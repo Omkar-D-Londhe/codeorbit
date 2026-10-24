@@ -1,0 +1,64 @@
+/* CodeOrbit design tokens. Mirrored in /DESIGN.md — keep both in sync. */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #111219;
+  --surface: #191b25;
+  --surface-raised: #222533;
+  --surface-high: #292c3c;
+  --border: #2e3142;
+  --border-strong: #404459;
+
+  /* Text */
+  --text: #f4f2f8;
+  --text-muted: #a7a9bc;
+  --text-quiet: #9a9db3;
+
+  /* Accents */
+  --accent: #9a8bff;
+  --accent-hover: #aa9eff;
+  --accent-soft: #c4baff;
+  --accent-wash: rgb(154 139 255 / 0.13);
+  --on-accent: #14121f;
+  --success: #c3f477;
+  --success-wash: rgb(195 244 119 / 0.12);
+  --warning: #f2b85b;
+  --warning-wash: rgb(242 184 91 / 0.12);
+  --danger: #ff7f7f;
+  --danger-wash: rgb(255 127 127 / 0.12);
+  --focus: #c4baff;
+
+  /* Type */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-display: clamp(2rem, 1.4rem + 2vw, 2.75rem);
+  --fs-title: 1.5rem;
+  --fs-section: 1.2rem;
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-meta: 0.8125rem;
+  --fs-code: 0.9rem;
+
+  /* Space (4px base) */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 56px;
+
+  /* Shape + depth */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --shadow-1: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.28);
+  --glow-active: 0 0 0 3px var(--accent-wash), 0 0 18px rgb(154 139 255 / 0.35);
+
+  /* Motion */
+  --t-fast: 120ms;
+  --t-med: 220ms;
+  --t-orbit: 360ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --rail-w: 76px;
+  --content-w: 1120px;
+  --content-w-wide: 1320px;
+  --z-nav: 20; --z-fade: 2; --z-dialog: 100; --z-toast: 110;
+}
