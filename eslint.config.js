@@ -4,7 +4,15 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'scripts'] },
+  {
+    ignores: [
+      'dist',
+      'node_modules',
+      'scripts',
+      'docs/antigravity/reference/**',
+      'docs/**',
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -14,6 +22,24 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    files: [
+      'src/pages/**/*.{ts,tsx}',
+      'src/components/**/*.{ts,tsx}',
+      'src/core/**/*.{ts,tsx}',
+      'src/lib/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Literal[value='html']",
+          message:
+            "Literal 'html' is forbidden in src/pages/**, src/components/**, src/core/** and src/lib/**. Query the TrackRegistry or useTrack hook instead.",
+        },
+      ],
     },
   },
 )

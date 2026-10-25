@@ -9,10 +9,12 @@ import { useDocumentTitle } from '../lib/hooks'
 import { lessonPath, practicePath, quizPath, trackPath } from '../lib/routes'
 import { formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { useTrack } from '../core/content/useTrack'
 
 export default function Review() {
   useDocumentTitle('Review')
   const { state, dispatch } = useApp()
+  const track = useTrack()
   const [tab, setTab] = useState<'errors' | 'journal'>('errors')
   const [del, setDel] = useState<string | null>(null)
   const notes = Object.entries(state.notes)
@@ -29,7 +31,7 @@ export default function Review() {
       <div role="tabpanel" id="rpanel-errors" aria-labelledby="rtab-errors" hidden={tab !== 'errors'}>
         {state.errorNotebook.length === 0 ? (
           <EmptyState icon="notebook" title="Your Error Notebook is empty"
-            action={<Link className="btn btn--secondary" to={trackPath()}>Open the Learning Orbit</Link>}>
+            action={<Link className="btn btn--secondary" to={track ? trackPath(track.id) : '/explore'}>Open the Learning Orbit</Link>}>
             When a practice check fails or you miss a quiz question, choose “Save to Error Notebook” and it will appear here for review.
           </EmptyState>
         ) : (

@@ -1,6 +1,6 @@
 # CodeOrbit — DESIGN.md
 
-Premium dark learning atelier: quiet obsidian surfaces, warm near-white text, cool muted secondary text, controlled lavender accent, lime reserved for genuine success/progress. The celestial motif lives in the **Learning Orbit** and in truthful progress moments only; lessons and the practice lab stay plain and readable.
+Premium dark learning atelier: quiet obsidian surfaces, warm near-white text, cool muted secondary text, controlled lavender accent, lime reserved for genuine success/progress. CodeOrbit is a language-neutral learning platform where HTML is the first optional track module. The celestial motif lives in the **Learning Orbit** and in truthful progress moments only; lessons and the practice lab stay plain and readable. A read-only reference snapshot is maintained at `docs/antigravity/reference/`.
 
 All values below are the real tokens in `src/styles/tokens.css`. Change them there and here together.
 

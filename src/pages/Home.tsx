@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { challengesForTopic } from '../data/challenges'
-import { getTopic, topics, getTechnology } from '../data/curriculum'
+import { getTopic } from '../data/curriculum'
+import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressRing } from '../components/ProgressRing'
@@ -9,6 +10,7 @@ import { nextAction, openErrorCount, topicProgress, trackProgress } from '../lib
 import { ACTIVITY_LABEL, lessonPath, resumePath, trackPath } from '../lib/routes'
 import { STATUS_LABEL, formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { useTrack } from '../core/content/useTrack'
 
 function OrbitFrame() {
   // Decorative cropped constellation: static, aria-hidden, carries no data.
@@ -26,22 +28,38 @@ function OrbitFrame() {
 export default function Home() {
   useDocumentTitle('Home')
   const { state } = useApp()
-  const tech = getTechnology('html')!
-  const tp = trackProgress(state, 'html')
-  const action = nextAction(state, 'html')
+  const track = useTrack()
+
+  if (!track) {
+    return (
+      <div className="page page--home">
+        <PageHeader
+          title="Learn by exploring"
+          lede="Short lessons, quick checks and a safe practice lab — all in this browser."
+        />
+        <EmptyState icon="compass" title="No learning tracks are available yet">
+          Learning tracks will appear here once registered.
+        </EmptyState>
+      </div>
+    )
+  }
+
+  const trackTopics = track.topics
+  const tp = trackProgress(state, track.id)
+  const action = nextAction(state, track.id)
   const lv = state.lastVisited
   const lvTopic = lv ? getTopic(lv.topicId) : undefined
   const lvProgress = lvTopic ? topicProgress(state, lvTopic) : undefined
   const lvChallenge = lv?.activity === 'practice' ? challengesForTopic(lv.topicId).find((c) => c.id === lv.challengeId) ?? challengesForTopic(lv.topicId)[0] : undefined
   const allDone = tp.completedTopics === tp.totalTopics
-  const anyProgress = tp.parts > 0 || !!lv || topics.some((t) => topicProgress(state, t).touched)
+  const anyProgress = tp.parts > 0 || !!lv || trackTopics.some((t) => topicProgress(state, t).touched)
   const nextTopic = action.topicId ? getTopic(action.topicId) : undefined
   const open = openErrorCount(state)
 
   return (
     <div className="page page--home">
       <PageHeader
-        title={anyProgress ? 'Welcome back' : 'Learn HTML by exploring it'}
+        title={anyProgress ? 'Welcome back' : `Learn ${track.name} by exploring it`}
         lede={anyProgress ? 'Pick up where you left off, or choose a topic on the Learning Orbit.' : 'Short lessons, quick checks and a safe practice lab — all in this browser.'}
       />
 
@@ -62,28 +80,28 @@ export default function Home() {
                 <p className="muted small">Last activity: {formatDateTime(lv.at)}</p>
                 <div className="btn-row">
                   <Link className="btn btn--primary btn--lg" to={resumePath(lv)}>Resume<Icon name="arrow-right" size={18} /></Link>
-                  <Link className="btn btn--secondary btn--lg" to={trackPath()}>Browse topics</Link>
+                  <Link className="btn btn--secondary btn--lg" to={trackPath(track.id)}>Browse topics</Link>
                 </div>
               </>
             ) : allDone ? (
               <>
-                <h2 id="continue-h" className="continue__title">Every HTML topic is complete</h2>
+                <h2 id="continue-h" className="continue__title">Every {track.name} topic is complete</h2>
                 <p className="continue__desc">You have finished all {tp.totalTopics} topics. Revisit any topic on the Learning Orbit, or look over your progress.</p>
                 <div className="btn-row">
                   <Link className="btn btn--primary btn--lg" to="/progress">See your progress</Link>
-                  <Link className="btn btn--secondary btn--lg" to={trackPath()}>Open the Learning Orbit</Link>
+                  <Link className="btn btn--secondary btn--lg" to={trackPath(track.id)}>Open the Learning Orbit</Link>
                 </div>
               </>
             ) : (
               <>
-                <h2 id="continue-h" className="continue__title">{anyProgress ? 'Choose what to do next' : 'Start with HTML'}</h2>
+                <h2 id="continue-h" className="continue__title">{anyProgress ? 'Choose what to do next' : `Start with ${track.name}`}</h2>
                 <p className="continue__desc">
                   {anyProgress
                     ? 'You have saved progress. Open the Learning Orbit to pick a topic.'
                     : `${tp.totalTopics} topics from the page skeleton to a finished page. Each has a lesson, a short quiz and a practice challenge.`}
                 </p>
                 <div className="btn-row">
-                  <Link className="btn btn--primary btn--lg" to={trackPath()}>{anyProgress ? 'Open the Learning Orbit' : 'Start HTML'}<Icon name="arrow-right" size={18} /></Link>
+                  <Link className="btn btn--primary btn--lg" to={trackPath(track.id)}>{anyProgress ? 'Open the Learning Orbit' : `Start ${track.name}`}<Icon name="arrow-right" size={18} /></Link>
                   <Link className="btn btn--secondary btn--lg" to="/explore">Browse technologies</Link>
                 </div>
               </>
@@ -93,10 +111,10 @@ export default function Home() {
 
         <section className="card track-card" aria-labelledby="track-h">
           <p className="eyebrow">Learning track</p>
-          <h2 id="track-h" className="card__title">{tech.name}</h2>
+          <h2 id="track-h" className="card__title">{track.name}</h2>
           <p className="muted">{tp.completedTopics} of {tp.totalTopics} topics complete · {tp.parts} of {tp.partsTotal} steps</p>
           <ol className="seg" aria-label="Topic status, in curriculum order">
-            {topics.map((t, i) => {
+            {trackTopics.map((t, i) => {
               const p = topicProgress(state, t)
               return (
                 <li key={t.id} className={`seg__item seg__item--${p.status}`}>
@@ -107,7 +125,7 @@ export default function Home() {
               )
             })}
           </ol>
-          <Link className="btn btn--secondary" to={trackPath()}>Open track</Link>
+          <Link className="btn btn--secondary" to={trackPath(track.id)}>Open track</Link>
           <p className="muted small track-card__previews">CSS, JavaScript, Bootstrap and Angular are planned. <Link to="/explore">See what is coming</Link>.</p>
         </section>
       </div>

@@ -37,7 +37,7 @@ function QuizInner({ topicId }: { topicId: string }) {
   const update = (s: QuizSession) => dispatch({ type: 'QUIZ_UPDATE', topicId, session: s })
   const start = () => update(newSession(n))
 
-  const crumbs = [{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath() }, { label: topic.title, to: lessonPath(topicId) }, { label: 'Quick quiz' }]
+  const crumbs = [{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath(topic.technologyId) }, { label: topic.title, to: lessonPath(topicId) }, { label: 'Quick quiz' }]
   const header = <PageHeader crumbs={crumbs} title={`Quick quiz: ${topic.title}`} />
 
   if (!session) {

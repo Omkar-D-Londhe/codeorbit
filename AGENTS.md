@@ -2,9 +2,9 @@
 
 ## Product and source of truth
 
-CodeOrbit is a frontend learning studio. HTML is the only complete learning track in the first release; other tracks may be clearly labelled previews. Read `docs/CODEORBIT_BLUEPRINT.md`, `docs/UI_DESIGN_SPEC.md`, `docs/DECISIONS.md`, `docs/ASSESSMENT_COMPLIANCE.md`, `docs/TEST_PLAN.md`, and root `DESIGN.md` when it exists.
+CodeOrbit is a browser-based, language-neutral learning studio. A learner picks a language or technology, moves through a **Learning Orbit** of topics, reads short lessons, checks understanding with varied quizzes, writes code in a real editor, gets deterministic feedback, and explores complexity analysis and optimisation. HTML is the first optional track module, with CSS, JavaScript, Bootstrap and Angular planned. A read-only snapshot of reference material is located at `docs/antigravity/reference/` (never imported by `src/`). Read `docs/antigravity/ANTIGRAVITY_EXECUTION_GUIDE.md`, `docs/antigravity/01_PRODUCT_AND_ARCHITECTURE.md`, `docs/DECISIONS.md`, and root `DESIGN.md`.
 
-Precedence: (1) original mandatory assessment requirements, (2) locked decisions and blueprint requirements, (3) `docs/UI_DESIGN_SPEC.md` and the actual root `DESIGN.md`, (4) implementation proposal. Do not invent missing assessment requirements or silently resolve conflicts.
+Precedence: (1) Locked decisions in `01_PRODUCT_AND_ARCHITECTURE.md` Part A, (2) resolved decisions in `07_CONFLICTS_AND_DECISIONS.md`, (3) the active stage specification, (4) `DESIGN.md` and repo documentation. Do not invent missing requirements or silently resolve conflicts.
 
 ## Claude owns UI/UX
 

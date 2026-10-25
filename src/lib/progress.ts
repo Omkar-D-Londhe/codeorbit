@@ -1,6 +1,7 @@
 import { challenges, challengesForTopic } from '../data/challenges'
 import { getQuiz } from '../data/quizzes'
 import { topics, getTopic } from '../data/curriculum'
+import { defaultTrackId } from '../core/content/registry'
 import type { Topic } from '../data/types'
 import { isPass, isPerfect } from './quiz'
 import type { CodeOrbitState } from '../state/types'
@@ -95,7 +96,7 @@ const isDone = (state: CodeOrbitState, t: Topic): boolean => {
 }
 
 /** Transparent, rule-based recommendation (no hidden scoring). */
-export function nextAction(state: CodeOrbitState, technologyId = 'html'): NextAction {
+export function nextAction(state: CodeOrbitState, technologyId: string = defaultTrackId() ?? ''): NextAction {
   const ts = topics.filter((t) => t.technologyId === technologyId)
   const anyActivity = ts.some((t) => topicProgress(state, t).touched)
   const lv = state.lastVisited ? getTopic(state.lastVisited.topicId) : undefined

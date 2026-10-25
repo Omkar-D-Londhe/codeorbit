@@ -1,10 +1,13 @@
 import '@testing-library/jest-dom/vitest'
 import { afterEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import '../app/registerTracks'
+import { registerTracks } from '../app/registerTracks'
 
 afterEach(() => {
   cleanup()
   window.localStorage.clear()
+  registerTracks()
 })
 
 // jsdom lacks these browser APIs.

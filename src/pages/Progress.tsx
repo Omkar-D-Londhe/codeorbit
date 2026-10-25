@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { groups, topics, getTopic } from '../data/curriculum'
+import { getTopic } from '../data/curriculum'
 import { ConfirmDialog } from '../components/Dialog'
+import { EmptyState } from '../components/EmptyState'
 import { Icon } from '../components/Icon'
 import { PageHeader } from '../components/PageHeader'
 import { ProgressRing } from '../components/ProgressRing'
@@ -11,16 +12,32 @@ import { topicProgress, trackProgress, nextAction } from '../lib/progress'
 import { lessonPath } from '../lib/routes'
 import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { useTrack } from '../core/content/useTrack'
 
 export default function Progress() {
   useDocumentTitle('My Progress')
   const { state, resetAll } = useApp()
+  const track = useTrack()
   const toast = useToast()
   const [confirm, setConfirm] = useState(false)
-  const tp = trackProgress(state, 'html')
-  const action = nextAction(state, 'html')
+
+  if (!track) {
+    return (
+      <div className="page">
+        <PageHeader title="My progress" lede="Everything here comes from what you have actually done in this browser." />
+        <EmptyState icon="compass" title="No learning tracks are available yet">
+          Progress will appear here once tracks are available.
+        </EmptyState>
+      </div>
+    )
+  }
+
+  const trackTopics = track.topics
+  const trackGroups = track.groups
+  const tp = trackProgress(state, track.id)
+  const action = nextAction(state, track.id)
   const next = action.topicId ? getTopic(action.topicId) : undefined
-  const started = topics.some((t) => topicProgress(state, t).touched)
+  const started = trackTopics.some((t) => topicProgress(state, t).touched)
 
   return (
     <div className="page">
@@ -29,7 +46,7 @@ export default function Progress() {
       <section className="card progress-summary" aria-labelledby="sum-h">
         <ProgressRing fraction={tp.partsTotal ? tp.parts / tp.partsTotal : 0} size={72} stroke={5} className="ring--accent" />
         <div>
-          <h2 id="sum-h" className="card__title">HTML track</h2>
+          <h2 id="sum-h" className="card__title">{track.name} track</h2>
           <p>{tp.completedTopics} of {tp.totalTopics} topics complete · {tp.parts} of {tp.partsTotal} steps done{tp.masteredTopics > 0 ? ` · ${tp.masteredTopics} mastered` : ''}</p>
           {next && action.kind !== 'all-complete' && (
             <p className="muted">{started ? 'Suggested next' : 'Start here'}: <Link to={lessonPath(next.id)}>{next.title}</Link>. {action.reason}</p>
@@ -38,8 +55,8 @@ export default function Progress() {
         </div>
       </section>
 
-      {groups.map((g) => {
-        const ts = topics.filter((t) => t.groupId === g.id)
+      {trackGroups.map((g) => {
+        const ts = trackTopics.filter((t) => t.groupId === g.id)
         return (
           <section key={g.id} className="progress-group" aria-labelledby={`g-${g.id}`}>
             <h2 id={`g-${g.id}`} className="section-title">{g.title}</h2>

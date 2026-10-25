@@ -84,7 +84,7 @@ function LessonInner({ topicId }: { topicId: string }) {
       ))}
       <nav className="pager" aria-label="Topic navigation">
         {prev ? <Link className="btn btn--secondary" to={`/lesson/${prev.id}`}><Icon name="arrow-left" size={18} />Previous: {prev.shortTitle}</Link> : <span />}
-        {next ? <Link className="btn btn--secondary" to={`/lesson/${next.id}`}>Next: {next.shortTitle}<Icon name="arrow-right" size={18} /></Link> : <Link className="btn btn--secondary" to={trackPath()}>Back to the Orbit</Link>}
+        {next ? <Link className="btn btn--secondary" to={`/lesson/${next.id}`}>Next: {next.shortTitle}<Icon name="arrow-right" size={18} /></Link> : <Link className="btn btn--secondary" to={trackPath(topic.technologyId)}>Back to the Orbit</Link>}
       </nav>
     </article>
   )
@@ -128,10 +128,10 @@ function LessonInner({ topicId }: { topicId: string }) {
   return (
     <div className="page page--wide">
       <PageHeader
-        crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath() }, { label: topic.title }]}
+        crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath(topic.technologyId) }, { label: topic.title }]}
         title={topic.title}
         lede={`${getGroup(topic.groupId)?.title} · Topic ${idx + 1} of ${topics.length}`}
-        actions={<Link className="btn btn--ghost" to={trackPath()}><Icon name="compass" size={18} />Learning Orbit</Link>}
+        actions={<Link className="btn btn--ghost" to={trackPath(topic.technologyId)}><Icon name="compass" size={18} />Learning Orbit</Link>}
       />
       <h2 id="lesson-h" className="sr-only">Lesson content</h2>
       {narrow ? (

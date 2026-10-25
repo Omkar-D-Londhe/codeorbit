@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 8 files
+## Automated (Vitest, jsdom) — 13 files (207 tests)
 | File | Covers |
 |---|---|
 | `curriculum.test.ts` | stable unique IDs/order; prerequisite edges valid, acyclic, not a chain; every topic has lesson/quiz/challenge; quiz shape; previews have no topics |
@@ -13,6 +13,18 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `progress.test.ts` | status rules, best score, mastery vs solution reveal, sticky completion, recommendations, hints, drafts, notes, bookmarks, error dedupe, reset |
 | `preview.test.tsx` | `sandbox=""`, no allow-scripts/allow-same-origin, learner markup absent from parent DOM, CSP before content, source scan for innerHTML/dangerouslySetInnerHTML/document.write |
 | `app.test.tsx` | first-run, previews, Orbit render/sync/keyboard/stable positions/edges/carousel/restore, lesson notes+bookmark persistence, full quiz + resume, practice run/check/hints/solution/focus/reset/mobile tabs, progress & review empty/populated, corrupt/unavailable storage, a11y landmarks |
+| `registry.test.ts` | TrackRegistry registration, duplicate rejection, registration order, availability filtering, defaultTrackId, unregisterTrack |
+| `htmlTrack.test.ts` | HTML track module packaging, unique IDs, complete lesson/quiz/challenge per topic, truthful capability declarations, planned track definitions |
+| `emptyTracks.test.tsx` | Empty track registry handling: Home and Explore render EmptyState titled "No learning tracks are available yet" with no actions and no crashes; unknown :technologyId redirects to /explore |
+| `challengeAdapter.test.ts` | `toChallengeV2` and `toChallenge` round-trip and conversion of all 12 curriculum challenges without data loss |
+| `regression.smoke.test.tsx` | Automates the 9 G2 regression smoke items (start/resume, orbit sync/keyboard, lesson persistence, quiz pass/perfect/retake, practice draft/hints/solution, error notebook CRUD, progress state numbers, storage recovery, preview sandbox/CSP) and 8 automated axe checks for serious/critical violations on Home, Explore, Track, Lesson, Quiz, Practice, Progress, Review |
+
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (4 tests)
+Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
+1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
+2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
+3. **Lesson persistence**: Marking lesson complete persists across full browser reload.
+4. **Sandboxed preview iframe**: Preview iframe verified to have empty `sandbox=""`, strictly disallow scripts, and include CSP meta `default-src 'none'`.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

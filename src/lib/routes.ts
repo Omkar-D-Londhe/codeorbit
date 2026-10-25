@@ -4,7 +4,7 @@ import type { LastVisited } from '../state/types'
 export const lessonPath = (topicId: string): string => `/lesson/${topicId}`
 export const quizPath = (topicId: string): string => `/quiz/${topicId}`
 export const practicePath = (challengeId: string): string => `/practice/${challengeId}`
-export const trackPath = (technologyId = 'html'): string => `/learn/${technologyId}`
+export const trackPath = (technologyId: string): string => `/learn/${technologyId}`
 
 export function resumePath(lv: LastVisited): string {
   if (lv.activity === 'quiz') return quizPath(lv.topicId)

@@ -219,7 +219,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
               ))}
             </ul>
             {result.allPassed ? (
-              <p className="small">Next: <Link to={trackPath()}>choose your next topic on the Learning Orbit</Link>, or take the topic quiz.</p>
+              <p className="small">Next: <Link to={trackPath(topic.technologyId)}>choose your next topic on the Learning Orbit</Link>, or take the topic quiz.</p>
             ) : (
               <div className="coach__next">
                 <p className="small">Next: fix “{failed[0].description}”, then check again. <Link to={lessonPath(challenge.topicId)}>Review the lesson</Link> or ask for a hint.</p>
@@ -245,7 +245,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
 
   const header = (
     <PageHeader
-      crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath() }, { label: topic.title, to: lessonPath(challenge.topicId) }, { label: 'Practice' }]}
+      crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath(topic.technologyId) }, { label: topic.title, to: lessonPath(challenge.topicId) }, { label: 'Practice' }]}
       title={challenge.title}
       lede={<>{challenge.difficulty[0].toUpperCase() + challenge.difficulty.slice(1)}{rec?.completed ? ' · Completed' : ''}</>}
     />
