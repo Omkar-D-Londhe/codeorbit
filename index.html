@@ -8,6 +8,22 @@
     <meta name="description" content="CodeOrbit — an HTML learning studio with a Learning Orbit, quizzes and a safe practice lab." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>CodeOrbit — learn HTML by exploring</title>
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('codeorbit:settings:early');
+          if (raw) {
+            var s = JSON.parse(raw);
+            var doc = document.documentElement;
+            if (s.theme) doc.setAttribute('data-theme', s.theme);
+            if (s.accent) doc.setAttribute('data-accent', s.accent);
+            if (s.contrast) doc.setAttribute('data-contrast', s.contrast);
+            if (s.motion && s.motion !== 'system') doc.setAttribute('data-motion', s.motion);
+            doc.style.colorScheme = s.theme === 'starlight' ? 'light' : 'dark';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

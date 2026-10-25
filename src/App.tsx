@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Shell } from './components/Shell'
@@ -12,6 +13,8 @@ import Progress from './pages/Progress'
 import QuizPage from './pages/Quiz'
 import Review from './pages/Review'
 import Track from './pages/Track'
+
+const UiGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiGallery')) : null
 
 export default function App() {
   return (
@@ -28,6 +31,16 @@ export default function App() {
               <Route path="practice/:challengeId" element={<Practice />} />
               <Route path="progress" element={<Progress />} />
               <Route path="review" element={<Review />} />
+              {import.meta.env.DEV && UiGallery && (
+                <Route
+                  path="__ui"
+                  element={
+                    <Suspense fallback={<div className="page">Loading gallery...</div>}>
+                      <UiGallery />
+                    </Suspense>
+                  }
+                />
+              )}
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

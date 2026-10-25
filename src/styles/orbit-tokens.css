@@ -1,0 +1,77 @@
+/* Constellation Orbit Design Tokens (04 §1.3, 10 §19) */
+
+:root,
+[data-theme="obsidian"] {
+  --orbit-field: radial-gradient(circle at 50% 50%, #161928 0%, #111219 100%);
+  --orbit-hub-glow: 0 0 48px rgb(154 139 255 / 0.28);
+  --orbit-ring: rgb(255 255 255 / 0.08);
+  --orbit-star-size: 56px;
+  --orbit-hub-size: 140px;
+  --orbit-star-completed: #c3f477;
+  --orbit-star-progress: var(--c-accent);
+  --orbit-star-available: #f4f2f8;
+  --orbit-star-locked: #a7a9bc;
+  --orbit-edge-prereq: #c4baff;
+  --orbit-edge-order: rgb(167 169 188 / 0.45);
+  --orbit-edge-active: #aa9eff;
+  --orbit-label: #f4f2f8;
+  --orbit-halo: rgb(154 139 255 / 0.12);
+}
+
+[data-theme="starlight"] {
+  --orbit-field: radial-gradient(circle at 50% 50%, #f0eef8 0%, #f7f6fb 100%);
+  --orbit-hub-glow: 0 0 36px rgb(91 69 224 / 0.20);
+  --orbit-ring: rgb(74 70 96 / 0.12);
+  --orbit-star-completed: #2d7a10;
+  --orbit-star-progress: var(--c-accent);
+  --orbit-star-available: #17151f;
+  --orbit-star-locked: #4a4660;
+  --orbit-edge-prereq: #5b45e0;
+  --orbit-edge-order: rgb(74 70 96 / 0.45);
+  --orbit-edge-active: #4934cc;
+  --orbit-label: #17151f;
+  --orbit-halo: rgb(91 69 224 / 0.10);
+}
+
+[data-theme="aurora"] {
+  --orbit-field: radial-gradient(circle at 50% 50%, #16262a 0%, #0d1517 100%);
+  --orbit-hub-glow: 0 0 48px rgb(95 214 198 / 0.28);
+  --orbit-ring: rgb(95 214 198 / 0.10);
+  --orbit-star-completed: #4ade80;
+  --orbit-star-progress: var(--c-accent);
+  --orbit-star-available: #eaf6f5;
+  --orbit-star-locked: #a3bfc0;
+  --orbit-edge-prereq: #5fd6c6;
+  --orbit-edge-order: rgb(163 191 192 / 0.45);
+  --orbit-edge-active: #7ae0d2;
+  --orbit-label: #eaf6f5;
+  --orbit-halo: rgb(95 214 198 / 0.14);
+}
+
+[data-contrast="high"] {
+  --orbit-hub-glow: none;
+  --orbit-ring: var(--border-strong);
+  --orbit-star-completed: #c3f477;
+  --orbit-star-progress: var(--c-accent);
+  --orbit-star-available: #ffffff;
+  --orbit-star-locked: #e0e0ea;
+  --orbit-edge-prereq: #ffffff;
+  --orbit-edge-order: #bfbfe0;
+  --orbit-edge-active: #ffffff;
+  --orbit-label: #ffffff;
+  --orbit-halo: transparent;
+}
+
+[data-theme="starlight"][data-contrast="high"] {
+  --orbit-hub-glow: none;
+  --orbit-ring: var(--border-strong);
+  --orbit-star-completed: #2d7a10;
+  --orbit-star-progress: var(--c-accent);
+  --orbit-star-available: #000000;
+  --orbit-star-locked: #222030;
+  --orbit-edge-prereq: #000000;
+  --orbit-edge-order: #403c58;
+  --orbit-edge-active: #000000;
+  --orbit-label: #000000;
+  --orbit-halo: transparent;
+}

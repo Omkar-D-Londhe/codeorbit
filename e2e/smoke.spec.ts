@@ -92,4 +92,79 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     expect(srcdocAttr).not.toBeNull()
     expect(srcdocAttr).toContain("default-src 'none'")
   })
+
+  test('Theme switching (Obsidian, Starlight, Aurora) and accents visibly restyle document attributes and styles', async ({ page }) => {
+    await page.goto('/')
+
+    // Test Starlight (light theme)
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'starlight')
+      document.documentElement.setAttribute('data-accent', 'teal')
+      document.documentElement.setAttribute('data-contrast', 'high')
+      document.documentElement.style.colorScheme = 'light'
+    })
+
+    const themeAttr = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+    expect(themeAttr).toBe('starlight')
+
+    const bodyBg = await page.evaluate(() => window.getComputedStyle(document.body).backgroundColor)
+    // Starlight body bg is #f7f6fb -> rgb(247, 246, 251)
+    expect(bodyBg).toBe('rgb(247, 246, 251)')
+
+    // Capture visual verification screenshot in light theme
+    await page.screenshot({ path: 'test-results/screenshots/starlight-home-1280.png' })
+
+    // Test Aurora (teal dark theme)
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'aurora')
+      document.documentElement.setAttribute('data-accent', 'amber')
+      document.documentElement.setAttribute('data-contrast', 'normal')
+      document.documentElement.style.colorScheme = 'dark'
+    })
+    const auroraBg = await page.evaluate(() => window.getComputedStyle(document.body).backgroundColor)
+    // Aurora body bg is #0d1517 -> rgb(13, 21, 23)
+    expect(auroraBg).toBe('rgb(13, 21, 23)')
+
+    await page.screenshot({ path: 'test-results/screenshots/aurora-home-1280.png' })
+
+    // Test Obsidian (default dark)
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'obsidian')
+      document.documentElement.setAttribute('data-accent', 'violet')
+      document.documentElement.setAttribute('data-contrast', 'normal')
+      document.documentElement.style.colorScheme = 'dark'
+    })
+    await page.screenshot({ path: 'test-results/screenshots/obsidian-home-1280.png' })
+
+    // Responsive viewports
+    await page.setViewportSize({ width: 820, height: 1180 })
+    await page.screenshot({ path: 'test-results/screenshots/obsidian-home-820.png' })
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.screenshot({ path: 'test-results/screenshots/obsidian-home-390.png' })
+
+    await page.setViewportSize({ width: 320, height: 640 })
+    await page.screenshot({ path: 'test-results/screenshots/obsidian-home-320.png' })
+
+    // Test early script storage application across reload
+    await page.evaluate(() => {
+      localStorage.setItem('codeorbit:settings:early', JSON.stringify({
+        v: 1,
+        theme: 'aurora',
+        accent: 'azure',
+        contrast: 'normal',
+        motion: 'system'
+      }))
+    })
+    await page.reload()
+    const reloadedTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))
+    expect(reloadedTheme).toBe('aurora')
+  })
+
+  test('Dev route /__ui is isolated from production build (returns 404 NotFound)', async ({ page }) => {
+    await page.goto('/__ui')
+    // In production preview build, UiGallery is stripped and NotFound page is shown
+    const notFoundText = page.locator('text=That page doesn’t exist')
+    await expect(notFoundText).toBeVisible()
+  })
 })

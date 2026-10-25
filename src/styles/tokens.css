@@ -27,12 +27,74 @@
   --warning-wash: rgb(242 184 91 / 0.12);
   --danger: #ff7f7f;
   --danger-wash: rgb(255 127 127 / 0.12);
+  --on-danger: #2a0e0e;
   --focus: #c4baff;
+
+  /* Semantic aliases (--c-*) */
+  --c-bg: var(--bg);
+  --c-surface-1: var(--surface);
+  --c-surface-2: var(--surface-raised);
+  --c-surface-3: var(--surface-high);
+  --c-border: var(--border);
+  --c-border-strong: var(--border-strong);
+  --c-text: var(--text);
+  --c-text-muted: var(--text-muted);
+  --c-text-quiet: var(--text-quiet);
+  --c-accent: var(--accent);
+  --c-accent-hover: var(--accent-hover);
+  --c-accent-soft: var(--accent-soft);
+  --c-accent-wash: var(--accent-wash);
+  --c-on-accent: var(--on-accent);
+  --c-success: var(--success);
+  --c-warning: var(--warning);
+  --c-danger: var(--danger);
+  --c-on-danger: var(--on-danger);
+  --c-focus: var(--focus);
+
+  /* Glass tokens (1.4) */
+  --glass-bg: rgb(25 27 37 / 0.68);
+  --glass-border: rgb(255 255 255 / 0.10);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --glass-blur: 14px;
+  --glass-saturate: 1.15;
+
+  /* Elevation */
+  --shadow-1: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.28);
+  --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 16px 32px -4px rgb(0 0 0 / 0.45);
+  --glow-active: 0 0 0 3px var(--c-accent-wash), 0 0 18px rgb(154 139 255 / 0.35);
+
+  /* Scrollbar (1.5) */
+  --scrollbar-thumb: var(--c-border-strong);
+  --scrollbar-thumb-hover: var(--c-text-quiet);
+  --scrollbar-track: transparent;
+
+  /* Atmosphere */
+  --nebula-tint: rgb(154 139 255 / 0.12);
+  --grid-opacity: 0.05;
+  --glow-radius: 320px;
+
+  /* Code */
+  --code-bg: #141620;
+  --code-gutter: #1c1e2b;
+  --tok-keyword: #c4baff;
+  --tok-string: #c3f477;
+  --tok-number: #f2b85b;
+  --tok-comment: #9a9db3;
+  --tok-tag: #c4baff;
+  --tok-attr: #8fd3ff;
+  --tok-func: #9a8bff;
+  --tok-type: #7db4ff;
+  --tok-punct: #a7a9bc;
+
+  /* Diff */
+  --diff-add-bg: rgb(195 244 119 / 0.14);
+  --diff-del-bg: rgb(255 127 127 / 0.14);
 
   /* Type */
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-scale: 1;
   --fs-display: clamp(2rem, 1.4rem + 2vw, 2.75rem);
   --fs-title: 1.5rem;
   --fs-section: 1.2rem;
@@ -46,8 +108,6 @@
 
   /* Shape + depth */
   --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
-  --shadow-1: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.28);
-  --glow-active: 0 0 0 3px var(--accent-wash), 0 0 18px rgb(154 139 255 / 0.35);
 
   /* Motion */
   --t-fast: 120ms;

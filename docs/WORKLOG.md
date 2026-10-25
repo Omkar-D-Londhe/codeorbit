@@ -26,3 +26,24 @@
 - **T8 Browser smoke:** Installed `@playwright/test` and Playwright Chromium. Created `playwright.config.ts`, `e2e/smoke.spec.ts` (4 tests passing), and script `test:e2e` in `package.json`. Updated `vite.config.ts` `test.exclude` to exclude `e2e/**` and `docs/**` while preserving defaults.
 - **T9 Concept registry skeleton:** Created `src/core/concepts/concepts.ts` with `ConceptEntry` interface and empty typed array.
 - **T10 Documentation:** Updated `AGENTS.md`, `README.md`, `DESIGN.md`, `docs/WORKLOG.md`, `docs/DECISIONS.md`, `docs/TEST_PLAN.md`, and generated `docs/antigravity/status/STAGE_01_STATUS.md`.
+
+## 2026-10-26 — Stage 02: Design system v2: tokens, themes, accents, glass surfaces, scrollbars
+- **Branch:** `stage-02-design-system-v2`
+- **Tokens & Themes:**
+  - Added semantic `--c-*` aliases across `tokens.css` and rebased `components.css`.
+  - Created `src/styles/themes.css` supporting Obsidian (default dark), Starlight (light), and Aurora (teal dark), with 5 accent presets (violet, teal, amber, rose, azure), and high contrast overrides.
+  - Created `src/styles/orbit-tokens.css` defining constellation orbit tokens (`--orbit-field`, `--orbit-hub-glow`, `--orbit-star-*`, `--orbit-edge-*`, etc.).
+  - Added thin custom scrollbar styling in `base.css` with WebKit support.
+  - Added early appearance boot script in `index.html` preventing theme flashes on cold load.
+- **Contrast & Appearance Core:**
+  - Created `src/core/a11y/contrast.ts` calculating WCAG relative luminance, alpha compositing, and contrast ratios. Added `src/test/contrast.test.ts` verifying the full 3×5×2 matrix meets WCAG AA/AAA thresholds (37 tests).
+  - Created `src/core/settings/appearance.ts` (`applyAppearance`, `readEarlyAppearance`, `writeEarlyAppearance`). Added `src/test/appearance.test.ts` (6 tests).
+- **Core UI Components:**
+  - Extracted/built `Button`, `IconButton`, `Card`, `GlassPanel`, `Tabs`, `Toggle`, `Select`, `Segmented`, `Tooltip`, `Kbd`, `Skeleton`, `StatusChip`, `ProgressRing`, `ProgressBar`, `DockedPanel`, `Drawer`, and inline-SVG icon registry `core/ui/icons`.
+  - Added `src/test/uiComponents.test.tsx` verifying keyboard navigation, ARIA roles, and axe accessibility (15 tests).
+- **Visual QA Gallery:**
+  - Built `src/pages/UiGallery.tsx` accessible at `/__ui` (dev-only, stripped in production build). Added `src/test/devRoute.test.tsx`.
+- **E2E & Browser Smoke:**
+  - Extended `e2e/smoke.spec.ts` with theme switching tests, computed background assertions, and production 404 isolation for `/__ui` (6 tests passing).
+- **Documentation:**
+  - Updated `DESIGN.md`, `docs/WORKLOG.md`, and produced `docs/antigravity/status/STAGE_02_STATUS.md`.
