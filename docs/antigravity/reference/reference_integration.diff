@@ -1,0 +1,400 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index 672aeae..941725d 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -6,6 +6,7 @@ import { AppStateProvider } from './state/AppState'
+ import Explore from './pages/Explore'
+ import Home from './pages/Home'
+ import Lesson from './pages/Lesson'
++import Mastery from './pages/Mastery'
+ import NotFound from './pages/NotFound'
+ import Practice from './pages/Practice'
+ import Progress from './pages/Progress'
+@@ -23,6 +24,7 @@ export default function App() {
+               <Route index element={<Home />} />
+               <Route path="explore" element={<Explore />} />
+               <Route path="learn/:technologyId" element={<Track />} />
++              <Route path="mastery" element={<Mastery />} />
+               <Route path="lesson/:topicId" element={<Lesson />} />
+               <Route path="quiz/:topicId" element={<QuizPage />} />
+               <Route path="practice/:challengeId" element={<Practice />} />
+diff --git a/src/components/Shell.tsx b/src/components/Shell.tsx
+index 3174fb7..9a449b5 100644
+--- a/src/components/Shell.tsx
++++ b/src/components/Shell.tsx
+@@ -9,7 +9,7 @@ interface NavItem { to: string; label: string; icon: IconName; match: (p: string
+ 
+ const NAV: NavItem[] = [
+   { to: '/', label: 'Home', icon: 'home', match: (p) => p === '/' },
+-  { to: '/explore', label: 'Explore', icon: 'compass', match: (p) => ['/explore', '/learn', '/lesson', '/quiz', '/practice'].some((x) => p === x || p.startsWith(x + '/')) },
++  { to: '/explore', label: 'Explore', icon: 'compass', match: (p) => ['/explore', '/learn', '/mastery', '/lesson', '/quiz', '/practice'].some((x) => p === x || p.startsWith(x + '/')) },
+   { to: '/progress', label: 'My Progress', icon: 'progress', match: (p) => p === '/progress' },
+   { to: '/review', label: 'Review', icon: 'notebook', match: (p) => p === '/review' },
+ ]
+diff --git a/src/lib/storage.ts b/src/lib/storage.ts
+index 5ec87e1..28e5801 100644
+--- a/src/lib/storage.ts
++++ b/src/lib/storage.ts
+@@ -7,6 +7,7 @@ import { sanitizeSession } from './quiz'
+ export const STORAGE_KEY = 'codeorbit:state'
+ export const BACKUP_KEY = 'codeorbit:state:backup'
+ export const SCHEMA_VERSION = 1
++export const MAX_DAYS = 400
+ 
+ export type RecoveryReason = 'none' | 'corrupt' | 'newer-version' | 'unavailable' | 'repaired'
+ 
+@@ -24,6 +25,8 @@ export const createDefaultState = (): CodeOrbitState => ({
+   notes: {},
+   bookmarks: [],
+   errorNotebook: [],
++  activityDays: [],
++  dailyDone: [],
+ })
+ 
+ type Json = Record<string, unknown>
+@@ -142,6 +145,12 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
+       } else drop()
+     }
+   }
++  const dayList = (v: unknown): string[] | null =>
++    Array.isArray(v) ? Array.from(new Set(v.filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)))).sort().slice(-MAX_DAYS) : null
++  const ad = dayList(raw.activityDays)
++  if (ad) { s.activityDays = ad; if (ad.length !== (raw.activityDays as unknown[]).length) drop() } else if (raw.activityDays !== undefined) drop()
++  const dd = dayList(raw.dailyDone)
++  if (dd) { s.dailyDone = dd; if (dd.length !== (raw.dailyDone as unknown[]).length) drop() } else if (raw.dailyDone !== undefined) drop()
+   return { state: s, repaired }
+ }
+ 
+diff --git a/src/pages/Home.tsx b/src/pages/Home.tsx
+index bc7beee..e8455d1 100644
+--- a/src/pages/Home.tsx
++++ b/src/pages/Home.tsx
+@@ -1,6 +1,7 @@
+ import { Link } from 'react-router-dom'
+ import { challengesForTopic } from '../data/challenges'
+ import { getTopic, topics, getTechnology } from '../data/curriculum'
++import { DailyChallengeCard } from '../components/DailyChallengeCard'
+ import { Icon } from '../components/Icon'
+ import { PageHeader } from '../components/PageHeader'
+ import { ProgressRing } from '../components/ProgressRing'
+@@ -8,6 +9,7 @@ import { useDocumentTitle } from '../lib/hooks'
+ import { nextAction, openErrorCount, topicProgress, trackProgress } from '../lib/progress'
+ import { ACTIVITY_LABEL, lessonPath, resumePath, trackPath } from '../lib/routes'
+ import { STATUS_LABEL, formatDateTime } from '../lib/status'
++import { dayKey, streakInfo } from '../lib/streak'
+ import { useApp } from '../state/AppState'
+ 
+ function OrbitFrame() {
+@@ -37,6 +39,7 @@ export default function Home() {
+   const anyProgress = tp.parts > 0 || !!lv || topics.some((t) => topicProgress(state, t).touched)
+   const nextTopic = action.topicId ? getTopic(action.topicId) : undefined
+   const open = openErrorCount(state)
++  const streak = streakInfo(state.activityDays, dayKey(Date.now()))
+ 
+   return (
+     <div className="page page--home">
+@@ -112,8 +115,22 @@ export default function Home() {
+         </section>
+       </div>
+ 
+-      {(action.kind === 'next' || open > 0) && (
+-        <div className="home-secondary">
++      <div className="home-secondary">
++        <DailyChallengeCard />
++        {state.activityDays.length > 0 && (
++          <section className="card card--quiet" aria-labelledby="streak-h">
++            <p className="eyebrow">Activity</p>
++            <h2 id="streak-h" className="card__title">{streak.current > 0 ? `${streak.current}-day streak` : 'No active streak'}</h2>
++            <p className="muted">
++              {streak.current > 0
++                ? `${streak.activeToday ? 'You were active today.' : 'Keep it going today.'} Longest so far: ${streak.longest} ${streak.longest === 1 ? 'day' : 'days'}.`
++                : `Last active ${streak.lastActive}. Complete a lesson, finish a quiz or run a check to start a new one.`}
++            </p>
++            <Link className="btn btn--secondary" to="/progress">See progress</Link>
++          </section>
++        )}
++        {action.kind === 'next' || open > 0 ? (
++          <>
+           {action.kind === 'next' && nextTopic && !(lv && action.topicId === lv.topicId && !allDone) && (
+             <section className="card card--quiet" aria-labelledby="next-h">
+               <p className="eyebrow">Recommended next</p>
+@@ -130,8 +147,9 @@ export default function Home() {
+               <Link className="btn btn--secondary" to="/review">Open Error Notebook</Link>
+             </section>
+           )}
+-        </div>
+-      )}
++          </>
++        ) : null}
++      </div>
+     </div>
+   )
+ }
+diff --git a/src/pages/Lesson.tsx b/src/pages/Lesson.tsx
+index a80ec06..e51e340 100644
+--- a/src/pages/Lesson.tsx
++++ b/src/pages/Lesson.tsx
+@@ -94,7 +94,7 @@ function LessonInner({ topicId }: { topicId: string }) {
+       <section className="study__block">
+         <h2 className="study__h">Lesson</h2>
+         <button type="button" className={`btn ${p.lessonDone ? 'btn--success' : 'btn--secondary'} btn--block`} aria-pressed={p.lessonDone}
+-          onClick={() => dispatch({ type: 'SET_LESSON_COMPLETE', topicId, value: !p.lessonDone })}>
++          onClick={() => dispatch({ type: 'SET_LESSON_COMPLETE', topicId, value: !p.lessonDone, now: Date.now() })}>
+           <Icon name={p.lessonDone ? 'check' : 'circle'} size={18} />{p.lessonDone ? 'Lesson marked complete' : 'Mark lesson complete'}
+         </button>
+         <button type="button" className="btn btn--ghost btn--block" aria-pressed={bookmarked} onClick={() => dispatch({ type: 'TOGGLE_BOOKMARK', topicId })}>
+diff --git a/src/pages/Progress.tsx b/src/pages/Progress.tsx
+index b20ff14..74a53a6 100644
+--- a/src/pages/Progress.tsx
++++ b/src/pages/Progress.tsx
+@@ -1,13 +1,16 @@
+ import { useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { groups, topics, getTopic } from '../data/curriculum'
++import { DailyChallengeCard } from '../components/DailyChallengeCard'
+ import { ConfirmDialog } from '../components/Dialog'
+ import { Icon } from '../components/Icon'
+ import { PageHeader } from '../components/PageHeader'
+ import { ProgressRing } from '../components/ProgressRing'
+ import { useToast } from '../components/Toast'
+ import { useDocumentTitle } from '../lib/hooks'
++import { computeAchievements } from '../lib/achievements'
+ import { topicProgress, trackProgress, nextAction } from '../lib/progress'
++import { dayKey, streakInfo } from '../lib/streak'
+ import { lessonPath } from '../lib/routes'
+ import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
+ import { useApp } from '../state/AppState'
+@@ -20,6 +23,10 @@ export default function Progress() {
+   const tp = trackProgress(state, 'html')
+   const action = nextAction(state, 'html')
+   const next = action.topicId ? getTopic(action.topicId) : undefined
++  const today = dayKey(Date.now())
++  const streak = streakInfo(state.activityDays, today)
++  const achievements = computeAchievements(state, today)
++  const earned = achievements.filter((a) => a.earned).length
+   const started = topics.some((t) => topicProgress(state, t).touched)
+ 
+   return (
+@@ -38,6 +45,38 @@ export default function Progress() {
+         </div>
+       </section>
+ 
++      <div className="home-secondary">
++        <section className="card card--quiet" aria-labelledby="streak-h">
++          <p className="eyebrow">Activity</p>
++          <h2 id="streak-h" className="card__title">{streak.current > 0 ? `${streak.current}-day streak` : 'No active streak'}</h2>
++          <p className="muted">
++            {state.activityDays.length === 0
++              ? 'No activity recorded yet.'
++              : `Longest streak: ${streak.longest} ${streak.longest === 1 ? 'day' : 'days'} · ${state.activityDays.length} active ${state.activityDays.length === 1 ? 'day' : 'days'} in total.`}
++          </p>
++          <p className="muted small">A day counts when you complete a lesson, finish a quiz or run a check. Dates come from this device’s clock and are kept only in this browser.</p>
++        </section>
++        <DailyChallengeCard />
++      </div>
++
++      <section aria-labelledby="ach-h">
++        <h2 id="ach-h" className="section-title">Achievements <span className="muted small">({earned} of {achievements.length} earned)</span></h2>
++        <ul className="ach-grid">
++          {achievements.map((a) => (
++            <li key={a.id} className={`ach ${a.earned ? 'is-earned' : ''}`}>
++              <div className="ach__head">
++                <Icon name={a.earned ? 'star' : 'circle'} size={18} />
++                <h3 className="ach__title">{a.title}</h3>
++                <span className="ach__state">{a.earned ? 'Earned' : 'Not yet'}</span>
++              </div>
++              <p className="muted small">{a.rule}</p>
++              {a.progress && !a.earned && <p className="small">{a.progress.current} of {a.progress.total}</p>}
++            </li>
++          ))}
++        </ul>
++        <p className="muted small">Achievements are worked out from your saved activity each time you open this page. Link to the <Link to="/mastery">mastery map</Link> for how topics depend on each other.</p>
++      </section>
++
+       {groups.map((g) => {
+         const ts = topics.filter((t) => t.groupId === g.id)
+         return (
+diff --git a/src/pages/Quiz.tsx b/src/pages/Quiz.tsx
+index 3e3cbc2..7f8a963 100644
+--- a/src/pages/Quiz.tsx
++++ b/src/pages/Quiz.tsx
+@@ -117,7 +117,7 @@ function QuizInner({ topicId }: { topicId: string }) {
+       if (!allChecked(session)) return
+       const done = finish(session)
+       const sc = scoreSession(done, quiz)
+-      dispatch({ type: 'QUIZ_FINISH', topicId, session: done, correct: sc.correct, total: sc.total })
++      dispatch({ type: 'QUIZ_FINISH', topicId, session: done, correct: sc.correct, total: sc.total, now: Date.now() })
+       setTimeout(() => resultsHeading.current?.focus(), 0)
+     } else update(goTo(session, qi + 1))
+   }
+diff --git a/src/pages/Track.tsx b/src/pages/Track.tsx
+index 7cbc939..dff7f7f 100644
+--- a/src/pages/Track.tsx
++++ b/src/pages/Track.tsx
+@@ -1,5 +1,6 @@
+ import { useCallback } from 'react'
+-import { Navigate, useParams } from 'react-router-dom'
++import { Link, Navigate, useParams } from 'react-router-dom'
++import { Icon } from '../components/Icon'
+ import { getTechnology, getTopic, topicsFor } from '../data/curriculum'
+ import { LearningOrbit } from '../components/orbit/LearningOrbit'
+ import { TopicDetail } from '../components/orbit/TopicDetail'
+@@ -31,6 +32,7 @@ function TrackInner({ technologyId, name }: { technologyId: string; name: string
+       <PageHeader
+         crumbs={[{ label: 'Explore', to: '/explore' }, { label: name }]}
+         title={`${name} Learning Orbit`}
++        actions={<Link className="btn btn--ghost" to="/mastery"><Icon name="progress" size={18} />Mastery map</Link>}
+         lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done. Select a topic on the strip or the arch.`}
+       />
+       <section className="card orbit-card" aria-label={`${name} Learning Orbit`}>
+diff --git a/src/state/reducer.ts b/src/state/reducer.ts
+index bcd3a66..cd996f7 100644
+--- a/src/state/reducer.ts
++++ b/src/state/reducer.ts
+@@ -1,4 +1,6 @@
+-import { createDefaultState } from '../lib/storage'
++import { dailyChallengeFor } from '../lib/daily'
++import { createDefaultState, MAX_DAYS } from '../lib/storage'
++import { addDay, dayKey } from '../lib/streak'
+ import type { QuizSession } from '../lib/quiz'
+ import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest } from './types'
+ 
+@@ -6,10 +8,10 @@ export type Action =
+   | { type: 'RESET_ALL' }
+   | { type: 'SELECT_TOPIC'; topicId: string }
+   | { type: 'VISIT'; topicId: string; activity: Activity; challengeId?: string; now: number }
+-  | { type: 'SET_LESSON_COMPLETE'; topicId: string; value: boolean }
++  | { type: 'SET_LESSON_COMPLETE'; topicId: string; value: boolean; now?: number }
+   | { type: 'QUIZ_UPDATE'; topicId: string; session: QuizSession }
+   | { type: 'QUIZ_RESET'; topicId: string }
+-  | { type: 'QUIZ_FINISH'; topicId: string; session: QuizSession; correct: number; total: number }
++  | { type: 'QUIZ_FINISH'; topicId: string; session: QuizSession; correct: number; total: number; now?: number }
+   | { type: 'SET_DRAFT'; challengeId: string; code: string }
+   | { type: 'CLEAR_DRAFT'; challengeId: string }
+   | { type: 'RECORD_CHECK'; challengeId: string; passed: number; total: number; failedIds: string[]; now: number }
+@@ -23,6 +25,13 @@ export type Action =
+ 
+ const emptyChallenge = () => ({ attempts: 0, hintsRevealed: 0, solutionRevealed: false, completed: false, completedWithoutSolution: false })
+ 
++/** Record that something meaningful happened today (only when a real timestamp is supplied). */
++const withDay = (state: CodeOrbitState, now?: number): CodeOrbitState => {
++  if (now === undefined) return state
++  const days = addDay(state.activityDays, dayKey(now), MAX_DAYS)
++  return days === state.activityDays ? state : { ...state, activityDays: days }
++}
++
+ const better = (a: QuizBest | undefined, b: QuizBest): QuizBest => (!a || b.correct / b.total > a.correct / a.total ? b : a)
+ 
+ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
+@@ -42,7 +51,8 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
+     }
+     case 'SET_LESSON_COMPLETE': {
+       const prev = state.topics[action.topicId] ?? { lessonComplete: false, quizAttempts: 0 }
+-      return { ...state, topics: { ...state.topics, [action.topicId]: { ...prev, lessonComplete: action.value } } }
++      const next = { ...state, topics: { ...state.topics, [action.topicId]: { ...prev, lessonComplete: action.value } } }
++      return action.value ? withDay(next, action.now) : next
+     }
+     case 'QUIZ_UPDATE':
+       return { ...state, quizSessions: { ...state.quizSessions, [action.topicId]: action.session } }
+@@ -54,11 +64,11 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
+     case 'QUIZ_FINISH': {
+       const prev = state.topics[action.topicId] ?? { lessonComplete: false, quizAttempts: 0 }
+       const best = better(prev.quizBest, { correct: action.correct, total: action.total })
+-      return {
++      return withDay({
+         ...state,
+         quizSessions: { ...state.quizSessions, [action.topicId]: action.session },
+         topics: { ...state.topics, [action.topicId]: { ...prev, quizAttempts: prev.quizAttempts + 1, quizBest: best } },
+-      }
++      }, action.now)
+     }
+     case 'SET_DRAFT':
+       return state.drafts[action.challengeId] === action.code ? state : { ...state, drafts: { ...state.drafts, [action.challengeId]: action.code } }
+@@ -71,8 +81,11 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
+       const prev = state.challenges[action.challengeId] ?? emptyChallenge()
+       const allPassed = action.passed === action.total && action.total > 0
+       const nowCompleted = prev.completed || allPassed
+-      return {
++      const today = dayKey(action.now)
++      const dailyHit = allPassed && dailyChallengeFor(today).id === action.challengeId && !state.dailyDone.includes(today)
++      return withDay({
+         ...state,
++        dailyDone: dailyHit ? addDay(state.dailyDone, today, MAX_DAYS) : state.dailyDone,
+         challenges: {
+           ...state.challenges,
+           [action.challengeId]: {
+@@ -83,7 +96,7 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
+             lastCheck: { passed: action.passed, total: action.total, failedIds: action.failedIds, at: action.now },
+           },
+         },
+-      }
++      }, action.now)
+     }
+     case 'REVEAL_HINT': {
+       const prev = state.challenges[action.challengeId] ?? emptyChallenge()
+diff --git a/src/state/types.ts b/src/state/types.ts
+index 929bb76..7f5043b 100644
+--- a/src/state/types.ts
++++ b/src/state/types.ts
+@@ -63,4 +63,8 @@ export interface CodeOrbitState {
+   notes: Record<string, NoteRecord>
+   bookmarks: string[]
+   errorNotebook: ErrorEntry[]
++  /** Local calendar days (YYYY-MM-DD) on which the learner did something meaningful. Basis for streaks. */
++  activityDays: string[]
++  /** Local days on which the learner passed that day's daily challenge. */
++  dailyDone: string[]
+ }
+diff --git a/src/styles/pages.css b/src/styles/pages.css
+index e6001cf..3c6059f 100644
+--- a/src/styles/pages.css
++++ b/src/styles/pages.css
+@@ -217,7 +217,7 @@ html.is-focus .main { padding: var(--s-4); }
+ .progress-row + .progress-row { border-top: 1px solid var(--border); }
+ .progress-row__title { font-weight: 600; color: var(--text); }
+ .rules { margin-top: var(--s-8); } .rules summary { cursor: pointer; font-weight: 600; } .rules ul { margin-top: var(--s-3); padding-left: 18px; list-style: disc; display: grid; gap: 6px; color: var(--text-muted); font-size: var(--fs-small); }
+-.card--quiet + .card--quiet { margin-top: var(--s-4); }
++.rules + .card--quiet { margin-top: var(--s-4); }
+ #data-h { margin-bottom: 4px; } section[aria-labelledby='data-h'] { margin-top: var(--s-4); display: grid; gap: var(--s-3); justify-items: start; }
+ .entries { display: grid; gap: var(--s-4); }
+ .entry { display: grid; gap: var(--s-2); }
+@@ -229,3 +229,39 @@ html.is-focus .main { padding: var(--s-4); }
+ .bookmark-list { display: grid; gap: 6px; }
+ .bookmark-list li { display: flex; align-items: center; gap: 10px; }
+ @media (max-width: 700px) { .progress-row { grid-template-columns: 1fr auto; } .progress-row .status-chip { grid-column: 1 / -1; justify-self: start; } .progress-summary { flex-direction: column; align-items: flex-start; } }
++
++/* ---------- Daily, achievements, mastery map ---------- */
++.daily { display: grid; gap: var(--s-2); justify-items: start; }
++.daily__state { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--text-muted); }
++.daily__state.is-done { color: var(--success); }
++.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-3); }
++.ach { padding: var(--s-4); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); display: grid; gap: 6px; align-content: start; }
++.ach.is-earned { border-color: rgb(195 244 119 / 0.5); background: linear-gradient(160deg, var(--success-wash), var(--surface) 70%); }
++.ach__head { display: flex; align-items: center; gap: 8px; }
++.ach__head svg { flex: none; color: var(--text-quiet); }
++.ach.is-earned .ach__head svg { color: var(--success); }
++.ach__title { font-size: var(--fs-small); font-weight: 650; flex: 1; }
++.ach__state { font-size: var(--fs-meta); font-weight: 700; color: var(--text-quiet); }
++.ach.is-earned .ach__state { color: var(--success); }
++.mastery-card { padding: var(--s-5); }
++.mastery { min-width: 0; }
++.mastery__graph { position: relative; width: 100%; }
++.mastery__svg { position: absolute; inset: 0; overflow: visible; }
++.mastery__levels span { position: absolute; top: 0; font-size: var(--fs-meta); color: var(--text-quiet); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
++.mastery__edge { fill: none; stroke: var(--text-quiet); stroke-width: 1.2; opacity: 0.35; transition: opacity var(--t-med), stroke var(--t-med); }
++.mastery__edge--active { stroke: var(--accent-soft); stroke-width: 2; opacity: 1; }
++.mastery__nodes li { position: absolute; }
++.mastery-node { width: 100%; height: 100%; display: grid; align-content: center; gap: 2px; padding: 6px 12px; text-align: left; background: var(--surface-raised); border: 1px solid var(--border-strong); border-radius: var(--r-md); color: var(--text); cursor: pointer; transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-med); }
++.mastery-node:hover { border-color: var(--accent); }
++.mastery-node__title { font-weight: 650; font-size: var(--fs-small); line-height: 1.2; }
++.mastery-node__status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--text-muted); }
++.mastery-node--in-progress { border-style: dashed; border-color: var(--accent); }
++.mastery-node--in-progress .mastery-node__status { color: var(--accent-soft); }
++.mastery-node--completed { border-color: rgb(195 244 119 / 0.55); background: var(--success-wash); }
++.mastery-node--completed .mastery-node__status, .mastery-node--mastered .mastery-node__status { color: var(--success); }
++.mastery-node--mastered { border-color: var(--success); background: var(--success-wash); box-shadow: inset 0 0 0 1px var(--success); }
++.mastery-node[aria-current='true'] { box-shadow: var(--glow-active); border-color: var(--accent-soft); }
++.mastery-alt { margin-top: var(--s-4); } .mastery-alt summary { cursor: pointer; font-weight: 600; font-size: var(--fs-small); }
++.mastery-list { display: grid; gap: var(--s-4); } .mastery-list__h { font-size: var(--fs-small); font-weight: 650; margin-bottom: 6px; color: var(--text-muted); }
++.mastery-list ul { display: grid; gap: 8px; }
++.mastery-list__row { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
