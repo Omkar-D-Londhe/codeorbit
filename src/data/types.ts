@@ -77,6 +77,8 @@ export interface ChallengeRequirement {
   description: string
   /** Why this requirement matters (shown in feedback). */
   explanation: string
+  /** Detailed expandable explanation for Code Coach (7.5). */
+  explain?: string
   rule: Rule
 }
 

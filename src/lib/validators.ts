@@ -1,4 +1,5 @@
 import type { Challenge, ChallengeRequirement, Rule } from '../data/types'
+import { findRuleLocation } from './sourcePositions'
 
 export type RequirementStatus = 'pass' | 'fail'
 
@@ -7,6 +8,10 @@ export interface RequirementResult {
   description: string
   explanation: string
   status: RequirementStatus
+  met?: boolean
+  detail?: string
+  line?: number
+  column?: number
 }
 
 export interface CheckResult {
@@ -107,12 +112,19 @@ export function evaluateRule(rule: Rule, doc: Document, rawHtml: string): boolea
 
 export function checkRequirements(requirements: ChallengeRequirement[], html: string): CheckResult {
   const doc = parseHtml(html)
-  const results: RequirementResult[] = requirements.map((r) => ({
-    id: r.id,
-    description: r.description,
-    explanation: r.explanation,
-    status: evaluateRule(r.rule, doc, html) ? 'pass' : 'fail',
-  }))
+  const results: RequirementResult[] = requirements.map((r) => {
+    const met = evaluateRule(r.rule, doc, html)
+    const loc = findRuleLocation(r.rule, doc, html, met)
+    return {
+      id: r.id,
+      description: r.description,
+      explanation: r.explanation,
+      status: met ? 'pass' : 'fail',
+      met,
+      line: loc?.line,
+      column: loc?.column,
+    }
+  })
   const passed = results.filter((r) => r.status === 'pass').length
   return { results, passed, total: results.length, allPassed: passed === results.length }
 }

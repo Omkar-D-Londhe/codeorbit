@@ -322,4 +322,49 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     const linterHeading = page.locator('text=Accessibility Linter')
     await expect(linterHeading).toBeVisible()
   })
+
+  test('Stage 07: Feedback progress bar, requirement rows, expandable explanations, history, and Code Coach persona', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/practice/ch-html-structure')
+    await page.waitForLoadState('networkidle')
+
+    // Initial state: before check, empty guidance is shown
+    await expect(page.locator('text=Run Check to see how your code measures up')).toBeVisible()
+    await expect(page.getByRole('progressbar')).not.toBeVisible()
+
+    // Run check on starter code
+    const checkBtn = page.getByRole('button', { name: /check solution/i })
+    await checkBtn.click()
+
+    // 1. Progress bar reflects met/total
+    const progressbar = page.getByRole('progressbar')
+    await expect(progressbar).toBeVisible()
+    await expect(progressbar).toHaveAttribute('aria-valuenow', '1')
+    await expect(progressbar).toHaveAttribute('aria-valuemax', '5')
+    await expect(page.locator('.coach__summary')).toContainText('1 of 5 requirements met')
+
+    // 2. Code Coach persona label and L-05 compliance
+    const coachLabel = page.locator('text=Code Coach · rule-based, specific to this challenge')
+    await expect(coachLabel).toBeVisible()
+    const coachNote = page.locator('.coach-note')
+    const coachText = await coachNote.innerText()
+    expect(coachText).not.toMatch(/\bAI\b/)
+    expect(coachText.toLowerCase()).not.toContain('reviewed your code')
+
+    // 3. Expandable explanation (7.5)
+    const explainSummary = page.locator('summary:has-text("Explain this requirement")').first()
+    await expect(explainSummary).toBeVisible()
+    await explainSummary.click()
+    const openDetails = page.locator('.req-explanation[open]')
+    await expect(openDetails).toBeVisible()
+
+    // 4. Feedback history (7.4)
+    const historySummary = page.locator('summary:has-text("Feedback History")')
+    await expect(historySummary).toBeVisible()
+    await historySummary.click()
+    const viewBtn = page.getByRole('button', { name: 'View' }).first()
+    await expect(viewBtn).toBeVisible()
+    await viewBtn.click()
+    await expect(page.locator('text=Unmet requirement IDs:')).toBeVisible()
+  })
 })

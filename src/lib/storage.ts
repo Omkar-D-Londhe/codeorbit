@@ -1,15 +1,15 @@
 import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
-import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings } from '../state/types'
+import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -65,7 +65,8 @@ export const migrations: Array<(old: Json) => Json> = [
     const { progress, ...rest } = old
     return { ...rest, topics: isObj(old.topics) ? old.topics : isObj(progress) ? progress : {}, schemaVersion: 1 }
   },
-  migrateV1toV2
+  migrateV1toV2,
+  migrateV2toV3,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -136,9 +137,27 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
         solutionRevealed: v.solutionRevealed === true,
         completed: v.completed === true,
         completedWithoutSolution: v.completed === true && v.completedWithoutSolution === true,
+        ...(v.history !== undefined
+          ? {
+              history: Array.isArray(v.history)
+                ? v.history
+                    .filter(
+                      (h): h is CheckHistoryEntry =>
+                        isObj(h) &&
+                        nonNegInt(h.passed) &&
+                        nonNegInt(h.total) &&
+                        isNum(h.at) &&
+                        Array.isArray(h.failedIds) &&
+                        h.failedIds.every((fid) => typeof fid === 'string')
+                    )
+                    .slice(-20)
+                : [],
+            }
+          : {}),
       }
       if (isObj(v.lastCheck) && nonNegInt(v.lastCheck.passed) && nonNegInt(v.lastCheck.total) && Array.isArray(v.lastCheck.failedIds) && isNum(v.lastCheck.at))
         rec.lastCheck = { passed: v.lastCheck.passed, total: v.lastCheck.total, at: v.lastCheck.at, failedIds: v.lastCheck.failedIds.filter((x): x is string => typeof x === 'string') }
+      if (v.history !== undefined && (!Array.isArray(v.history) || rec.history?.length !== v.history.length)) drop()
       s.challenges[id] = rec
     }
   }

@@ -22,6 +22,13 @@ export interface TopicRecord {
   quizBest?: QuizBest
 }
 
+export interface CheckHistoryEntry {
+  at: number
+  passed: number
+  total: number
+  failedIds: string[]
+}
+
 export interface ChallengeRecord {
   attempts: number
   hintsRevealed: number
@@ -30,6 +37,7 @@ export interface ChallengeRecord {
   /** True only when every requirement passed before the reference solution was revealed. */
   completedWithoutSolution: boolean
   lastCheck?: { passed: number; total: number; failedIds: string[]; at: number }
+  history?: CheckHistoryEntry[]
 }
 
 export interface NoteRecord {

@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 34 files (362 tests)
+## Automated (Vitest, jsdom) — 37 files (387 tests)
 | File | Covers |
 |---|---|
 |---|---|
@@ -25,7 +25,7 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `devRoute.test.tsx` | Dev-only `/__ui` gallery route isolation from production builds |
 | `streak.test.ts` | Streak computation, freeze window, milestone alerts, and streak-best logic across leap years and clock shifts |
 | `activity.test.ts` | Meaningful activity predicate rules, daily deduplication, and activity event formatting |
-| `migrations.test.ts` | Schema v1 to v2 migration, preservation of reference-era activity days and daily done, sanitization and repair |
+| `migrations.test.ts` | Schema v1 to v2 to v3 migration, preservation of reference-era activity days and daily done, sanitization, challenge history initialization, and repair |
 | `exportImport.test.ts` | Backup JSON export structure, schema validation, size limits (≤ 4 MiB), and preview summaries |
 | `persistence.test.tsx` | 300ms save debounce, flush on pagehide/visibilitychange, cross-tab synchronization, quota warning |
 | `Settings.test.tsx` | Profile name length validation, FC-07 compliant form controls, typed "RESET" modal confirmation, atmosphere toggles and motion selector |
@@ -40,8 +40,11 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `a11yLint.test.ts` | Accessibility linter rules: missing img alt, unlabelled inputs, empty headings, ID duplicates, heading hierarchy skips, explicit non-WCAG disclaimer |
 | `difficulty.test.ts` | Soft challenge progression predicate, recommendations based on prerequisites, advisory non-blocking nature |
 | `practiceWorkspace.test.tsx` | Multi-file tabs (`fileCount > 1`), DeviceFrame viewport switcher, DiffViewer gating behind solution reveal, snippet insertion at cursor |
+| `sourcePositions.test.ts` | HTML source offset-to-line/column mapping (7.1), doctype/selector/attribute/heading/control location detection, multi-line and void element handling |
+| `diagnostics.test.ts` | Mapping `RequirementResult` to `EditorDiagnostic` objects (7.1), severity assignment, line/column preservation |
+| `FeedbackPanel.test.tsx` | Progress bar (`role="progressbar"`) met/total accuracy (7.2), grouped requirement rows (7.3), expandable explanations (7.5), check history persistence & cap at 20 (7.4), L-05 Code Coach copy test (7.6) |
 
-## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (10 tests)
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (11 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
 1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
 2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
@@ -53,6 +56,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 8. **Atmosphere & Reduced Motion**: Atmosphere layer renders behind content at z-index: 0; `prefers-reduced-motion: reduce` suppresses animation classes; motion setting `reduced` applies `data-motion="reduced"`.
 9. **Editor Platform & Preferences**: Splitter separator with keyboard controls, AutoSaveIndicator, Fullscreen dialog modal with Esc exit and focus restoration, and Settings Editor preferences controls (engine, font size, tab indentation).
 10. **Practice Workspace Platform**: Multi-file tab UI, DeviceFrame viewport dimensions (Desktop, Tablet 768px, Mobile 375px), Snippets drawer insertion, A11y linter detection, and Diff gating strictly disabled until solution revealed.
+11. **Feedback & Code Coach Platform**: Initial empty state, progress bar (`role="progressbar"`) met/total reflection, Code Coach persona label with strict L-05 compliance, expandable requirement explanations (`details.req-explanation`), and attempt history entry inspection.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

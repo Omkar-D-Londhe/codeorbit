@@ -29,7 +29,9 @@ import { SnippetPanel } from '../core/learning/SnippetPanel'
 import { HTML_SNIPPETS } from '../tracks/html/snippets'
 import { isChallengeRecommended } from '../core/learning/difficulty'
 import { Drawer } from '../core/ui/DockedPanel'
-import type { EditorHandle } from '../core/editor/types'
+import type { EditorHandle, EditorDiagnostic } from '../core/editor/types'
+import { FeedbackPanel } from '../core/learning/FeedbackPanel'
+import { requirementsToDiagnostics } from '../core/learning/diagnostics'
 import NotFound from './NotFound'
 
 const HINT_TITLES = ['Conceptual clue', 'Structural clue', 'Specific guidance']
@@ -70,6 +72,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const [snippetsOpen, setSnippetsOpen] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [lintIssues, setLintIssues] = useState<A11yLintIssue[] | null>(null)
+  const [diagnostics, setDiagnostics] = useState<EditorDiagnostic[]>([])
 
   const fullscreenOpenerRef = useRef<HTMLButtonElement>(null)
   const editorHandleRef = useRef<EditorHandle | null>(null)
@@ -157,6 +160,8 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     const htmlCode = htmlFile ? htmlFile.content : code
     const r = checkChallenge(challenge, htmlCode)
     setResult(r)
+    const diags = requirementsToDiagnostics(r.results)
+    setDiagnostics(diags)
     const runner = new IframePreviewRunner()
     runner.run({ files: currentFiles }).then((res) => {
       if (res.status === 'ok' && res.previewDoc) {
@@ -195,6 +200,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const reset = () => {
     dispatch({ type: 'CLEAR_DRAFT', challengeId })
     setResult(null)
+    setDiagnostics([])
     setConfirm(null)
     setLintIssues(null)
     toast.show('Editor reset to the starter code.', 'info')
@@ -220,7 +226,6 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const hintsShown = rec?.hintsRevealed ?? 0
   const stale = ranCode !== null && ranCode !== code
   const status = (id: string): 'pass' | 'fail' | 'unchecked' => result?.results.find((r) => r.id === id)?.status ?? 'unchecked'
-  const failed = result?.results.filter((r) => r.status === 'fail') ?? []
 
   const draftNote =
     saveStatus.kind === 'error' ? 'Draft not saved: browser storage unavailable.'
@@ -352,7 +357,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
           ))}
         </div>
       )}
-      <CodeEditor value={code} onChange={setCode} editorRef={editorHandleRef} />
+      <CodeEditor value={code} onChange={setCode} editorRef={editorHandleRef} diagnostics={diagnostics} />
     </section>
   )
 
@@ -380,37 +385,16 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     <section className="pane coach" aria-labelledby="coach-h">
       <div className="pane__head">
         <h2 id="coach-h" className="pane__title">Code Coach</h2>
-        <span className="muted small">Rule-based checks for this challenge, not an AI review.</span>
+        <span className="muted small">Rule-based checks specific to this challenge.</span>
       </div>
       <div role="status" aria-live="polite">
-        {!result ? (
-          <p className="muted">
-            {rec?.lastCheck ? `Last check: ${rec.lastCheck.passed} of ${rec.lastCheck.total} requirements met (${formatDateTime(rec.lastCheck.at)}). Press “Check solution” to check your current code.` : 'Press “Check solution” to see which requirements your code meets.'}
-          </p>
-        ) : (
-          <>
-            <p className={`coach__summary ${result.allPassed ? 'is-good' : ''}`}>
-              <Icon name={result.allPassed ? 'check' : 'info'} size={18} />
-              {result.passed} of {result.total} requirements met{result.allPassed ? ' — challenge complete.' : '.'}
-            </p>
-            <ul className="coach__rows">
-              {result.results.map((r) => (
-                <li key={r.id} className={`coach__row coach__row--${r.status}`}>
-                  <span className="coach__status"><Icon name={r.status === 'pass' ? 'check' : 'x'} size={16} />{r.status === 'pass' ? 'Met' : 'Not met'}</span>
-                  <div><p>{r.description}</p>{r.status === 'fail' && <p className="muted small">Why it matters: {r.explanation}</p>}</div>
-                </li>
-              ))}
-            </ul>
-            {result.allPassed ? (
-              <p className="small">Next: <Link to={trackPath(topic.technologyId)}>choose your next topic on the Learning Orbit</Link>, or take the topic quiz.</p>
-            ) : (
-              <div className="coach__next">
-                <p className="small">Next: fix “{failed[0].description}”, then check again. <Link to={lessonPath(challenge.topicId)}>Review the lesson</Link> or ask for a hint.</p>
-                <button type="button" className="btn btn--ghost btn--sm" onClick={saveError}>Save to Error Notebook</button>
-              </div>
-            )}
-          </>
-        )}
+        <FeedbackPanel
+          result={result}
+          challenge={challenge}
+          history={rec?.history}
+          onSaveError={saveError}
+          onAskHint={hint}
+        />
       </div>
 
       {/* A11y Linter Section (6.7) */}

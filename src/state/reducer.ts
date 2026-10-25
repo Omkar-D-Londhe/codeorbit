@@ -1,6 +1,6 @@
 import { createDefaultState, MAX_DAYS, MAX_ACTIVITY_EVENTS } from '../lib/storage'
 import type { QuizSession } from '../lib/quiz'
-import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent } from './types'
+import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent, ChallengeRecord, CheckHistoryEntry } from './types'
 import { addDay, dayKey, streakInfo, nextStreakBest } from '../core/gamification/streak'
 
 export type Action =
@@ -24,7 +24,14 @@ export type Action =
   | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
   | { type: 'IMPORT_STATE'; state: CodeOrbitState }
 
-const emptyChallenge = () => ({ attempts: 0, hintsRevealed: 0, solutionRevealed: false, completed: false, completedWithoutSolution: false })
+const emptyChallenge = (): ChallengeRecord => ({
+  attempts: 0,
+  hintsRevealed: 0,
+  solutionRevealed: false,
+  completed: false,
+  completedWithoutSolution: false,
+  history: [],
+})
 
 const better = (a: QuizBest | undefined, b: QuizBest): QuizBest => (!a || b.correct / b.total > a.correct / a.total ? b : a)
 
@@ -136,6 +143,15 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
       const allPassed = action.passed === action.total && action.total > 0
       const nowCompleted = prev.completed || allPassed
       const checkTime = action.now || Date.now()
+      const newEntry: CheckHistoryEntry = {
+        at: checkTime,
+        passed: action.passed,
+        total: action.total,
+        failedIds: action.failedIds,
+      }
+      const prevHistory = prev.history ?? []
+      const nextHistory = [...prevHistory, newEntry].slice(-20)
+
       let nextState: CodeOrbitState = {
         ...state,
         challenges: {
@@ -146,6 +162,7 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
             completed: nowCompleted,
             completedWithoutSolution: prev.completed ? prev.completedWithoutSolution : allPassed ? !prev.solutionRevealed : false,
             lastCheck: { passed: action.passed, total: action.total, failedIds: action.failedIds, at: checkTime },
+            history: nextHistory,
           },
         },
       }

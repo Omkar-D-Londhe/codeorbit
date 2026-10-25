@@ -79,6 +79,38 @@
   - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.
 
+## 2026-10-26 — Stage 07: Feedback and Code Coach framework
+- **Branch:** `stage-07-feedback-code-coach`
+- **Schema v3 & Attempt History (7.4):**
+  - Bumped `SCHEMA_VERSION` to 3. Added `CheckHistoryEntry` and `history?: CheckHistoryEntry[]` to `ChallengeRecord` in `src/state/types.ts`.
+  - Created migration `v2 -> v3` in `src/core/storage/migrations.ts` ensuring `history: []` is initialized without data loss.
+  - Updated `src/lib/storage.ts` `sanitizeState` to validate history entries, drop malformed records, and cap history at 20 entries.
+  - Updated `RECORD_CHECK` in `src/state/reducer.ts` to append `{ at, passed, total, failedIds }` to `rec.history` and `.slice(-20)`.
+- **Source Positions & Inline Diagnostics (7.1):**
+  - Created `src/lib/sourcePositions.ts` implementing `indexToLocation`, `findDoctypeLocation`, `findTagLocations`, and `findRuleLocation` using safe querying without throwing on invalid selectors. Reports 1-based line/column numbers for doctype, selectors, attributes, headings, form controls, and anchor links.
+  - Extended `RequirementResult` with optional `line`, `column`, and `met` fields in `src/lib/validators.ts`.
+  - Created `src/core/learning/diagnostics.ts` mapping unmet `RequirementResult` entries to `EditorDiagnostic` objects (`severity: 'error'`).
+  - Integrated diagnostics into `src/pages/Practice.tsx` and `<CodeEditor />`, passing error markers and underlines to CodeMirror lint/gutter extensions.
+- **Requirement Progress Bar & Animated Rows (7.2, 7.3):**
+  - Created `src/core/learning/FeedbackPanel.tsx` with accessible `role="progressbar"`, `aria-valuenow`, `aria-valuemax`, and percentage bar matching exact `passed / total` values.
+  - Grouped requirement rows into "Met" and "Not met" sections.
+  - Created `src/core/learning/RequirementRow.tsx` ($\ge 44$ px touch target, status badges, line numbers for failures) with $\le 160$ ms transitions, suppressed under reduced motion (`useMotionAllowed`).
+- **"Explain This Requirement" Expandable (7.5):**
+  - Added optional `explain?: string` to `ChallengeRequirement` in `src/data/types.ts`.
+  - In `RequirementRow.tsx`, rendered native `<details className="req-explanation">` with `<summary>Explain this requirement</summary>`, allowing keyboard-accessible expansion of authored explanations.
+- **Code Coach Persona & L-05 Compliance (7.6):**
+  - Created `src/core/learning/CoachNote.tsx` featuring the Code Coach persona with compass/check avatar and label `Code Coach · rule-based, specific to this challenge`.
+  - Strictly adheres to locked decision L-05: never uses "AI" or claims general code review, describing checks deterministically and suggesting the next smallest step.
+- **Verification & Quality Gates:**
+  - Added unit/component tests: `src/test/sourcePositions.test.ts` (14 tests), `src/test/diagnostics.test.ts` (3 tests), and `src/test/FeedbackPanel.test.tsx` (7 tests). Updated `src/test/migrations.test.ts` (+1 test) and `src/test/exportImport.test.ts`.
+  - All 37 Vitest test files (387 tests) passing cleanly.
+  - Extended `e2e/smoke.spec.ts` with test 11: 11 Playwright E2E browser tests passing.
+  - TypeScript typecheck and ESLint clean: 0 errors, 0 warnings.
+  - Production build: `index-*.js` 472.34 kB (144.04 kB gzip); CodeMirror chunk 496.16 kB (172.06 kB gzip).
+  - Security audit (`npm audit --omit=dev`): 0 vulnerabilities.
+  - Clean architecture: 0 forbidden `'html'` string literals across pages, components, core, and lib.
+  - Legacy Learning Orbit (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`): 0 diff against master.
+
 ## 2026-10-26 — Stage 06: Practice workspace: multi-file, snippets, device frames, a11y linter, diff, difficulty progression
 - **Branch:** `stage-06-practice-workspace`
 - **CodeRunner & Preview Multi-File Engine:**

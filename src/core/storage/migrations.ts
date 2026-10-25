@@ -44,3 +44,30 @@ export function migrateV1toV2(old: Json): Json {
     streakBest
   }
 }
+
+/**
+ * Migrates a version-2 state object to version-3 (Stage 07).
+ * Ensures ChallengeRecord.history is initialized as an array for each challenge.
+ */
+export function migrateV2toV3(old: Json): Json {
+  const challenges: Record<string, unknown> = {}
+
+  if (isObj(old.challenges)) {
+    for (const [id, ch] of Object.entries(old.challenges)) {
+      if (isObj(ch)) {
+        challenges[id] = {
+          ...ch,
+          history: Array.isArray(ch.history) ? ch.history.slice(-20) : [],
+        }
+      } else {
+        challenges[id] = ch
+      }
+    }
+  }
+
+  return {
+    ...old,
+    schemaVersion: 3,
+    challenges,
+  }
+}

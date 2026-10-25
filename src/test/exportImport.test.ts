@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildExport, parseImport } from '../core/storage/exportImport'
-import { createDefaultState } from '../lib/storage'
+import { createDefaultState, SCHEMA_VERSION } from '../lib/storage'
 import type { CodeOrbitState } from '../state/types'
 
 describe('Data export and import (14.4)', () => {
@@ -12,7 +12,7 @@ describe('Data export and import (14.4)', () => {
 
     expect(parsed.app).toBe('codeorbit')
     expect(parsed.exportVersion).toBe(1)
-    expect(parsed.schemaVersion).toBe(2)
+    expect(parsed.schemaVersion).toBe(SCHEMA_VERSION)
     expect(parsed.exportedAt).toBe(1729700000000)
     expect(parsed.state.topics['html-structure'].lessonComplete).toBe(true)
   })
