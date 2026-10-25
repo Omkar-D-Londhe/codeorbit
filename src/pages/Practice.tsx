@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getChallenge } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
@@ -15,6 +15,9 @@ import { formatDateTime } from '../lib/status'
 import { checkChallenge, type CheckResult } from '../lib/validators'
 import { useApp } from '../state/AppState'
 import { useClock } from '../core/time/Clock'
+import { Splitter } from '../core/ui/Splitter'
+import { AutoSaveIndicator } from '../core/editor/AutoSaveIndicator'
+import { FullscreenEditor } from '../core/editor/FullscreenEditor'
 import NotFound from './NotFound'
 
 const HINT_TITLES = ['Conceptual clue', 'Structural clue', 'Specific guidance']
@@ -43,6 +46,41 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const [focus, setFocus] = useState(false)
   const [tab, setTab] = useState<MobileTab>('editor')
   const [confirm, setConfirm] = useState<null | 'reset' | 'solution'>(null)
+  const [fullscreen, setFullscreen] = useState(false)
+  const fullscreenOpenerRef = useRef<HTMLButtonElement>(null)
+  const isNarrowDesktop = useMediaQuery('(min-width: 768px) and (max-width: 899px)')
+
+  const [splitRatio, setSplitRatio] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('codeorbit:splitter:ratio')
+      if (saved) {
+        const parsed = parseFloat(saved)
+        if (!isNaN(parsed) && parsed >= 25 && parsed <= 75) return parsed
+      }
+    } catch {
+      // fallback
+    }
+    return 50
+  })
+
+  const handleSplitChange = useCallback((newRatio: number) => {
+    setSplitRatio(newRatio)
+    try {
+      localStorage.setItem('codeorbit:splitter:ratio', String(newRatio))
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const handleSplitReset = useCallback(() => {
+    setSplitRatio(50)
+    try {
+      localStorage.setItem('codeorbit:splitter:ratio', '50')
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const draftEdited = code !== challenge.starterCode
 
   useEffect(() => { dispatch({ type: 'VISIT', topicId: challenge.topicId, activity: 'practice', challengeId, now: Date.now() }) }, [challenge.topicId, challengeId, dispatch])
@@ -174,7 +212,26 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
 
   const editor = (
     <section className="pane" aria-labelledby="ed-h">
-      <div className="pane__head"><h2 id="ed-h" className="pane__title">Editor</h2><span className="muted small">{draftNote}</span></div>
+      <div className="pane__head">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 id="ed-h" className="pane__title">Editor</h2>
+          <AutoSaveIndicator title={draftNote} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            ref={fullscreenOpenerRef}
+            className="btn btn--ghost btn--sm"
+            onClick={() => setFullscreen(true)}
+            aria-label="Fullscreen editor"
+          >
+            <Icon name="expand" size={16} />Fullscreen
+          </button>
+          <Link to="/settings" className="btn btn--ghost btn--sm" aria-label="Editor settings">
+            <Icon name="gear" size={16} />
+          </Link>
+        </div>
+      </div>
       <CodeEditor value={code} onChange={setCode} />
     </section>
   )
@@ -269,9 +326,22 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
         <div role="tabpanel" id="ppanel-preview" aria-labelledby="ptab-preview" hidden={tab !== 'preview'}>{preview}</div>
         <div role="tabpanel" id="ppanel-feedback" aria-labelledby="ptab-feedback" hidden={tab !== 'feedback'}>{feedback}</div>
         {dialogs}
+        <FullscreenEditor
+          open={fullscreen}
+          onClose={() => setFullscreen(false)}
+          title={challenge.title}
+          openerRef={fullscreenOpenerRef}
+          editor={<CodeEditor value={code} onChange={setCode} />}
+          preview={preview}
+        />
       </div>
     )
   }
+
+  const splitOrientation = isNarrowDesktop ? 'vertical' : 'horizontal'
+  const panesStyle = splitOrientation === 'horizontal'
+    ? { display: 'grid', gridTemplateColumns: `${splitRatio}% auto minmax(0, 1fr)`, alignItems: 'stretch' }
+    : { display: 'grid', gridTemplateRows: `${splitRatio}% auto minmax(0, 1fr)`, gap: '8px' }
 
   return (
     <div className={`page page--wide practice${focus ? ' practice--focus' : ''}`}>
@@ -280,11 +350,28 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
         {!focus && <div className="practice__brief">{brief}</div>}
         <div className="practice__work">
           {toolbar}
-          <div className="practice__panes">{editor}{preview}</div>
+          <div className="practice__panes" style={panesStyle}>
+            {editor}
+            <Splitter
+              ratio={splitRatio}
+              onChange={handleSplitChange}
+              orientation={splitOrientation}
+              onReset={handleSplitReset}
+            />
+            {preview}
+          </div>
           {feedback}
         </div>
       </div>
       {dialogs}
+      <FullscreenEditor
+        open={fullscreen}
+        onClose={() => setFullscreen(false)}
+        title={challenge.title}
+        openerRef={fullscreenOpenerRef}
+        editor={<CodeEditor value={code} onChange={setCode} />}
+        preview={preview}
+      />
     </div>
   )
 }

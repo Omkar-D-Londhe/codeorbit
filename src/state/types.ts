@@ -67,6 +67,28 @@ export const DEFAULT_ATMOSPHERE_SETTINGS: AtmosphereSettings = {
   particles: false,
 }
 
+export type EditorEngine = 'codemirror' | 'plain'
+
+export interface EditorSettings {
+  engine: EditorEngine
+  fontSize: number
+  tabSize: number
+  lineNumbers: boolean
+  wrap: boolean
+  tabCapturesFocus: boolean
+  autoClose: boolean
+}
+
+export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
+  engine: 'codemirror',
+  fontSize: 14.4,
+  tabSize: 2,
+  lineNumbers: true,
+  wrap: false,
+  tabCapturesFocus: false,
+  autoClose: true,
+}
+
 export interface Settings {
   userName?: string
   pace: 'casual' | 'regular' | 'intensive'
@@ -78,6 +100,7 @@ export interface Settings {
   streakReminders?: boolean
   dailyGoal?: number
   atmosphere?: AtmosphereSettings
+  editor?: EditorSettings
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -87,7 +110,8 @@ export const DEFAULT_SETTINGS: Settings = {
   accent: 'violet',
   contrast: 'normal',
   motion: 'system',
-  atmosphere: { ...DEFAULT_ATMOSPHERE_SETTINGS }
+  atmosphere: { ...DEFAULT_ATMOSPHERE_SETTINGS },
+  editor: { ...DEFAULT_EDITOR_SETTINGS }
 }
 
 export interface ActivityEvent {

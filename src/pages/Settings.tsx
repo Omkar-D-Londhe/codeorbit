@@ -7,7 +7,7 @@ import { useToast } from '../components/Toast'
 import { buildExport, parseImport, type ImportResult } from '../core/storage/exportImport'
 import { getQuotaInfo } from '../core/storage/quota'
 import { dayKey } from '../core/gamification/streak'
-import { DEFAULT_ATMOSPHERE_SETTINGS, type AtmosphereSettings } from '../state/types'
+import { DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS, type AtmosphereSettings, type EditorSettings, type EditorEngine } from '../state/types'
 import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
 
 export default function Settings() {
@@ -66,6 +66,7 @@ export default function Settings() {
   }
 
   const atmosphere = settings.atmosphere ?? DEFAULT_ATMOSPHERE_SETTINGS
+  const editor = settings.editor ?? DEFAULT_EDITOR_SETTINGS
 
   const handleAtmosphereToggle = (key: keyof AtmosphereSettings, checked: boolean) => {
     const updated = {
@@ -73,6 +74,19 @@ export default function Settings() {
       [key]: checked,
     }
     dispatch({ type: 'SET_SETTINGS', patch: { atmosphere: updated } })
+  }
+
+  const handleEditorSettingChange = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
+    const current = settings.editor ?? DEFAULT_EDITOR_SETTINGS
+    dispatch({
+      type: 'SET_SETTINGS',
+      patch: {
+        editor: {
+          ...current,
+          [key]: value,
+        },
+      },
+    })
   }
 
   const handleExport = () => {
@@ -271,6 +285,77 @@ export default function Settings() {
               description="Floating micro-starlight dust on dashboard (opt-in)."
               checked={atmosphere.particles}
               onChange={(e) => handleAtmosphereToggle('particles', e.target.checked)}
+            />
+          </div>
+        </Card>
+
+        {/* Editor Preferences (Stage 05: 6.1, 14.5) */}
+        <Card title="Editor" eyebrow="Practice & Workspace">
+          <div id="editor" style={{ display: 'grid', gap: 'var(--s-4)', marginTop: 'var(--s-3)' }}>
+            <Select
+              id="editor-engine-select"
+              label="Editor Engine"
+              value={editor.engine}
+              options={[
+                { value: 'codemirror', label: 'CodeMirror 6 (Syntax highlighting, auto-close)' },
+                { value: 'plain', label: 'Plain Text (Lightweight textarea)' },
+              ]}
+              onChange={(e) => handleEditorSettingChange('engine', e.target.value as EditorEngine)}
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--s-4)' }}>
+              <Select
+                id="editor-font-size-select"
+                label="Font Size"
+                value={String(editor.fontSize)}
+                options={[
+                  { value: '12', label: '12px — Compact' },
+                  { value: '14.4', label: '14.4px — Standard' },
+                  { value: '16', label: '16px — Large' },
+                  { value: '18', label: '18px — Extra Large' },
+                ]}
+                onChange={(e) => handleEditorSettingChange('fontSize', parseFloat(e.target.value))}
+              />
+
+              <Select
+                id="editor-tab-size-select"
+                label="Tab Indentation"
+                value={String(editor.tabSize)}
+                options={[
+                  { value: '2', label: '2 spaces (HTML standard)' },
+                  { value: '4', label: '4 spaces' },
+                  { value: '8', label: '8 spaces' },
+                ]}
+                onChange={(e) => handleEditorSettingChange('tabSize', parseInt(e.target.value, 10))}
+              />
+            </div>
+
+            <Toggle
+              label="Line Numbers"
+              description="Show line-number gutter on the left side of the code editor."
+              checked={editor.lineNumbers}
+              onChange={(e) => handleEditorSettingChange('lineNumbers', e.target.checked)}
+            />
+
+            <Toggle
+              label="Soft Line Wrapping"
+              description="Wrap long lines to fit within the editor viewport without horizontal scrolling."
+              checked={editor.wrap}
+              onChange={(e) => handleEditorSettingChange('wrap', e.target.checked)}
+            />
+
+            <Toggle
+              label="Tab Inserts Indentation"
+              description="When enabled, pressing Tab indents code instead of focusing the next element. (Press Esc then Tab to exit the editor)."
+              checked={editor.tabCapturesFocus}
+              onChange={(e) => handleEditorSettingChange('tabCapturesFocus', e.target.checked)}
+            />
+
+            <Toggle
+              label="Auto-Close Tags and Quotes"
+              description="Automatically close HTML tags and quote pairs as you type."
+              checked={editor.autoClose}
+              onChange={(e) => handleEditorSettingChange('autoClose', e.target.checked)}
             />
           </div>
         </Card>

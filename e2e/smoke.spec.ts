@@ -236,4 +236,47 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     const rootMotion = await page.evaluate(() => document.documentElement.getAttribute('data-motion'))
     expect(rootMotion).toBe('reduced')
   })
+
+  test('Stage 05: Editor platform, Splitter, AutoSaveIndicator, Fullscreen, and Editor preferences', async ({ page }) => {
+    // 1. Visit Practice page on desktop
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/practice/ch-html-structure')
+    await page.waitForLoadState('networkidle')
+
+    // Splitter is rendered
+    const splitter = page.locator('div[role="separator"]')
+    await expect(splitter).toBeVisible()
+    await expect(splitter).toHaveAttribute('aria-valuenow', '50')
+
+    // Auto-save indicator is rendered
+    const autoSave = page.locator('.auto-save-indicator')
+    await expect(autoSave).toBeVisible()
+
+    // Fullscreen editor button
+    const fullscreenBtn = page.getByRole('button', { name: /fullscreen editor/i })
+    await expect(fullscreenBtn).toBeVisible()
+    await fullscreenBtn.click()
+
+    // Fullscreen dialog opens
+    const fullscreenDialog = page.getByRole('dialog', { name: /fullscreen code editor/i })
+    await expect(fullscreenDialog).toBeVisible()
+
+    // Press Escape to exit fullscreen
+    await page.keyboard.press('Escape')
+    await expect(fullscreenDialog).not.toBeVisible()
+
+    // 2. Settings: Editor Preferences
+    await page.goto('/settings')
+    await page.waitForLoadState('networkidle')
+
+    const engineSelect = page.locator('#editor-engine-select')
+    await expect(engineSelect).toBeVisible()
+    await expect(engineSelect).toHaveValue('codemirror')
+
+    const fontSizeSelect = page.locator('#editor-font-size-select')
+    await expect(fontSizeSelect).toBeVisible()
+
+    const tabSizeSelect = page.locator('#editor-tab-size-select')
+    await expect(tabSizeSelect).toBeVisible()
+  })
 })

@@ -79,7 +79,35 @@
   - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.
 
-## 2026-10-26 — Stage 04: Atmosphere layers and cinematic transitions
+## 2026-10-26 — Stage 05: Editor platform: CodeMirror 6 adapter, splitter, auto-save, fullscreen, editor preferences
+- **Branch:** `stage-05-editor-platform`
+- **Soft Decision Gate O-01:**
+  - Proceeded with CodeMirror 6 (P-01) as the default advanced editor engine while keeping `PlainTextEditorAdapter` as zero-runtime fallback and test adapter.
+- **CodeMirror 6 & Plain Adapters:**
+  - Created `src/core/editor/types.ts` defining language-neutral contracts (`EditorAdapter`, `EditorHandle`, `EditorOptions`, `EditorDiagnostic`).
+  - Created `src/core/editor/codemirrorAdapter.ts` dynamically importing `@codemirror/state`, `@codemirror/view`, `@codemirror/commands`, `@codemirror/language`, `@codemirror/lang-html`, `@codemirror/autocomplete`, and `@codemirror/lint`. Styled using theme tokens (`--code-bg`, `--code-gutter`, `--tok-*`), supporting bracket matching, auto-closing tags and quotes, line numbers, and soft wrapping.
+  - Implemented `PlainTextEditorAdapter` in `src/core/editor/plainAdapter.ts` (textarea + synchronized line gutter), guaranteeing zero-crash fallback and running in jsdom environments.
+  - Accessible keyboard model: Tab does NOT trap focus by default (`tabCapturesFocus: false`). When opted in, pressing Tab indents and persistent documentation informs the user that pressing Esc then Tab exits.
+  - Created `src/components/CodeEditor.tsx` wrapper dynamically importing the CodeMirror chunk when configured.
+  - Created `src/core/editor/highlight.ts` static HTML tokenizer producing token spans for read-only code display (`CodeBlock`).
+- **Workspace Splitter & Persistence:**
+  - Created `src/core/ui/Splitter.tsx` (`role="separator"`, $\pm 2\%$ keyboard navigation, Home 25%, End 75%, Enter/Space/r reset to 50%, double-click reset, 8px visual bar with 24px hit area).
+  - Integrated into `Practice.tsx` between editor and preview on desktop/tablet, with ratio persisted in `localStorage` under `codeorbit:splitter:ratio` (clamped 25%–75%).
+- **Auto-Save Indicator & Fullscreen Mode:**
+  - Created `src/core/editor/AutoSaveIndicator.tsx` reading `saveStatus` from `AppState`, with relative time updating every 10s and amber warning on storage errors.
+  - Created `src/core/editor/FullscreenEditor.tsx` modal dialog filling the viewport with an uncluttered coding area, Esc key exit restoring focus to opener button, and slide-out live preview `Drawer`.
+- **Editor Preferences (14.5):**
+  - Added `EditorEngine`, `EditorSettings`, and `DEFAULT_EDITOR_SETTINGS` to `src/state/types.ts` and `src/lib/storage.ts`.
+  - Added Editor Preferences card in `src/pages/Settings.tsx` covering editor engine, font size, tab indentation size, line numbers, soft wrapping, tab key behavior, and auto-closing tags/quotes.
+- **Verification & Gates:**
+  - Added unit and component tests: `src/test/editorAdapters.test.ts` (10 tests), `src/test/splitter.test.tsx` (7 tests), `src/test/autoSaveIndicator.test.tsx` (3 tests), and `src/test/fullscreenEditor.test.tsx` (4 tests).
+  - Full Vitest suite: 30 test files, 342 tests passing (100% green).
+  - Full Playwright E2E: 9 tests passing including editor, splitter, fullscreen, and editor preferences.
+  - Typecheck and ESLint clean: 0 errors, 0 warnings.
+  - Build chunk verified: CodeMirror 6 code split into lazy chunk `codemirrorAdapter-*.js` (496 kB / 172 kB gzip); initial JS bundle grew by only ~15 kB (438.40 kB / 135.41 kB gzip).
+  - Production audit clean: 0 vulnerabilities.
+  - Legacy orbit files (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`) completely untouched.
+
 - **Branch:** `stage-04-atmosphere-and-motion`
 - **Atmosphere Components & Foundation:**
   - Created `src/core/atmosphere/useMotionAllowed.ts` combining user motion setting and OS `prefers-reduced-motion` media query. Added `src/test/useMotionAllowed.test.ts` (6 tests passing).

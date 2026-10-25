@@ -370,3 +370,9 @@
 .tok-func { color: var(--tok-func); }
 .tok-type { color: var(--tok-type); }
 .tok-punct { color: var(--tok-punct); }
+
+/* ---------- Splitter & Editor (Stage 05) ---------- */
+.splitter:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.splitter:hover .splitter__bar { background: var(--c-surface-3); border-color: var(--c-border-strong); }
+.splitter:focus-visible .splitter__bar { border-color: var(--c-accent); }
+

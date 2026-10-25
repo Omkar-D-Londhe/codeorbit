@@ -2,7 +2,7 @@ import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
 import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings } from '../state/types'
-import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS } from '../state/types'
+import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
 import { migrateV1toV2 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
@@ -251,6 +251,23 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       set.atmosphere = { ...DEFAULT_ATMOSPHERE_SETTINGS }
     } else {
       set.atmosphere = { ...DEFAULT_ATMOSPHERE_SETTINGS }
+    }
+
+    if (isObj(rawSet.editor)) {
+      set.editor = {
+        engine: rawSet.editor.engine === 'plain' ? 'plain' : 'codemirror',
+        fontSize: typeof rawSet.editor.fontSize === 'number' && rawSet.editor.fontSize >= 10 && rawSet.editor.fontSize <= 24 ? rawSet.editor.fontSize : DEFAULT_EDITOR_SETTINGS.fontSize,
+        tabSize: typeof rawSet.editor.tabSize === 'number' && [2, 4, 8].includes(rawSet.editor.tabSize) ? rawSet.editor.tabSize : DEFAULT_EDITOR_SETTINGS.tabSize,
+        lineNumbers: typeof rawSet.editor.lineNumbers === 'boolean' ? rawSet.editor.lineNumbers : DEFAULT_EDITOR_SETTINGS.lineNumbers,
+        wrap: typeof rawSet.editor.wrap === 'boolean' ? rawSet.editor.wrap : DEFAULT_EDITOR_SETTINGS.wrap,
+        tabCapturesFocus: typeof rawSet.editor.tabCapturesFocus === 'boolean' ? rawSet.editor.tabCapturesFocus : DEFAULT_EDITOR_SETTINGS.tabCapturesFocus,
+        autoClose: typeof rawSet.editor.autoClose === 'boolean' ? rawSet.editor.autoClose : DEFAULT_EDITOR_SETTINGS.autoClose,
+      }
+    } else if (rawSet.editor !== undefined) {
+      drop()
+      set.editor = { ...DEFAULT_EDITOR_SETTINGS }
+    } else {
+      set.editor = { ...DEFAULT_EDITOR_SETTINGS }
     }
 
     if (typeof rawSet.soundEnabled === 'boolean') set.soundEnabled = rawSet.soundEnabled
