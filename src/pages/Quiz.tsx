@@ -10,6 +10,7 @@ import { useDocumentTitle } from '../lib/hooks'
 import { allChecked, checkAnswer, finish, goTo, isPass, newSession, scoreSession, selectOption, skipQuestion, type QuizSession } from '../lib/quiz'
 import { lessonPath, practicePath, trackPath } from '../lib/routes'
 import { useApp } from '../state/AppState'
+import { useClock } from '../core/time/Clock'
 import NotFound from './NotFound'
 
 export default function QuizPage() {
@@ -25,6 +26,7 @@ function QuizInner({ topicId }: { topicId: string }) {
   const quiz = getQuiz(topicId)!
   useDocumentTitle(`${topic.shortTitle} quiz`)
   const { state, dispatch } = useApp()
+  const now = useClock()
   const toast = useToast()
   const session = state.quizSessions[topicId]
   const nextBtn = useRef<HTMLButtonElement>(null)
@@ -117,7 +119,7 @@ function QuizInner({ topicId }: { topicId: string }) {
       if (!allChecked(session)) return
       const done = finish(session)
       const sc = scoreSession(done, quiz)
-      dispatch({ type: 'QUIZ_FINISH', topicId, session: done, correct: sc.correct, total: sc.total })
+      dispatch({ type: 'QUIZ_FINISH', topicId, session: done, correct: sc.correct, total: sc.total, now: now() })
       setTimeout(() => resultsHeading.current?.focus(), 0)
     } else update(goTo(session, qi + 1))
   }

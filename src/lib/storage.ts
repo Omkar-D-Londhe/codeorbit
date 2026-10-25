@@ -1,12 +1,17 @@
 import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
-import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord } from '../state/types'
+import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings } from '../state/types'
+import { DEFAULT_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
+import { migrateV1toV2 } from '../core/storage/migrations'
+import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
+export const MAX_DAYS = 400
+export const MAX_ACTIVITY_EVENTS = 5000
 
 export type RecoveryReason = 'none' | 'corrupt' | 'newer-version' | 'unavailable' | 'repaired'
 
@@ -15,16 +20,35 @@ export interface LoadResult {
   recovery: RecoveryReason
 }
 
-export const createDefaultState = (): CodeOrbitState => ({
-  schemaVersion: SCHEMA_VERSION,
-  topics: {},
-  quizSessions: {},
-  drafts: {},
-  challenges: {},
-  notes: {},
-  bookmarks: [],
-  errorNotebook: [],
-})
+export const createDefaultState = (): CodeOrbitState => {
+  const early = typeof window !== 'undefined' ? readEarlyAppearance() : null
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    topics: {},
+    quizSessions: {},
+    drafts: {},
+    challenges: {},
+    notes: {},
+    bookmarks: [],
+    errorNotebook: [],
+    settings: {
+      ...DEFAULT_SETTINGS,
+      ...(early
+        ? {
+            theme: early.theme,
+            accent: early.accent,
+            contrast: early.contrast,
+            ...(early.motion ? { motion: early.motion } : {})
+          }
+        : {})
+    },
+    activity: [],
+    activityDays: [],
+    dailyDone: [],
+    dailyAssigned: {},
+    streakBest: 0
+  }
+}
 
 type Json = Record<string, unknown>
 const isObj = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -34,12 +58,14 @@ const nonNegInt = (v: unknown): v is number => isNum(v) && Number.isInteger(v) &
 /**
  * Ordered migrations. migrations[n] upgrades a version-n object to version n+1.
  * Version 0 is the (hypothetical) pre-release shape that used `progress` instead of `topics`.
+ * Version 1 is the original schema with topics, challenges, drafts, notes, bookmarks, errorNotebook.
  */
 export const migrations: Array<(old: Json) => Json> = [
   (old) => {
     const { progress, ...rest } = old
     return { ...rest, topics: isObj(old.topics) ? old.topics : isObj(progress) ? progress : {}, schemaVersion: 1 }
   },
+  migrateV1toV2
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -142,6 +168,107 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       } else drop()
     }
   }
+
+  // Sanitize activityDays and dailyDone (with regex, uniqueness, sort and cap)
+  const dayList = (v: unknown): string[] | null =>
+    Array.isArray(v)
+      ? Array.from(
+          new Set(
+            v.filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
+          )
+        )
+          .sort()
+          .slice(-MAX_DAYS)
+      : null
+
+  const ad = dayList(raw.activityDays)
+  if (ad) {
+    s.activityDays = ad
+    if (ad.length !== (raw.activityDays as unknown[]).length) drop()
+  } else if (raw.activityDays !== undefined) drop()
+
+  const dd = dayList(raw.dailyDone)
+  if (dd) {
+    s.dailyDone = dd
+    if (dd.length !== (raw.dailyDone as unknown[]).length) drop()
+  } else if (raw.dailyDone !== undefined) drop()
+
+  // Sanitize dailyAssigned
+  if (isObj(raw.dailyAssigned)) {
+    s.dailyAssigned = {}
+    for (const [dateKey, chId] of Object.entries(raw.dailyAssigned)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey) && typeof chId === 'string') {
+        s.dailyAssigned[dateKey] = chId
+      } else drop()
+    }
+  }
+
+  // Sanitize streakBest
+  if (nonNegInt(raw.streakBest)) {
+    s.streakBest = raw.streakBest
+  } else if (raw.streakBest !== undefined) drop()
+
+  // Sanitize settings
+  if (isObj(raw.settings)) {
+    const rawSet = raw.settings
+    const set: Settings = { ...DEFAULT_SETTINGS }
+
+    if (typeof rawSet.userName === 'string') {
+      set.userName = rawSet.userName.trim().slice(0, 40)
+      if (set.userName !== rawSet.userName) drop()
+    }
+    if (rawSet.pace === 'casual' || rawSet.pace === 'regular' || rawSet.pace === 'intensive') {
+      set.pace = rawSet.pace
+    } else if (rawSet.pace !== undefined) drop()
+
+    if (isValidTheme(rawSet.theme)) {
+      set.theme = rawSet.theme
+    } else if (rawSet.theme !== undefined) drop()
+
+    if (isValidAccent(rawSet.accent)) {
+      set.accent = rawSet.accent
+    } else if (rawSet.accent !== undefined) drop()
+
+    if (isValidContrast(rawSet.contrast)) {
+      set.contrast = rawSet.contrast
+    } else if (rawSet.contrast !== undefined) drop()
+
+    if (isValidMotion(rawSet.motion)) {
+      set.motion = rawSet.motion
+    } else if (rawSet.motion !== undefined) drop()
+
+    if (typeof rawSet.soundEnabled === 'boolean') set.soundEnabled = rawSet.soundEnabled
+    if (typeof rawSet.streakReminders === 'boolean') set.streakReminders = rawSet.streakReminders
+    if (nonNegInt(rawSet.dailyGoal)) set.dailyGoal = rawSet.dailyGoal
+
+    s.settings = set
+  } else if (raw.settings !== undefined) drop()
+
+  // Sanitize activity events
+  if (Array.isArray(raw.activity)) {
+    const validEvents: ActivityEvent[] = []
+    for (const item of raw.activity) {
+      if (
+        isObj(item) &&
+        typeof item.id === 'string' &&
+        (item.type === 'lesson-complete' || item.type === 'quiz-finish' || item.type === 'challenge-check') &&
+        isNum(item.at)
+      ) {
+        validEvents.push({
+          id: item.id,
+          type: item.type,
+          at: item.at,
+          ...(typeof item.trackId === 'string' ? { trackId: item.trackId } : {}),
+          ...(typeof item.topicId === 'string' ? { topicId: item.topicId } : {}),
+          ...(typeof item.refId === 'string' ? { refId: item.refId } : {}),
+          ...(isObj(item.meta) ? { meta: item.meta as Record<string, string | number | boolean> } : {})
+        })
+      } else drop()
+    }
+    s.activity = validEvents.slice(-MAX_ACTIVITY_EVENTS)
+    if (s.activity.length !== raw.activity.length) drop()
+  } else if (raw.activity !== undefined) drop()
+
   return { state: s, repaired }
 }
 

@@ -7,20 +7,27 @@ import { Emblem, Icon, type IconName } from './Icon'
 
 interface NavItem { to: string; label: string; icon: IconName; match: (p: string) => boolean }
 
-const NAV: NavItem[] = [
+const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: 'home', match: (p) => p === '/' },
   { to: '/explore', label: 'Explore', icon: 'compass', match: (p) => ['/explore', '/learn', '/lesson', '/quiz', '/practice'].some((x) => p === x || p.startsWith(x + '/')) },
   { to: '/progress', label: 'My Progress', icon: 'progress', match: (p) => p === '/progress' },
   { to: '/review', label: 'Review', icon: 'notebook', match: (p) => p === '/review' },
 ]
 
+const SIDEBAR_NAV: NavItem[] = [
+  ...PRIMARY_NAV,
+  { to: '/settings', label: 'Settings', icon: 'settings', match: (p) => p === '/settings' },
+]
+
 function NavLinks({ variant }: { variant: 'side' | 'bottom' }) {
   const { pathname } = useLocation()
   const { state } = useApp()
   const open = openErrorCount(state)
+  const items = variant === 'side' ? SIDEBAR_NAV : PRIMARY_NAV
+
   return (
     <ul className={`nav nav--${variant}`}>
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active = item.match(pathname)
         return (
           <li key={item.to}>
@@ -51,6 +58,8 @@ function SaveNote() {
   const { saveStatus } = useApp()
   if (saveStatus.kind === 'error')
     return <p className="side-note side-note--warn"><Icon name="alert" size={16} />Progress cannot be saved in this browser right now.</p>
+  if (saveStatus.quotaWarn)
+    return <p className="side-note side-note--warn"><Icon name="alert" size={16} />Storage is nearly full (≥ 80%). Consider exporting data in Settings.</p>
   return <p className="side-note">Progress is stored only in this browser.</p>
 }
 
@@ -91,7 +100,17 @@ export function Shell() {
     <div className="shell">
       <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus() }}>Skip to main content</a>
       {isMobile ? (
-        <header className="topbar"><Brand /></header>
+        <header className="topbar" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Brand />
+          <Link
+            to="/settings"
+            className={`icon-btn ${pathname === '/settings' ? 'is-active' : ''}`}
+            aria-label="Settings"
+            title="Settings"
+          >
+            <Icon name="settings" size={20} />
+          </Link>
+        </header>
       ) : (
         <aside className="sidebar" aria-label="Primary">
           <Brand />

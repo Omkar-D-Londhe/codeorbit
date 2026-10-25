@@ -167,4 +167,35 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     const notFoundText = page.locator('text=That page doesn’t exist')
     await expect(notFoundText).toBeVisible()
   })
+
+  test('Settings page renders form controls, quota meter, and allows data management', async ({ page }) => {
+    await page.goto('/settings')
+    await page.waitForLoadState('networkidle')
+
+    // Profile input
+    const nameInput = page.locator('#user-name-input')
+    await expect(nameInput).toBeVisible()
+    await nameInput.fill('Ada Lovelace')
+
+    // Preferred pace select
+    const paceSelect = page.locator('#pace-select')
+    await expect(paceSelect).toBeVisible()
+    await paceSelect.selectOption('intensive')
+
+    // Theme radio selection
+    const starlightRadio = page.locator('input[type="radio"][value="starlight"]')
+    await expect(starlightRadio).toBeVisible()
+    await starlightRadio.check()
+
+    // Export and Reset buttons exist
+    const exportBtn = page.locator('button:has-text("Export Backup (.json)")')
+    await expect(exportBtn).toBeVisible()
+
+    const resetBtn = page.locator('button:has-text("Reset All Learning Data")')
+    await expect(resetBtn).toBeVisible()
+
+    // Quota indicator is rendered
+    const quotaLabel = page.locator('text=Storage Usage')
+    await expect(quotaLabel).toBeVisible()
+  })
 })

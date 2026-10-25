@@ -7,7 +7,7 @@ import { SandboxedPreview } from '../components/SandboxedPreview'
 import { getQuiz } from '../data/quizzes'
 import { isPass, isPerfect } from '../lib/quiz'
 import { trackProgress } from '../lib/progress'
-import { BACKUP_KEY, STORAGE_KEY, createDefaultState, loadState, saveState } from '../lib/storage'
+import { BACKUP_KEY, STORAGE_KEY, createDefaultState, loadState, saveState, SCHEMA_VERSION } from '../lib/storage'
 import { expectNoA11yViolations } from './a11y'
 
 const setWidth = (w: number) => {
@@ -229,7 +229,7 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
     window.localStorage.setItem(STORAGE_KEY, '{"bad-json')
     const corruptRes = loadState()
     expect(corruptRes.recovery).toBe('corrupt')
-    expect(corruptRes.state.schemaVersion).toBe(1)
+    expect(corruptRes.state.schemaVersion).toBe(SCHEMA_VERSION)
     expect(window.localStorage.getItem(BACKUP_KEY)).toBe('{"bad-json')
 
     // Newer-version storage recovery

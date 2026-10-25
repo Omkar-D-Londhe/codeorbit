@@ -47,3 +47,34 @@
   - Extended `e2e/smoke.spec.ts` with theme switching tests, computed background assertions, and production 404 isolation for `/__ui` (6 tests passing).
 - **Documentation:**
   - Updated `DESIGN.md`, `docs/WORKLOG.md`, and produced `docs/antigravity/status/STAGE_02_STATUS.md`.
+
+## 2026-10-26 — Stage 03: Storage v2, settings, data management, activity foundation
+- **Branch:** `stage-03-storage-v2-settings-data`
+- **Schema v2 & Storage Migrations:**
+  - Bumped `SCHEMA_VERSION` to 2; added `settings`, `activity`, `activityDays`, `dailyDone`, `dailyAssigned`, and `streakBest` to `src/state/types.ts`.
+  - Added `DEFAULT_SETTINGS` covering pace, theme, accent, contrast, motion, sound, streak reminders, and daily goal.
+  - Created `src/core/storage/migrations.ts` (`migrateV1toV2`) preserving v1 data and reference-era activity fields.
+  - Created test fixtures `src/test/fixtures/` (`state.v1.original.json`, `state.v1.reference.json`, `state.v1.malformed.json`).
+  - Added `src/test/migrations.test.ts` (5 tests passing).
+- **Gamification & Activity Core:**
+  - Created `src/core/gamification/streak.ts` calculating streaks, freeze grace windows, milestones, and best streaks across leap years and day boundaries. Added `src/test/streak.test.ts` (10 tests passing).
+  - Created `src/core/activity/meaningful.ts` implementing substantive activity criteria (`isMeaningfulActivity`) for lesson completion, quiz finish, and passing challenge checks without spam. Added `src/test/activity.test.ts` (4 tests passing).
+- **Pluggable Clock:**
+  - Created `src/core/time/Clock.tsx` (`ClockProvider`, `useClock`) enabling time injection and deterministic testing.
+  - Wrapped `App.tsx` with `ClockProvider` and updated `Lesson.tsx`, `Quiz.tsx`, and `Practice.tsx` to pass accurate timestamps.
+- **Persistence Hardening & Quota Guard:**
+  - Created `src/core/storage/quota.ts` with 4 MiB soft budget, 80% warning threshold, and formatted byte utilities.
+  - Implemented 300ms debounce in `AppState.tsx` with flush on `pagehide` and `visibilitychange` (`hidden`).
+  - Added multi-tab `storage` event listener in `AppState.tsx`.
+  - Added quota warning to `Shell.tsx` and Settings.
+  - Added `src/test/persistence.test.tsx` (4 tests passing).
+- **Settings Page & Data Management (FC-07):**
+  - Created `src/pages/Settings.tsx` with profile name (validated ≤ 40 chars), preferred pace selector, radio theme controls, accent/contrast/motion controls, quota progress meter, backup JSON export/import with preview dialog, and typed `RESET` danger confirmation.
+  - Created `src/core/storage/exportImport.ts` (`buildExport`, `parseImport`, summary). Added `src/test/exportImport.test.ts` (4 tests passing).
+  - Added Settings route to `App.tsx` and Settings icon/link to `Shell.tsx`.
+  - Added `src/test/Settings.test.tsx` (3 tests passing).
+- **E2E & Verification:**
+  - Added Playwright test for Settings page in `e2e/smoke.spec.ts` (7 tests passing).
+  - Full suite verified: 23 test files, 296 unit/integration tests passing.
+  - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
+  - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.

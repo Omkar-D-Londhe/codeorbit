@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "topics": {
+    "html-structure": {
+      "lessonComplete": true,
+      "quizAttempts": 1
+    }
+  },
+  "quizSessions": {},
+  "drafts": {},
+  "challenges": {},
+  "notes": {},
+  "bookmarks": [],
+  "errorNotebook": [],
+  "activityDays": [
+    "not-a-date",
+    "2026-10-24",
+    "2026-10-22",
+    "2026-10-24",
+    12345
+  ],
+  "dailyDone": [
+    "2026-10-24",
+    "invalid-date"
+  ]
+}

@@ -1,18 +1,19 @@
-import { createDefaultState } from '../lib/storage'
+import { createDefaultState, MAX_DAYS, MAX_ACTIVITY_EVENTS } from '../lib/storage'
 import type { QuizSession } from '../lib/quiz'
-import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest } from './types'
+import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent } from './types'
+import { addDay, dayKey, streakInfo, nextStreakBest } from '../core/gamification/streak'
 
 export type Action =
   | { type: 'RESET_ALL' }
   | { type: 'SELECT_TOPIC'; topicId: string }
-  | { type: 'VISIT'; topicId: string; activity: Activity; challengeId?: string; now: number }
-  | { type: 'SET_LESSON_COMPLETE'; topicId: string; value: boolean }
+  | { type: 'VISIT'; topicId: string; activity: Activity; challengeId?: string; now?: number }
+  | { type: 'SET_LESSON_COMPLETE'; topicId: string; value: boolean; now?: number }
   | { type: 'QUIZ_UPDATE'; topicId: string; session: QuizSession }
   | { type: 'QUIZ_RESET'; topicId: string }
-  | { type: 'QUIZ_FINISH'; topicId: string; session: QuizSession; correct: number; total: number }
+  | { type: 'QUIZ_FINISH'; topicId: string; session: QuizSession; correct: number; total: number; now?: number }
   | { type: 'SET_DRAFT'; challengeId: string; code: string }
   | { type: 'CLEAR_DRAFT'; challengeId: string }
-  | { type: 'RECORD_CHECK'; challengeId: string; passed: number; total: number; failedIds: string[]; now: number }
+  | { type: 'RECORD_CHECK'; challengeId: string; passed: number; total: number; failedIds: string[]; now?: number }
   | { type: 'REVEAL_HINT'; challengeId: string; max: number }
   | { type: 'REVEAL_SOLUTION'; challengeId: string }
   | { type: 'SET_NOTE'; topicId: string; text: string; now: number }
@@ -20,10 +21,44 @@ export type Action =
   | { type: 'ADD_ERROR'; entry: ErrorEntry }
   | { type: 'SET_ERROR_STATUS'; id: string; status: ErrorStatus }
   | { type: 'DELETE_ERROR'; id: string }
+  | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
+  | { type: 'IMPORT_STATE'; state: CodeOrbitState }
 
 const emptyChallenge = () => ({ attempts: 0, hintsRevealed: 0, solutionRevealed: false, completed: false, completedWithoutSolution: false })
 
 const better = (a: QuizBest | undefined, b: QuizBest): QuizBest => (!a || b.correct / b.total > a.correct / a.total ? b : a)
+
+function withActivity(
+  state: CodeOrbitState,
+  now: number | undefined,
+  event: Omit<ActivityEvent, 'id' | 'at'> & { id?: string; at?: number }
+): CodeOrbitState {
+  if (now === undefined) return state
+
+  const key = dayKey(now)
+  const newDays = addDay(state.activityDays, key, MAX_DAYS)
+  const streak = streakInfo(newDays, key)
+  const newStreakBest = nextStreakBest(state.streakBest, streak)
+
+  const fullEvent: ActivityEvent = {
+    id: event.id || `act-${now}-${Math.random().toString(36).slice(2, 7)}`,
+    type: event.type,
+    at: event.at || now,
+    ...(event.trackId ? { trackId: event.trackId } : {}),
+    ...(event.topicId ? { topicId: event.topicId } : {}),
+    ...(event.refId ? { refId: event.refId } : {}),
+    ...(event.meta ? { meta: event.meta } : {})
+  }
+
+  const newActivity = [...state.activity, fullEvent].slice(-MAX_ACTIVITY_EVENTS)
+
+  return {
+    ...state,
+    activityDays: newDays,
+    activity: newActivity,
+    streakBest: newStreakBest
+  }
+}
 
 export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
   switch (action.type) {
@@ -32,17 +67,29 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
     case 'SELECT_TOPIC':
       return state.selectedTopicId === action.topicId ? state : { ...state, selectedTopicId: action.topicId }
     case 'VISIT': {
+      const atTime = action.now || Date.now()
       const lv = state.lastVisited
       if (lv && lv.topicId === action.topicId && lv.activity === action.activity && lv.challengeId === action.challengeId) return state
       return {
         ...state,
         selectedTopicId: action.topicId,
-        lastVisited: { topicId: action.topicId, activity: action.activity, at: action.now, ...(action.challengeId ? { challengeId: action.challengeId } : {}) },
+        lastVisited: { topicId: action.topicId, activity: action.activity, at: atTime, ...(action.challengeId ? { challengeId: action.challengeId } : {}) },
       }
     }
     case 'SET_LESSON_COMPLETE': {
       const prev = state.topics[action.topicId] ?? { lessonComplete: false, quizAttempts: 0 }
-      return { ...state, topics: { ...state.topics, [action.topicId]: { ...prev, lessonComplete: action.value } } }
+      let nextState: CodeOrbitState = {
+        ...state,
+        topics: { ...state.topics, [action.topicId]: { ...prev, lessonComplete: action.value } }
+      }
+      if (action.value === true) {
+        nextState = withActivity(nextState, action.now, {
+          type: 'lesson-complete',
+          topicId: action.topicId,
+          refId: action.topicId
+        })
+      }
+      return nextState
     }
     case 'QUIZ_UPDATE':
       return { ...state, quizSessions: { ...state.quizSessions, [action.topicId]: action.session } }
@@ -54,11 +101,18 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
     case 'QUIZ_FINISH': {
       const prev = state.topics[action.topicId] ?? { lessonComplete: false, quizAttempts: 0 }
       const best = better(prev.quizBest, { correct: action.correct, total: action.total })
-      return {
+      let nextState: CodeOrbitState = {
         ...state,
         quizSessions: { ...state.quizSessions, [action.topicId]: action.session },
         topics: { ...state.topics, [action.topicId]: { ...prev, quizAttempts: prev.quizAttempts + 1, quizBest: best } },
       }
+      nextState = withActivity(nextState, action.now, {
+        type: 'quiz-finish',
+        topicId: action.topicId,
+        refId: action.topicId,
+        meta: { correct: action.correct, total: action.total }
+      })
+      return nextState
     }
     case 'SET_DRAFT':
       return state.drafts[action.challengeId] === action.code ? state : { ...state, drafts: { ...state.drafts, [action.challengeId]: action.code } }
@@ -71,7 +125,8 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
       const prev = state.challenges[action.challengeId] ?? emptyChallenge()
       const allPassed = action.passed === action.total && action.total > 0
       const nowCompleted = prev.completed || allPassed
-      return {
+      const checkTime = action.now || Date.now()
+      let nextState: CodeOrbitState = {
         ...state,
         challenges: {
           ...state.challenges,
@@ -80,10 +135,16 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
             attempts: prev.attempts + 1,
             completed: nowCompleted,
             completedWithoutSolution: prev.completed ? prev.completedWithoutSolution : allPassed ? !prev.solutionRevealed : false,
-            lastCheck: { passed: action.passed, total: action.total, failedIds: action.failedIds, at: action.now },
+            lastCheck: { passed: action.passed, total: action.total, failedIds: action.failedIds, at: checkTime },
           },
         },
       }
+      nextState = withActivity(nextState, action.now, {
+        type: 'challenge-check',
+        refId: action.challengeId,
+        meta: { passed: action.passed, total: action.total }
+      })
+      return nextState
     }
     case 'REVEAL_HINT': {
       const prev = state.challenges[action.challengeId] ?? emptyChallenge()
@@ -122,5 +183,17 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
       return { ...state, errorNotebook: state.errorNotebook.map((e) => (e.id === action.id ? { ...e, status: action.status } : e)) }
     case 'DELETE_ERROR':
       return { ...state, errorNotebook: state.errorNotebook.filter((e) => e.id !== action.id) }
+    case 'SET_SETTINGS': {
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          ...action.patch
+        }
+      }
+    }
+    case 'IMPORT_STATE': {
+      return { ...action.state }
+    }
   }
 }

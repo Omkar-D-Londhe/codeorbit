@@ -17,7 +17,7 @@ npm run test:e2e    # build, run Vite preview and execute Playwright browser smo
 ```
 
 ## What is real
-All progress, drafts, notes, bookmarks and errors come from your own activity and live in this browser only (`localStorage` key `codeorbit:state`, schema v1, migrations + corrupt-data recovery). Nothing is synced or sent anywhere. Code Coach is rule-based per challenge — it is **not** an AI review.
+All progress, drafts, notes, bookmarks, errors, preferences and activity logs come from your own activity and live in this browser only (`localStorage` key `codeorbit:state`, schema v2 with safe migrations from v1, debounced saves, and corrupt-data recovery). Nothing is synced to an external server. The Settings page allows complete data export/import (JSON backup) and local data reset with typed confirmation. Code Coach is rule-based per challenge — it is **not** an AI review.
 
 ## Docs
 `DESIGN.md` (tokens/rules) · `docs/WORKLOG.md` · `docs/DECISIONS.md` · `docs/TEST_PLAN.md` · `docs/ASSESSMENT_COMPLIANCE.md` · `docs/antigravity/` (Antigravity implementation pack, including read-only reference snapshot under `docs/antigravity/reference/`).

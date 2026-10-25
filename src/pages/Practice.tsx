@@ -14,6 +14,7 @@ import { lessonPath, trackPath } from '../lib/routes'
 import { formatDateTime } from '../lib/status'
 import { checkChallenge, type CheckResult } from '../lib/validators'
 import { useApp } from '../state/AppState'
+import { useClock } from '../core/time/Clock'
 import NotFound from './NotFound'
 
 const HINT_TITLES = ['Conceptual clue', 'Structural clue', 'Specific guidance']
@@ -31,6 +32,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const topic = getTopic(challenge.topicId)!
   useDocumentTitle(challenge.title)
   const { state, dispatch, saveStatus } = useApp()
+  const now = useClock()
   const toast = useToast()
   const mobile = useMediaQuery('(max-width: 767px)')
 
@@ -62,7 +64,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     const r = checkChallenge(challenge, code)
     setResult(r)
     setRanCode(code)
-    dispatch({ type: 'RECORD_CHECK', challengeId, passed: r.passed, total: r.total, failedIds: r.results.filter((x) => x.status === 'fail').map((x) => x.id), now: Date.now() })
+    dispatch({ type: 'RECORD_CHECK', challengeId, passed: r.passed, total: r.total, failedIds: r.results.filter((x) => x.status === 'fail').map((x) => x.id), now: now() })
     if (r.allPassed) toast.show(`All ${r.total} requirements met. Challenge complete.`)
     if (mobile) setTab('feedback')
   }

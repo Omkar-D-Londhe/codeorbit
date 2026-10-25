@@ -1,4 +1,5 @@
 import type { QuizSession } from '../lib/quiz'
+import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
 
 export type Activity = 'lesson' | 'quiz' | 'practice'
 
@@ -52,6 +53,37 @@ export interface ErrorEntry {
   createdAt: number
 }
 
+export interface Settings {
+  userName?: string
+  pace: 'casual' | 'regular' | 'intensive'
+  theme: ThemeId
+  accent: AccentId
+  contrast: ContrastMode
+  motion: MotionPreference
+  soundEnabled?: boolean
+  streakReminders?: boolean
+  dailyGoal?: number
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  userName: '',
+  pace: 'regular',
+  theme: 'obsidian',
+  accent: 'violet',
+  contrast: 'normal',
+  motion: 'system'
+}
+
+export interface ActivityEvent {
+  id: string
+  type: 'lesson-complete' | 'quiz-finish' | 'challenge-check'
+  at: number
+  trackId?: string
+  topicId?: string
+  refId?: string
+  meta?: Record<string, string | number | boolean>
+}
+
 export interface CodeOrbitState {
   schemaVersion: number
   lastVisited?: LastVisited
@@ -63,4 +95,10 @@ export interface CodeOrbitState {
   notes: Record<string, NoteRecord>
   bookmarks: string[]
   errorNotebook: ErrorEntry[]
+  settings: Settings
+  activity: ActivityEvent[]
+  activityDays: string[]
+  dailyDone: string[]
+  dailyAssigned?: Record<string, string>
+  streakBest: number
 }

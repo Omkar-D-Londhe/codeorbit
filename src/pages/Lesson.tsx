@@ -12,6 +12,7 @@ import { topicProgress } from '../lib/progress'
 import { practicePath, quizPath, trackPath } from '../lib/routes'
 import { formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { useClock } from '../core/time/Clock'
 import NotFound from './NotFound'
 
 function NotesEditor({ topicId, title }: { topicId: string; title: string }) {
@@ -51,6 +52,7 @@ function LessonInner({ topicId }: { topicId: string }) {
   const challenge = challengesForTopic(topicId)[0]
   useDocumentTitle(topic.title)
   const { state, dispatch } = useApp()
+  const now = useClock()
   const narrow = useMediaQuery('(max-width: 899px)')
   const [tab, setTab] = useState<'lesson' | 'study'>('lesson')
 
@@ -94,7 +96,7 @@ function LessonInner({ topicId }: { topicId: string }) {
       <section className="study__block">
         <h2 className="study__h">Lesson</h2>
         <button type="button" className={`btn ${p.lessonDone ? 'btn--success' : 'btn--secondary'} btn--block`} aria-pressed={p.lessonDone}
-          onClick={() => dispatch({ type: 'SET_LESSON_COMPLETE', topicId, value: !p.lessonDone })}>
+          onClick={() => dispatch({ type: 'SET_LESSON_COMPLETE', topicId, value: !p.lessonDone, now: now() })}>
           <Icon name={p.lessonDone ? 'check' : 'circle'} size={18} />{p.lessonDone ? 'Lesson marked complete' : 'Mark lesson complete'}
         </button>
         <button type="button" className="btn btn--ghost btn--block" aria-pressed={bookmarked} onClick={() => dispatch({ type: 'TOGGLE_BOOKMARK', topicId })}>

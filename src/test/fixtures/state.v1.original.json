@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "lastVisited": {
+    "topicId": "html-structure",
+    "activity": "lesson",
+    "at": 1729700000000
+  },
+  "selectedTopicId": "html-structure",
+  "topics": {
+    "html-structure": {
+      "lessonComplete": true,
+      "quizAttempts": 1,
+      "quizBest": {
+        "correct": 3,
+        "total": 3
+      }
+    }
+  },
+  "quizSessions": {},
+  "drafts": {
+    "ch-html-structure": "<!DOCTYPE html><html><body><h1>Hello</h1></body></html>"
+  },
+  "challenges": {
+    "ch-html-structure": {
+      "attempts": 1,
+      "hintsRevealed": 0,
+      "solutionRevealed": false,
+      "completed": true,
+      "completedWithoutSolution": true,
+      "lastCheck": {
+        "passed": 3,
+        "total": 3,
+        "failedIds": [],
+        "at": 1729700100000
+      }
+    }
+  },
+  "notes": {
+    "html-structure": {
+      "text": "Every document starts with <!DOCTYPE html>",
+      "updatedAt": 1729700050000
+    }
+  },
+  "bookmarks": [
+    "html-structure"
+  ],
+  "errorNotebook": []
+}

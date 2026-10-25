@@ -62,8 +62,8 @@ describe('versioned storage', () => {
     const v0 = { progress: { lists: { lessonComplete: true, quizAttempts: 0 } } }
     const r = loadState(memoryStorage({ [STORAGE_KEY]: JSON.stringify(v0) }))
     expect(r.state.topics.lists?.lessonComplete).toBe(true)
-    expect(r.state.schemaVersion).toBe(1)
-    expect(migrate({ schemaVersion: 1, topics: {} })).toMatchObject({ schemaVersion: 1 })
+    expect(r.state.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(migrate({ schemaVersion: 1, topics: {} })).toMatchObject({ schemaVersion: SCHEMA_VERSION })
   })
 
   it('repairs partially malformed data and keeps the valid parts', () => {
