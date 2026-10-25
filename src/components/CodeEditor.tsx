@@ -13,6 +13,8 @@ export interface CodeEditorProps {
   readOnly?: boolean
   diagnostics?: EditorDiagnostic[]
   engine?: 'codemirror' | 'plain'
+  onMount?: (handle: EditorHandle) => void
+  editorRef?: React.MutableRefObject<EditorHandle | null>
 }
 
 /**
@@ -29,6 +31,8 @@ export function CodeEditor({
   readOnly = false,
   diagnostics = [],
   engine: engineProp,
+  onMount,
+  editorRef,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const handleRef = useRef<EditorHandle | null>(null)
@@ -92,10 +96,13 @@ export function CodeEditor({
     })
 
     handleRef.current = handle
+    if (editorRef) editorRef.current = handle
+    onMount?.(handle)
 
     return () => {
       handle.destroy()
       handleRef.current = null
+      if (editorRef) editorRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adapter])

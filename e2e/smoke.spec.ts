@@ -76,7 +76,7 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     await page.goto('/practice/ch-html-structure')
 
     // Click Run to execute preview and mount SandboxedPreview iframe
-    const runBtn = page.getByRole('button', { name: /run/i })
+    const runBtn = page.getByRole('button', { name: /^run$/i })
     await expect(runBtn).toBeVisible()
     await runBtn.click()
 
@@ -278,5 +278,48 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
 
     const tabSizeSelect = page.locator('#editor-tab-size-select')
     await expect(tabSizeSelect).toBeVisible()
+  })
+
+  test('Stage 06: Practice workspace, device frames, snippets, a11y linter, and diff gating', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/practice/ch-html-structure')
+    await page.waitForLoadState('networkidle')
+
+    // 1. Device frames
+    const runBtn = page.getByRole('button', { name: /^run$/i })
+    await runBtn.click()
+
+    const tabletFrameBtn = page.getByRole('button', { name: 'Tablet' })
+    await expect(tabletFrameBtn).toBeVisible()
+    await tabletFrameBtn.click()
+    await expect(page.locator('.device-frame-caption')).toHaveText('Tablet · 768 × 1024')
+
+    const mobileFrameBtn = page.getByRole('button', { name: 'Mobile' })
+    await mobileFrameBtn.click()
+    await expect(page.locator('.device-frame-caption')).toHaveText('Mobile · 375 × 667')
+
+    // 2. Diff button disabled before reveal
+    const diffBtn = page.getByRole('button', { name: /^diff$/i })
+    await expect(diffBtn).toBeDisabled()
+
+    // 3. Snippets library drawer
+    const snippetsBtn = page.getByRole('button', { name: /snippets/i })
+    await expect(snippetsBtn).toBeVisible()
+    await snippetsBtn.click()
+
+    const snippetHeading = page.getByRole('heading', { name: 'Code Snippets' })
+    await expect(snippetHeading).toBeVisible()
+
+    // Close the drawer before interacting with the background page
+    await page.getByRole('button', { name: 'Close drawer' }).click()
+    await expect(snippetHeading).not.toBeVisible()
+
+    // 4. Accessibility linter
+    const runLinterBtn = page.getByRole('button', { name: /run linter/i })
+    await expect(runLinterBtn).toBeVisible()
+    await runLinterBtn.click()
+
+    const linterHeading = page.locator('text=Accessibility Linter')
+    await expect(linterHeading).toBeVisible()
   })
 })

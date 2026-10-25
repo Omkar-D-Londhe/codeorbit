@@ -50,4 +50,25 @@ describe('preview security boundary', () => {
       expect(src, f).not.toMatch(/dangerouslySetInnerHTML|\.innerHTML\s*=|document\.write|allow-scripts|allow-same-origin/)
     })
   })
+
+  it('stitches multi-file HTML and CSS into a unified preview document', () => {
+    const files = [
+      { name: 'index.html', language: 'html', content: '<h1>Styled Title</h1>' },
+      { name: 'styles.css', language: 'css', content: 'h1 { color: purple; }' },
+    ]
+    const doc = buildPreviewDocument(files)
+    expect(doc).toContain('<style data-filename="styles.css">h1 { color: purple; }</style>')
+    expect(doc).toContain('<h1>Styled Title</h1>')
+  })
+
+  it('neutralizes </style> breakout injection attempts in user CSS', () => {
+    const maliciousFiles = [
+      { name: 'index.html', language: 'html', content: '<p>Content</p>' },
+      { name: 'attack.css', language: 'css', content: 'body { color: red; } </style><script>alert("xss")</script>' },
+    ]
+    const doc = buildPreviewDocument(maliciousFiles)
+    // The </style tag must be escaped to prevent ending the style block prematurely
+    expect(doc).not.toContain('</style><script>')
+    expect(doc).toContain('<\\/style')
+  })
 })

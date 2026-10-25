@@ -18,6 +18,18 @@ import { useClock } from '../core/time/Clock'
 import { Splitter } from '../core/ui/Splitter'
 import { AutoSaveIndicator } from '../core/editor/AutoSaveIndicator'
 import { FullscreenEditor } from '../core/editor/FullscreenEditor'
+import { toChallengeV2 } from '../core/content/challengeAdapter'
+import type { ChallengeFile } from '../core/content/types'
+import { draftKey } from '../state/reducer'
+import { IframePreviewRunner } from '../core/runner/iframePreviewRunner'
+import { DeviceFrame, type DeviceFrameMode } from '../core/ui/DeviceFrame'
+import { DiffViewer } from '../core/learning/DiffViewer'
+import { lintHtml, type A11yLintIssue } from '../tracks/html/a11yLint'
+import { SnippetPanel } from '../core/learning/SnippetPanel'
+import { HTML_SNIPPETS } from '../tracks/html/snippets'
+import { isChallengeRecommended } from '../core/learning/difficulty'
+import { Drawer } from '../core/ui/DockedPanel'
+import type { EditorHandle } from '../core/editor/types'
 import NotFound from './NotFound'
 
 const HINT_TITLES = ['Conceptual clue', 'Structural clue', 'Specific guidance']
@@ -39,16 +51,31 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const toast = useToast()
   const mobile = useMediaQuery('(max-width: 767px)')
 
+  const chV2 = useMemo(() => toChallengeV2(challenge), [challenge])
+  const [activeFileName, setActiveFileName] = useState(chV2.files[0]?.name ?? 'index.html')
+  const fileCount = chV2.files.length
+
   const rec = state.challenges[challengeId]
-  const code = state.drafts[challengeId] ?? challenge.starterCode
+  const currentKey = draftKey(challengeId, activeFileName, fileCount)
+  const activeStarter = chV2.files.find((f) => f.name === activeFileName)?.content ?? challenge.starterCode
+  const code = state.drafts[currentKey] ?? (fileCount === 1 ? (state.drafts[challengeId] ?? challenge.starterCode) : activeStarter)
+
   const [ranCode, setRanCode] = useState<string | null>(null)
   const [result, setResult] = useState<CheckResult | null>(null)
   const [focus, setFocus] = useState(false)
   const [tab, setTab] = useState<MobileTab>('editor')
   const [confirm, setConfirm] = useState<null | 'reset' | 'solution'>(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const [deviceFrame, setDeviceFrame] = useState<DeviceFrameMode>('desktop')
+  const [snippetsOpen, setSnippetsOpen] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
+  const [lintIssues, setLintIssues] = useState<A11yLintIssue[] | null>(null)
+
   const fullscreenOpenerRef = useRef<HTMLButtonElement>(null)
+  const editorHandleRef = useRef<EditorHandle | null>(null)
   const isNarrowDesktop = useMediaQuery('(min-width: 768px) and (max-width: 899px)')
+
+  const recResult = useMemo(() => isChallengeRecommended(challenge, state), [challenge, state])
 
   const [splitRatio, setSplitRatio] = useState<number>(() => {
     try {
@@ -81,7 +108,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     }
   }, [])
 
-  const draftEdited = code !== challenge.starterCode
+  const draftEdited = code !== activeStarter
 
   useEffect(() => { dispatch({ type: 'VISIT', topicId: challenge.topicId, activity: 'practice', challengeId, now: Date.now() }) }, [challenge.topicId, challengeId, dispatch])
 
@@ -95,22 +122,81 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   }, [focus])
   useEffect(() => () => document.documentElement.classList.remove('is-focus'), [])
 
-  const setCode = useCallback((v: string) => dispatch({ type: 'SET_DRAFT', challengeId, code: v }), [dispatch, challengeId])
+  const setCode = useCallback(
+    (v: string) => {
+      dispatch({
+        type: 'SET_DRAFT',
+        challengeId,
+        code: v,
+        fileName: fileCount > 1 ? activeFileName : undefined,
+      })
+    },
+    [dispatch, challengeId, fileCount, activeFileName]
+  )
 
-  const run = () => { setRanCode(code); if (mobile) setTab('preview') }
+  const currentFiles: ChallengeFile[] = useMemo(() => {
+    return chV2.files.map((f) => {
+      const k = draftKey(challengeId, f.name, fileCount)
+      const val = state.drafts[k] ?? (fileCount === 1 ? (state.drafts[challengeId] ?? f.content) : f.content)
+      return { ...f, content: val }
+    })
+  }, [chV2.files, state.drafts, challengeId, fileCount])
+
+  const run = () => {
+    const runner = new IframePreviewRunner()
+    runner.run({ files: currentFiles }).then((res) => {
+      if (res.status === 'ok' && res.previewDoc) {
+        setRanCode(res.previewDoc)
+      }
+    })
+    if (mobile) setTab('preview')
+  }
+
   const check = () => {
-    const r = checkChallenge(challenge, code)
+    const htmlFile = currentFiles.find((f) => f.name.toLowerCase().endsWith('.html')) ?? currentFiles[0]
+    const htmlCode = htmlFile ? htmlFile.content : code
+    const r = checkChallenge(challenge, htmlCode)
     setResult(r)
-    setRanCode(code)
-    dispatch({ type: 'RECORD_CHECK', challengeId, passed: r.passed, total: r.total, failedIds: r.results.filter((x) => x.status === 'fail').map((x) => x.id), now: now() })
+    const runner = new IframePreviewRunner()
+    runner.run({ files: currentFiles }).then((res) => {
+      if (res.status === 'ok' && res.previewDoc) {
+        setRanCode(res.previewDoc)
+      }
+    })
+    dispatch({
+      type: 'RECORD_CHECK',
+      challengeId,
+      passed: r.passed,
+      total: r.total,
+      failedIds: r.results.filter((x) => x.status === 'fail').map((x) => x.id),
+      now: now(),
+    })
     if (r.allPassed) toast.show(`All ${r.total} requirements met. Challenge complete.`)
+
+    const issues = lintHtml(htmlCode)
+    setLintIssues(issues)
     if (mobile) setTab('feedback')
   }
+
+  const runLinter = () => {
+    const htmlFile = currentFiles.find((f) => f.name.toLowerCase().endsWith('.html')) ?? currentFiles[0]
+    const htmlCode = htmlFile ? htmlFile.content : code
+    const issues = lintHtml(htmlCode)
+    setLintIssues(issues)
+    toast.show(
+      issues.length === 0
+        ? 'No accessibility issues found.'
+        : `Found ${issues.length} accessibility quick-check ${issues.length === 1 ? 'issue' : 'issues'}.`,
+      'info'
+    )
+  }
+
   const hint = () => dispatch({ type: 'REVEAL_HINT', challengeId, max: challenge.hints.length })
   const reset = () => {
     dispatch({ type: 'CLEAR_DRAFT', challengeId })
     setResult(null)
     setConfirm(null)
+    setLintIssues(null)
     toast.show('Editor reset to the starter code.', 'info')
   }
   const saveError = () => {
@@ -202,6 +288,16 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
       <button type="button" className="btn btn--primary" onClick={check}><Icon name="check" size={18} />Check solution</button>
       <button type="button" className="btn btn--ghost" onClick={hint} disabled={hintsShown >= challenge.hints.length}><Icon name="bulb" size={18} />Hint</button>
       <button type="button" className="btn btn--ghost" onClick={() => (draftEdited ? setConfirm('reset') : toast.show('The editor already has the starter code.', 'info'))}><Icon name="reset" size={18} />Reset</button>
+      <button
+        type="button"
+        className={`btn btn--ghost ${showDiff ? 'is-active' : ''}`}
+        aria-pressed={showDiff}
+        disabled={!rec?.solutionRevealed}
+        title={!rec?.solutionRevealed ? 'Reveal the solution to compare' : undefined}
+        onClick={() => setShowDiff((s) => !s)}
+      >
+        <Icon name="code" size={18} />Diff
+      </button>
       {!mobile && (
         <button type="button" className="btn btn--ghost toolbar__end" aria-pressed={focus} onClick={() => setFocus((f) => !f)}>
           <Icon name={focus ? 'collapse' : 'expand'} size={18} />{focus ? 'Exit focus mode' : 'Focus mode'}
@@ -220,6 +316,14 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setSnippetsOpen(true)}
+            aria-label="Code snippets"
+          >
+            <Icon name="bulb" size={16} />Snippets
+          </button>
+          <button
+            type="button"
             ref={fullscreenOpenerRef}
             className="btn btn--ghost btn--sm"
             onClick={() => setFullscreen(true)}
@@ -232,12 +336,28 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
           </Link>
         </div>
       </div>
-      <CodeEditor value={code} onChange={setCode} />
+      {fileCount > 1 && (
+        <div role="tablist" aria-label="Challenge files" className="tabs tabs--files" style={{ marginBottom: 0, borderRadius: 0, borderBottom: '1px solid var(--c-border)' }}>
+          {chV2.files.map((f) => (
+            <button
+              key={f.name}
+              type="button"
+              role="tab"
+              aria-selected={activeFileName === f.name}
+              className={`tab ${activeFileName === f.name ? 'is-active' : ''}`}
+              onClick={() => setActiveFileName(f.name)}
+            >
+              {f.name}
+            </button>
+          ))}
+        </div>
+      )}
+      <CodeEditor value={code} onChange={setCode} editorRef={editorHandleRef} />
     </section>
   )
 
   const preview = useMemo(() => (
-    <section className="pane" aria-labelledby="pv-h">
+    <section className="pane" aria-labelledby="pv-h" style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="pane__head">
         <h2 id="pv-h" className="pane__title">Preview</h2>
         <span className="muted small" role="status">
@@ -247,10 +367,14 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
       {ranCode === null ? (
         <div className="preview preview--empty"><p>Press <strong>Run</strong> to see your page here. The preview is sandboxed: scripts cannot run.</p></div>
       ) : (
-        <div className="preview"><SandboxedPreview html={ranCode} /></div>
+        <div className="preview" style={{ height: '100%', minHeight: '300px' }}>
+          <DeviceFrame mode={deviceFrame} onModeChange={setDeviceFrame}>
+            <SandboxedPreview html={ranCode} frame={deviceFrame} />
+          </DeviceFrame>
+        </div>
       )}
     </section>
-  ), [ranCode, stale])
+  ), [ranCode, stale, deviceFrame])
 
   const feedback = (
     <section className="pane coach" aria-labelledby="coach-h">
@@ -288,6 +412,60 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
           </>
         )}
       </div>
+
+      {/* A11y Linter Section (6.7) */}
+      <div style={{ marginTop: 'var(--s-4)', borderTop: '1px solid var(--c-border)', paddingTop: 'var(--s-3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div>
+            <span style={{ fontWeight: 650, fontSize: 'var(--fs-small)' }}>Accessibility Linter</span>
+            <span className="muted small" style={{ marginLeft: '8px' }}>Quick checks, not a full audit</span>
+          </div>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={runLinter}>
+            <Icon name="check" size={14} />Run linter
+          </button>
+        </div>
+        {lintIssues === null ? (
+          <p className="muted small" style={{ margin: 0 }}>
+            Press “Run linter” or “Check solution” to test for missing alt attributes, unlabelled controls, and heading hierarchy.
+          </p>
+        ) : lintIssues.length === 0 ? (
+          <div style={{ color: 'var(--c-success, #10b981)', fontSize: 'var(--fs-small)' }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>✓ No quick-check issues found.</p>
+            <p className="muted small" style={{ marginTop: '2px', margin: 0 }}>
+              Note: Passing automated quick checks does not guarantee full WCAG accessibility conformance.
+            </p>
+          </div>
+        ) : (
+          <ul className="reqs" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {lintIssues.map((issue) => (
+              <li
+                key={issue.id}
+                className={`req req--${issue.severity === 'error' ? 'fail' : 'warning'}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '16px 1fr',
+                  gap: '8px',
+                  padding: '6px 8px',
+                  borderRadius: 'var(--r-sm)',
+                  backgroundColor: issue.severity === 'error' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                  border: `1px solid ${issue.severity === 'error' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(245, 158, 11, 0.25)'}`,
+                  marginBottom: '6px',
+                }}
+              >
+                <Icon name={issue.severity === 'error' ? 'x' : 'info'} size={16} />
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--fs-small)' }}>{issue.message}</p>
+                  {issue.snippet && (
+                    <code style={{ fontSize: 'var(--fs-meta)', color: 'var(--c-text-quiet)', wordBreak: 'break-all' }}>
+                      {issue.snippet}
+                    </code>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   )
 
@@ -306,8 +484,51 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     <PageHeader
       crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath(topic.technologyId) }, { label: topic.title, to: lessonPath(challenge.topicId) }, { label: 'Practice' }]}
       title={challenge.title}
-      lede={<>{challenge.difficulty[0].toUpperCase() + challenge.difficulty.slice(1)}{rec?.completed ? ' · Completed' : ''}</>}
+      lede={
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span>{challenge.difficulty[0].toUpperCase() + challenge.difficulty.slice(1)}{rec?.completed ? ' · Completed' : ''}</span>
+          {!recResult.recommended && recResult.reason && (
+            <span
+              className="muted small"
+              style={{
+                padding: '2px 8px',
+                borderRadius: 'var(--r-sm)',
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                color: 'var(--c-warning, #f59e0b)',
+                fontWeight: 500,
+              }}
+              title={recResult.reason}
+            >
+              Recommended: Beginner first
+            </span>
+          )}
+        </span>
+      }
     />
+  )
+
+  const diffSection = showDiff && (
+    <section className="pane pane--diff" style={{ marginTop: 'var(--s-4)' }}>
+      <DiffViewer myCode={code} referenceCode={challenge.solutionCode} solutionRevealed={Boolean(rec?.solutionRevealed)} />
+    </section>
+  )
+
+  const snippetsDrawer = (
+    <Drawer
+      open={snippetsOpen}
+      onClose={() => setSnippetsOpen(false)}
+      title="Code Snippets"
+    >
+      <SnippetPanel
+        snippets={HTML_SNIPPETS}
+        onInsert={(snipCode) => {
+          editorHandleRef.current?.insertAtCursor(snipCode)
+          setSnippetsOpen(false)
+          toast.show('Snippet inserted into editor.')
+        }}
+        onClose={() => setSnippetsOpen(false)}
+      />
+    </Drawer>
   )
 
   if (mobile) {
@@ -322,10 +543,11 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
           ))}
         </div>
         <div role="tabpanel" id="ppanel-brief" aria-labelledby="ptab-brief" hidden={tab !== 'brief'}>{brief}</div>
-        <div role="tabpanel" id="ppanel-editor" aria-labelledby="ptab-editor" hidden={tab !== 'editor'}>{editor}</div>
+        <div role="tabpanel" id="ppanel-editor" aria-labelledby="ptab-editor" hidden={tab !== 'editor'}>{editor}{diffSection}</div>
         <div role="tabpanel" id="ppanel-preview" aria-labelledby="ptab-preview" hidden={tab !== 'preview'}>{preview}</div>
         <div role="tabpanel" id="ppanel-feedback" aria-labelledby="ptab-feedback" hidden={tab !== 'feedback'}>{feedback}</div>
         {dialogs}
+        {snippetsDrawer}
         <FullscreenEditor
           open={fullscreen}
           onClose={() => setFullscreen(false)}
@@ -360,10 +582,12 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
             />
             {preview}
           </div>
+          {diffSection}
           {feedback}
         </div>
       </div>
       {dialogs}
+      {snippetsDrawer}
       <FullscreenEditor
         open={fullscreen}
         onClose={() => setFullscreen(false)}

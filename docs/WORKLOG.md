@@ -79,6 +79,40 @@
   - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.
 
+## 2026-10-26 — Stage 06: Practice workspace: multi-file, snippets, device frames, a11y linter, diff, difficulty progression
+- **Branch:** `stage-06-practice-workspace`
+- **CodeRunner & Preview Multi-File Engine:**
+  - Created `src/core/runner/types.ts` defining `CodeRunner`, `RunInput`, `RunResult`, and `RunnerKind`.
+  - Created `src/core/runner/iframePreviewRunner.ts` implementing `IframePreviewRunner` (`kind: 'iframe-preview'`).
+  - Extended `src/lib/preview.ts`: `buildPreviewDocument` now handles both single-file HTML strings and `ChallengeFile[]`, stitching CSS files into `<style data-filename="...">` tags with `escapeStyleTag` defense against `</style>` breakout injection.
+  - Updated `src/components/SandboxedPreview.tsx` to support both `code` and `files` with device frame container sizing, preserving empty `sandbox=""` and strict CSP.
+- **Drafts & Multi-File Storage:**
+  - Updated `src/state/reducer.ts` and `src/state/types.ts` to support optional `fileName` in `SET_DRAFT`. Added `draftKey(challengeId, fileName, fileCount)` helper preserving backward compatibility for single-file challenges while partitioning multi-file drafts (`challengeId::fileName`).
+  - Updated `CLEAR_DRAFT` to clear both un-suffixed and suffixed draft keys.
+- **Myers / LCS Line Diff & Solution Gating:**
+  - Created pure `src/core/learning/diff.ts` implementing Myers / LCS line difference algorithm capped at `MAX_DIFF_LINES = 2000` lines.
+  - Created `src/core/learning/DiffViewer.tsx` presenting side-by-side/inline comparison with additions/deletions counts, line gutter numbers, and strict gating: if solution is not yet revealed, diff is locked behind a clear callout explaining solution must be revealed first.
+- **Device Frames:**
+  - Created `src/core/ui/DeviceFrame.tsx` with Desktop (100%), Tablet (768px), and Mobile (375px) modes, displaying viewport dimension captions.
+- **Accessibility Linter:**
+  - Created `src/tracks/html/a11yLint.ts` using native `DOMParser` to inspect learner HTML for common accessibility mistakes: missing `alt` on `<img>`, unlabelled form controls, empty headings, duplicate IDs, and heading hierarchy skips (`<h1>` to `<h3>`). Explicitly includes non-WCAG audit disclaimer.
+- **Snippet Library:**
+  - Authored accessible HTML snippets in `src/tracks/html/snippets.ts`: standard boilerplate, semantic page layout, accessible form, accessible table, and semantic figure.
+  - Created `src/core/learning/SnippetPanel.tsx` in a slide-out drawer, filtering snippets and inserting them into the editor at cursor position.
+- **Soft Difficulty Progression (O-16):**
+  - Created `src/core/learning/difficulty.ts` implementing `isChallengeRecommended(challenge, state)`. In accordance with O-16, prerequisites and progression are purely advisory and never block navigation or practice.
+- **Practice Page Integration:**
+  - Integrated `toChallengeV2` adapter, multi-file tab switcher (rendered only when `fileCount > 1`), device frame toggle, diff comparison drawer/viewer, snippet drawer, a11y linter runner, and difficulty badge.
+- **Verification & Quality Gates:**
+  - Added unit/component tests: `src/test/diff.test.ts` (6 tests), `src/test/a11yLint.test.ts` (5 tests), `src/test/difficulty.test.ts` (3 tests), and `src/test/practiceWorkspace.test.tsx` (4 tests). Updated `src/test/preview.test.tsx` (+2 tests).
+  - All 34 Vitest test files (362 tests) passing cleanly.
+  - Playwright E2E: 10 tests passing including multi-file workspace, device frames, snippets drawer, a11y linter, and diff gating.
+  - TypeScript typecheck (`tsc -b --noEmit`) and ESLint (`eslint .`): 0 errors, 0 warnings.
+  - Production build: `index-*.js` 458.43 kB (141.26 kB gzip), CodeMirror chunk 496.16 kB (172.06 kB gzip).
+  - Security audit (`npm audit --omit=dev`): 0 vulnerabilities.
+  - Clean architecture: 0 forbidden `'html'` string literals in `src/pages/**`, `src/components/**`, `src/core/**`, `src/lib/**`.
+  - Legacy Learning Orbit (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`): 0 diff against master.
+
 ## 2026-10-26 — Stage 05: Editor platform: CodeMirror 6 adapter, splitter, auto-save, fullscreen, editor preferences
 - **Branch:** `stage-05-editor-platform`
 - **Soft Decision Gate O-01:**

@@ -11,7 +11,7 @@ export type Action =
   | { type: 'QUIZ_UPDATE'; topicId: string; session: QuizSession }
   | { type: 'QUIZ_RESET'; topicId: string }
   | { type: 'QUIZ_FINISH'; topicId: string; session: QuizSession; correct: number; total: number; now?: number }
-  | { type: 'SET_DRAFT'; challengeId: string; code: string }
+  | { type: 'SET_DRAFT'; challengeId: string; code: string; fileName?: string }
   | { type: 'CLEAR_DRAFT'; challengeId: string }
   | { type: 'RECORD_CHECK'; challengeId: string; passed: number; total: number; failedIds: string[]; now?: number }
   | { type: 'REVEAL_HINT'; challengeId: string; max: number }
@@ -58,6 +58,10 @@ function withActivity(
     activity: newActivity,
     streakBest: newStreakBest
   }
+}
+
+export function draftKey(challengeId: string, fileName?: string, fileCount = 1): string {
+  return fileCount <= 1 || !fileName ? challengeId : `${challengeId}::${fileName}`
 }
 
 export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
@@ -114,12 +118,18 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
       })
       return nextState
     }
-    case 'SET_DRAFT':
-      return state.drafts[action.challengeId] === action.code ? state : { ...state, drafts: { ...state.drafts, [action.challengeId]: action.code } }
+    case 'SET_DRAFT': {
+      const k = draftKey(action.challengeId, action.fileName)
+      return state.drafts[k] === action.code ? state : { ...state, drafts: { ...state.drafts, [k]: action.code } }
+    }
     case 'CLEAR_DRAFT': {
-      const { [action.challengeId]: _d, ...rest } = state.drafts
-      void _d
-      return { ...state, drafts: rest }
+      const nextDrafts = { ...state.drafts }
+      for (const k of Object.keys(nextDrafts)) {
+        if (k === action.challengeId || k.startsWith(`${action.challengeId}::`)) {
+          delete nextDrafts[k]
+        }
+      }
+      return { ...state, drafts: nextDrafts }
     }
     case 'RECORD_CHECK': {
       const prev = state.challenges[action.challengeId] ?? emptyChallenge()

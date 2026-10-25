@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 30 files (342 tests)
+## Automated (Vitest, jsdom) — 34 files (362 tests)
 | File | Covers |
 |---|---|
 |---|---|
@@ -12,7 +12,7 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `quiz.test.ts` | select/check/skip/finish/retry/navigation/score/pass/perfect; session sanitising |
 | `storage.test.ts` | save/load round-trip, invalid JSON, non-object JSON, newer version, v0 migration, partial repair, unavailable storage, quota failure, clear |
 | `progress.test.ts` | status rules, best score, mastery vs solution reveal, sticky completion, recommendations, hints, drafts, notes, bookmarks, error dedupe, reset |
-| `preview.test.tsx` | `sandbox=""`, no allow-scripts/allow-same-origin, learner markup absent from parent DOM, CSP before content, source scan for innerHTML/dangerouslySetInnerHTML/document.write |
+| `preview.test.tsx` | `sandbox=""`, no allow-scripts/allow-same-origin, learner markup absent from parent DOM, CSP before content, source scan for innerHTML/dangerouslySetInnerHTML/document.write, multi-file CSS stitching and `</style>` breakout defense |
 | `app.test.tsx` | first-run, previews, Orbit render/sync/keyboard/stable positions/edges/carousel/restore, lesson notes+bookmark persistence, full quiz + resume, practice run/check/hints/solution/focus/reset/mobile tabs, progress & review empty/populated, corrupt/unavailable storage, a11y landmarks |
 | `registry.test.ts` | TrackRegistry registration, duplicate rejection, registration order, availability filtering, defaultTrackId, unregisterTrack |
 | `htmlTrack.test.ts` | HTML track module packaging, unique IDs, complete lesson/quiz/challenge per topic, truthful capability declarations, planned track definitions |
@@ -36,8 +36,12 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `splitter.test.tsx` | Splitter (6.2, FC-18): `role="separator"`, $\pm 2\%$ keyboard navigation, Home 25%, End 75%, Enter/Space/r reset to 50%, double-click reset, boundary clamping |
 | `autoSaveIndicator.test.tsx` | Auto-save indicator (6.3): `saveStatus` states, 'Saved just now', relative timestamp updates, and amber 'Draft not saved' warning on storage error |
 | `fullscreenEditor.test.tsx` | Fullscreen editor (6.8): dialog accessibility, Esc key exit restoring focus to opener button, and live preview slide-out drawer |
+| `diff.test.ts` | Myers / LCS line diff algorithm, line numbering, additions/deletions identification, empty inputs, identical inputs, 2000-line safety cap |
+| `a11yLint.test.ts` | Accessibility linter rules: missing img alt, unlabelled inputs, empty headings, ID duplicates, heading hierarchy skips, explicit non-WCAG disclaimer |
+| `difficulty.test.ts` | Soft challenge progression predicate, recommendations based on prerequisites, advisory non-blocking nature |
+| `practiceWorkspace.test.tsx` | Multi-file tabs (`fileCount > 1`), DeviceFrame viewport switcher, DiffViewer gating behind solution reveal, snippet insertion at cursor |
 
-## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (9 tests)
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (10 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
 1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
 2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
@@ -48,6 +52,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 7. **Settings & Data Management**: Form controls rendered with accessible labels, pace selection, theme selection, quota progress meter, and backup export/reset buttons verified.
 8. **Atmosphere & Reduced Motion**: Atmosphere layer renders behind content at z-index: 0; `prefers-reduced-motion: reduce` suppresses animation classes; motion setting `reduced` applies `data-motion="reduced"`.
 9. **Editor Platform & Preferences**: Splitter separator with keyboard controls, AutoSaveIndicator, Fullscreen dialog modal with Esc exit and focus restoration, and Settings Editor preferences controls (engine, font size, tab indentation).
+10. **Practice Workspace Platform**: Multi-file tab UI, DeviceFrame viewport dimensions (Desktop, Tablet 768px, Mobile 375px), Snippets drawer insertion, A11y linter detection, and Diff gating strictly disabled until solution revealed.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.
