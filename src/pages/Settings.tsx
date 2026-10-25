@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast'
 import { buildExport, parseImport, type ImportResult } from '../core/storage/exportImport'
 import { getQuotaInfo } from '../core/storage/quota'
 import { dayKey } from '../core/gamification/streak'
+import { DEFAULT_ATMOSPHERE_SETTINGS, type AtmosphereSettings } from '../state/types'
 import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
 
 export default function Settings() {
@@ -58,9 +59,20 @@ export default function Settings() {
     dispatch({ type: 'SET_SETTINGS', patch: { contrast } })
   }
 
-  const handleMotionToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const motion: MotionPreference = e.target.checked ? 'reduced' : 'system'
+  const handleMotionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const motion = e.target.value as MotionPreference
     dispatch({ type: 'SET_SETTINGS', patch: { motion } })
+    toast.show(`Motion preference set to ${motion}.`, 'info')
+  }
+
+  const atmosphere = settings.atmosphere ?? DEFAULT_ATMOSPHERE_SETTINGS
+
+  const handleAtmosphereToggle = (key: keyof AtmosphereSettings, checked: boolean) => {
+    const updated = {
+      ...atmosphere,
+      [key]: checked,
+    }
+    dispatch({ type: 'SET_SETTINGS', patch: { atmosphere: updated } })
   }
 
   const handleExport = () => {
@@ -208,6 +220,20 @@ export default function Settings() {
               />
             </div>
 
+            <div>
+              <Select
+                id="motion-select"
+                label="Motion & Animation"
+                value={settings.motion || 'system'}
+                options={[
+                  { value: 'system', label: 'Match System (Follows OS setting)' },
+                  { value: 'reduced', label: 'Reduced Motion (Disable decorative animations)' },
+                  { value: 'full', label: 'Full Motion (Enable all cinematic effects)' },
+                ]}
+                onChange={handleMotionChange}
+              />
+            </div>
+
             <div style={{ display: 'grid', gap: 'var(--s-3)' }}>
               <Toggle
                 label="High Contrast Mode"
@@ -215,13 +241,37 @@ export default function Settings() {
                 checked={settings.contrast === 'high'}
                 onChange={handleContrastToggle}
               />
-              <Toggle
-                label="Reduced Motion"
-                description="Disables decorative celestial animations and reduces transitions."
-                checked={settings.motion === 'reduced'}
-                onChange={handleMotionToggle}
-              />
             </div>
+          </div>
+        </Card>
+
+        {/* Atmosphere & Celestial Layers (Stage 04: 1.1, 1.2, 1.3, 1.6) */}
+        <Card title="Celestial Atmosphere" eyebrow="Atmosphere & Effects">
+          <div style={{ display: 'grid', gap: 'var(--s-4)', marginTop: 'var(--s-3)' }}>
+            <Toggle
+              label="Dynamic Nebula Background"
+              description="Deep space gradients with restrained drift on dashboard and track map."
+              checked={atmosphere.nebula}
+              onChange={(e) => handleAtmosphereToggle('nebula', e.target.checked)}
+            />
+            <Toggle
+              label="Constellation Grid Overlay"
+              description="Faint astronomical coordinate grid with subtle cursor proximity glow."
+              checked={atmosphere.grid}
+              onChange={(e) => handleAtmosphereToggle('grid', e.target.checked)}
+            />
+            <Toggle
+              label="Cursor Glow & Parallax Aura"
+              description="Subtle accent glow trailing pointer movements (mouse/trackpad only)."
+              checked={atmosphere.cursorGlow}
+              onChange={(e) => handleAtmosphereToggle('cursorGlow', e.target.checked)}
+            />
+            <Toggle
+              label="Ambient Particle Field"
+              description="Floating micro-starlight dust on dashboard (opt-in)."
+              checked={atmosphere.particles}
+              onChange={(e) => handleAtmosphereToggle('particles', e.target.checked)}
+            />
           </div>
         </Card>
 

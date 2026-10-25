@@ -24,6 +24,7 @@ import {
   readEarlyAppearance,
   writeEarlyAppearance
 } from '../core/settings/appearance'
+import { Starfield } from '../core/atmosphere/Starfield.tsx'
 import type {
   ThemeId,
   AccentId,
@@ -244,6 +245,37 @@ export default function UiGallery() {
             <p className="muted small">
               Foundational tokens and specimens for the constellation learning orbit. Node states, central hub, and connectors.
             </p>
+          </Card>
+
+          {/* Starfield Backdrop Specimen (Stage 04 / Stage 10) */}
+          <Card title="Deterministic Starfield Specimen (Stage 04 / Stage 10)">
+            <p className="muted small" style={{ marginBottom: 'var(--s-3)' }}>
+              Seeded static star layer backdrop with &le; 150 dots and twinkle on &le; 12 dots when motion is allowed.
+            </p>
+            <div
+              style={{
+                position: 'relative',
+                height: '220px',
+                borderRadius: 'var(--r-md)',
+                overflow: 'hidden',
+                background: 'var(--orbit-field, #0a0a14)',
+                border: '1px solid var(--c-border)',
+              }}
+            >
+              <Starfield seed="ui-gallery-specimen" density="normal" />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'var(--c-text)',
+                  pointerEvents: 'none',
+                }}
+              >
+                <span className="small muted">Starfield Backdrop Layer</span>
+              </div>
+            </div>
           </Card>
 
           {/* Node States */}

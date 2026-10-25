@@ -198,4 +198,42 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     const quotaLabel = page.locator('text=Storage Usage')
     await expect(quotaLabel).toBeVisible()
   })
+
+  test('Atmosphere layers render behind content and reduced motion disables animations', async ({ page }) => {
+    // 1. Visit Home with normal motion
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const atmosphereRoot = page.locator('.atmosphere-root')
+    await expect(atmosphereRoot).toBeAttached()
+    await expect(atmosphereRoot).toHaveAttribute('aria-hidden', 'true')
+
+    // Nebula is rendered on Home
+    const nebula = page.locator('.nebula-backdrop')
+    await expect(nebula).toBeAttached()
+
+    // Constellation grid is rendered
+    const grid = page.locator('.constellation-grid')
+    await expect(grid).toBeAttached()
+
+    // 2. Emulate prefers-reduced-motion: reduce
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
+    // Under reduced motion, animated glow classes are suppressed
+    const animatedGlow = page.locator('.nebula-glow--animated')
+    await expect(animatedGlow).toHaveCount(0)
+
+    // 3. Settings motion control
+    await page.goto('/settings')
+    await page.waitForLoadState('networkidle')
+
+    const motionSelect = page.locator('#motion-select')
+    await expect(motionSelect).toBeVisible()
+    await motionSelect.selectOption('reduced')
+
+    const rootMotion = await page.evaluate(() => document.documentElement.getAttribute('data-motion'))
+    expect(rootMotion).toBe('reduced')
+  })
 })

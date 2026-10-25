@@ -79,4 +79,26 @@ describe('Settings Page (14.1, 14.2, 14.4, FC-07)', () => {
     await user.click(resetActionBtn)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
+
+  it('renders atmosphere toggles and motion selector taking immediate effect', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+
+    // Motion select
+    const motionSelect = screen.getByLabelText(/Motion & Animation/i)
+    expect(motionSelect).toHaveValue('system')
+    await user.selectOptions(motionSelect, 'reduced')
+    expect(motionSelect).toHaveValue('reduced')
+
+    // Atmosphere toggles
+    const nebulaToggle = screen.getByRole('switch', { name: /Dynamic Nebula Background/i })
+    expect(nebulaToggle).toBeChecked()
+    await user.click(nebulaToggle)
+    expect(nebulaToggle).not.toBeChecked()
+
+    const particlesToggle = screen.getByRole('switch', { name: /Ambient Particle Field/i })
+    expect(particlesToggle).not.toBeChecked()
+    await user.click(particlesToggle)
+    expect(particlesToggle).toBeChecked()
+  })
 })

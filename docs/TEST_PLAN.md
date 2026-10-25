@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 23 files (296 tests)
+## Automated (Vitest, jsdom) — 26 files (318 tests)
 | File | Covers |
 |---|---|
 | `curriculum.test.ts` | stable unique IDs/order; prerequisite edges valid, acyclic, not a chain; every topic has lesson/quiz/challenge; quiz shape; previews have no topics |
@@ -27,9 +27,12 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `migrations.test.ts` | Schema v1 to v2 migration, preservation of reference-era activity days and daily done, sanitization and repair |
 | `exportImport.test.ts` | Backup JSON export structure, schema validation, size limits (≤ 4 MiB), and preview summaries |
 | `persistence.test.tsx` | 300ms save debounce, flush on pagehide/visibilitychange, cross-tab synchronization, quota warning |
-| `Settings.test.tsx` | Profile name length validation, FC-07 compliant form controls, typed "RESET" modal confirmation |
+| `Settings.test.tsx` | Profile name length validation, FC-07 compliant form controls, typed "RESET" modal confirmation, atmosphere toggles and motion selector |
+| `useMotionAllowed.test.ts` | Motion preference matrix (system/reduced/full), OS prefers-reduced-motion media query precedence, reactive updates |
+| `starfield.test.tsx` | Deterministic starPositions generator, hard caps (≤ 150 stars, ≤ 12 twinkle), SVG rendering, high-contrast suppression, reduced motion twinkle disablement |
+| `atmosphere.test.tsx` | Fixed z-index: 0 container, route-specific Nebula (Home/Track only), high-contrast absence, particle cap (≤ 30), route transition focus & first-render skip, text contrast over nebula gradient peak |
 
-## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (7 tests)
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (8 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
 1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
 2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
@@ -38,6 +41,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 5. **Theme & accent switching**: Switching between Obsidian, Starlight, and Aurora restyles document attributes and background styles without flash.
 6. **Dev route isolation**: `/__ui` returns 404 NotFound in production preview builds.
 7. **Settings & Data Management**: Form controls rendered with accessible labels, pace selection, theme selection, quota progress meter, and backup export/reset buttons verified.
+8. **Atmosphere & Reduced Motion**: Atmosphere layer renders behind content at z-index: 0; `prefers-reduced-motion: reduce` suppresses animation classes; motion setting `reduced` applies `data-motion="reduced"`.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

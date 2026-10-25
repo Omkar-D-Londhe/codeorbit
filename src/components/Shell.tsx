@@ -4,6 +4,8 @@ import { openErrorCount } from '../lib/progress'
 import { useMediaQuery } from '../lib/hooks'
 import { useApp } from '../state/AppState'
 import { Emblem, Icon, type IconName } from './Icon'
+import { Atmosphere } from '../core/atmosphere/Atmosphere'
+import { RouteTransition } from '../core/atmosphere/RouteTransition'
 
 interface NavItem { to: string; label: string; icon: IconName; match: (p: string) => boolean }
 
@@ -98,6 +100,7 @@ export function Shell() {
 
   return (
     <div className="shell">
+      <Atmosphere />
       <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus() }}>Skip to main content</a>
       {isMobile ? (
         <header className="topbar" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
@@ -120,7 +123,9 @@ export function Shell() {
       )}
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
         <StorageBanner />
-        <Outlet />
+        <RouteTransition>
+          <Outlet />
+        </RouteTransition>
       </main>
       {isMobile && <nav className="bottom-nav" aria-label="Main"><NavLinks variant="bottom" /></nav>}
     </div>

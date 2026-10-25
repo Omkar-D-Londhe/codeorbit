@@ -10,6 +10,13 @@ export function registerTracks(): void {
   }
 
   // Register planned tracks from existing curriculum definitions
+  const trackTints: Record<string, string> = {
+    css: '#f59e0b', // amber
+    javascript: '#14b8a6', // teal
+    bootstrap: '#8b5cf6',
+    angular: '#ef4444',
+  }
+
   for (const tech of technologies) {
     if (tech.status === 'planned' && !getTrack(tech.id)) {
       const plannedTrack: TrackModule = {
@@ -18,7 +25,7 @@ export function registerTracks(): void {
         glyph: tech.glyph,
         description: tech.description,
         availability: 'planned',
-        tint: '#9a8bff',
+        tint: trackTints[tech.id] || '#9a8bff',
         language: {
           id: tech.id,
           displayName: tech.name,

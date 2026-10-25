@@ -117,8 +117,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
 }
 
+export function useAppOptional(): Ctx | null {
+  return useContext(AppCtx)
+}
+
 export function useApp(): Ctx {
-  const c = useContext(AppCtx)
+  const c = useAppOptional()
   if (!c) throw new Error('useApp must be used inside <AppStateProvider>')
   return c
 }

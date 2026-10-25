@@ -78,3 +78,26 @@
   - Full suite verified: 23 test files, 296 unit/integration tests passing.
   - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.
+
+## 2026-10-26 — Stage 04: Atmosphere layers and cinematic transitions
+- **Branch:** `stage-04-atmosphere-and-motion`
+- **Atmosphere Components & Foundation:**
+  - Created `src/core/atmosphere/useMotionAllowed.ts` combining user motion setting and OS `prefers-reduced-motion` media query. Added `src/test/useMotionAllowed.test.ts` (6 tests passing).
+  - Created `src/core/atmosphere/starfield.ts` (deterministic Mulberry32 PRNG, hard-capped at 150 stars and ≤ 12 twinkling stars) and `src/core/atmosphere/Starfield.tsx`. Added `src/test/starfield.test.tsx` (7 tests passing) and added specimen to `UiGallery.tsx` under Constellation tab.
+  - Created `src/core/atmosphere/Nebula.tsx` and `src/core/atmosphere/nebula.css`: 3 stacked radial gradients with 100s transform/opacity drift, per-track `--nebula-tint` (violet HTML, amber CSS, teal JS), disabled under reduced motion and absent in high-contrast mode.
+  - Created `src/core/atmosphere/ConstellationGrid.tsx`: SVG pattern with rAF-throttled cursor proximity brightening on `(pointer: fine)` devices.
+  - Created `src/core/atmosphere/CursorGlow.tsx`: fixed radial gradient with 120ms trailing on pointer-fine devices.
+  - Created `src/core/atmosphere/Particles.tsx`: canvas ambient floating dust, hard-capped at 30 particles, paused when off-screen (`IntersectionObserver`) or hidden (`visibilitychange`).
+  - Created `src/core/atmosphere/RouteTransition.tsx`: 220ms opacity fade + 8px rise between route changes, skipped on first render and when motion is reduced, preserving focus in `<main>`.
+  - Created `src/core/atmosphere/Atmosphere.tsx`: fixed container behind content at `z-index: 0` (`pointer-events: none`, `aria-hidden: true`), rendering Nebula on Home/Track only.
+- **Integration & Shell:**
+  - Integrated `<Atmosphere />` and `<RouteTransition>` in `src/components/Shell.tsx`, with `.main` having `position: relative; z-index: 1`.
+  - Added per-track nebula tints to `registerTracks.ts`.
+  - Added `atmosphere` settings to `src/state/types.ts` and `src/lib/storage.ts`.
+  - Added Atmosphere toggles and full Motion select to `src/pages/Settings.tsx`.
+- **E2E & Verification:**
+  - Added `src/test/atmosphere.test.tsx` (8 tests passing) covering z-index, route filtering, high contrast absence, reduced motion, particle cap, and WCAG AA contrast over nebula peak.
+  - Updated `e2e/smoke.spec.ts` with Atmosphere layer and reduced motion emulation checks (8 tests passing).
+  - Full suite verified: 26 test files, 318 tests passing.
+  - Build size verified: 422.74 kB (130.28 kB gzip) — within 450 kB budget.
+  - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences; legacy orbit files untouched.

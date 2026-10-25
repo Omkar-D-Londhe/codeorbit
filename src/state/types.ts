@@ -53,6 +53,20 @@ export interface ErrorEntry {
   createdAt: number
 }
 
+export interface AtmosphereSettings {
+  nebula: boolean
+  grid: boolean
+  cursorGlow: boolean
+  particles: boolean
+}
+
+export const DEFAULT_ATMOSPHERE_SETTINGS: AtmosphereSettings = {
+  nebula: true,
+  grid: true,
+  cursorGlow: false,
+  particles: false,
+}
+
 export interface Settings {
   userName?: string
   pace: 'casual' | 'regular' | 'intensive'
@@ -63,6 +77,7 @@ export interface Settings {
   soundEnabled?: boolean
   streakReminders?: boolean
   dailyGoal?: number
+  atmosphere?: AtmosphereSettings
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -71,7 +86,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'obsidian',
   accent: 'violet',
   contrast: 'normal',
-  motion: 'system'
+  motion: 'system',
+  atmosphere: { ...DEFAULT_ATMOSPHERE_SETTINGS }
 }
 
 export interface ActivityEvent {

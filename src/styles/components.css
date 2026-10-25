@@ -96,7 +96,7 @@
 .nav__count { margin-left: auto; min-width: 22px; padding: 0 6px; text-align: center; font-size: var(--fs-meta); font-weight: 700; border-radius: 999px; background: var(--c-accent); color: var(--c-on-accent); }
 .side-note { margin-top: auto; font-size: var(--fs-meta); color: var(--c-text-quiet); padding: 0 var(--s-2); display: flex; gap: 8px; align-items: flex-start; }
 .side-note--warn { color: var(--c-warning); }
-.main { min-width: 0; padding: var(--s-8) var(--s-10) var(--s-12); outline: none; }
+.main { min-width: 0; padding: var(--s-8) var(--s-10) var(--s-12); outline: none; position: relative; z-index: 1; }
 .topbar { position: sticky; top: 0; z-index: var(--z-nav); display: flex; align-items: center; padding: 10px var(--s-4); background: var(--c-surface-1); border-bottom: 1px solid var(--c-border); }
 .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-nav); background: var(--c-surface-1); border-top: 1px solid var(--c-border); padding-bottom: env(safe-area-inset-bottom); }
 .nav--bottom { display: grid; grid-template-columns: repeat(4, 1fr); }

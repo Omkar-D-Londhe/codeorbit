@@ -45,13 +45,18 @@ export function isValidContrast(val: unknown): val is ContrastMode {
 }
 
 export function isValidMotion(val: unknown): val is MotionPreference {
-  return typeof val === 'string' && VALID_MOTIONS.includes(val as MotionPreference)
+  return typeof val === 'string' && (VALID_MOTIONS.includes(val as MotionPreference) || val === 'reduce')
 }
 
 /**
  * Applies theme, accent, contrast, and motion attributes to the given root element (defaults to <html>).
  */
-export function applyAppearance(appearance: Partial<Appearance>, root = document.documentElement): void {
+export function applyAppearance(
+  appearance: Partial<Appearance> & {
+    atmosphere?: { nebula?: boolean; grid?: boolean; cursorGlow?: boolean; particles?: boolean }
+  },
+  root = document.documentElement
+): void {
   if (!root) return
 
   const theme = isValidTheme(appearance.theme) ? appearance.theme : DEFAULT_APPEARANCE.theme
@@ -66,6 +71,15 @@ export function applyAppearance(appearance: Partial<Appearance>, root = document
     root.setAttribute('data-motion', motion)
   } else {
     root.removeAttribute('data-motion')
+  }
+
+  if (appearance.atmosphere) {
+    if (typeof appearance.atmosphere.nebula === 'boolean') {
+      root.setAttribute('data-atmosphere-nebula', appearance.atmosphere.nebula ? 'on' : 'off')
+    }
+    if (typeof appearance.atmosphere.grid === 'boolean') {
+      root.setAttribute('data-atmosphere-grid', appearance.atmosphere.grid ? 'on' : 'off')
+    }
   }
 
   // Update color-scheme CSS property

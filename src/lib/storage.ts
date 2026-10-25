@@ -2,7 +2,7 @@ import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
 import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings } from '../state/types'
-import { DEFAULT_SETTINGS } from '../state/types'
+import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
 import { migrateV1toV2 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
@@ -233,9 +233,25 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       set.contrast = rawSet.contrast
     } else if (rawSet.contrast !== undefined) drop()
 
-    if (isValidMotion(rawSet.motion)) {
+    if (rawSet.motion === 'reduce') {
+      set.motion = 'reduced'
+    } else if (isValidMotion(rawSet.motion)) {
       set.motion = rawSet.motion
     } else if (rawSet.motion !== undefined) drop()
+
+    if (isObj(rawSet.atmosphere)) {
+      set.atmosphere = {
+        nebula: typeof rawSet.atmosphere.nebula === 'boolean' ? rawSet.atmosphere.nebula : DEFAULT_ATMOSPHERE_SETTINGS.nebula,
+        grid: typeof rawSet.atmosphere.grid === 'boolean' ? rawSet.atmosphere.grid : DEFAULT_ATMOSPHERE_SETTINGS.grid,
+        cursorGlow: typeof rawSet.atmosphere.cursorGlow === 'boolean' ? rawSet.atmosphere.cursorGlow : DEFAULT_ATMOSPHERE_SETTINGS.cursorGlow,
+        particles: typeof rawSet.atmosphere.particles === 'boolean' ? rawSet.atmosphere.particles : DEFAULT_ATMOSPHERE_SETTINGS.particles,
+      }
+    } else if (rawSet.atmosphere !== undefined) {
+      drop()
+      set.atmosphere = { ...DEFAULT_ATMOSPHERE_SETTINGS }
+    } else {
+      set.atmosphere = { ...DEFAULT_ATMOSPHERE_SETTINGS }
+    }
 
     if (typeof rawSet.soundEnabled === 'boolean') set.soundEnabled = rawSet.soundEnabled
     if (typeof rawSet.streakReminders === 'boolean') set.streakReminders = rawSet.streakReminders

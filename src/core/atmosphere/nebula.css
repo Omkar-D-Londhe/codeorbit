@@ -1,0 +1,84 @@
+.nebula-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  z-index: 0;
+}
+
+.nebula-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+/* 3 stacked radial gradients with restrained alpha for WCAG AA compliance */
+.nebula-glow--primary {
+  width: min(80vw, 900px);
+  height: min(80vh, 700px);
+  top: -10%;
+  left: 15%;
+  background: radial-gradient(circle, var(--nebula-tint, rgba(154, 139, 255, 0.14)) 0%, transparent 70%);
+  opacity: 0.85;
+}
+
+.nebula-glow--secondary {
+  width: min(70vw, 750px);
+  height: min(70vh, 600px);
+  top: 30%;
+  right: -5%;
+  background: radial-gradient(circle, var(--c-accent-glow, rgba(139, 92, 246, 0.10)) 0%, transparent 68%);
+  opacity: 0.70;
+}
+
+.nebula-glow--tertiary {
+  width: min(90vw, 850px);
+  height: min(60vh, 550px);
+  bottom: -15%;
+  left: 20%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 65%);
+  opacity: 0.60;
+}
+
+@keyframes nebula-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  33% {
+    transform: translate3d(3vw, -2vh, 0) scale(1.05);
+    opacity: 0.72;
+  }
+  66% {
+    transform: translate3d(-2vw, 3vh, 0) scale(0.96);
+    opacity: 0.90;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+}
+
+.nebula-glow--animated {
+  animation: nebula-drift 100s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nebula-glow--animated {
+    animation: none !important;
+  }
+}
+
+html[data-motion='reduce'] .nebula-glow--animated,
+html[data-motion='reduced'] .nebula-glow--animated {
+  animation: none !important;
+}
+
+html[data-contrast='high'] .nebula-backdrop {
+  display: none !important;
+}
