@@ -432,11 +432,162 @@
   }
 }
 
+/* Catalog 2.1: Star Pulse on Progress Save */
+@keyframes orbit-star-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(154, 139, 255, 0.8);
+  }
+  70% {
+    box-shadow: 0 0 0 22px rgba(154, 139, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(154, 139, 255, 0);
+  }
+}
+
+.constellation-star--pulse .constellation-star__disc {
+  animation: orbit-star-pulse 1.4s cubic-bezier(0.25, 1, 0.5, 1) 1;
+}
+
+/* Catalog 2.2: Orbit Trail */
+.orbit-trail-path {
+  fill: none;
+  stroke: var(--accent, #9a8bff);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 8 6;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px var(--accent, #9a8bff));
+  animation: orbit-trail-flow 1.8s linear infinite;
+}
+
+@keyframes orbit-trail-flow {
+  from {
+    stroke-dashoffset: 28;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Catalog 2.3: Active edge emphasis */
+.constellation-edge-prereq--active {
+  stroke: var(--accent-bright, #c2b7ff) !important;
+  stroke-width: 2.5 !important;
+  stroke-dasharray: 4 2 !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px var(--accent, #9a8bff));
+}
+
+/* Catalog 2.4: Group Zones & Badges */
+.constellation-zone-halo {
+  transition: opacity 0.2s ease;
+}
+
+.constellation-zone-badge {
+  cursor: pointer;
+  background: var(--surface-raised, rgba(36, 34, 53, 0.85));
+  border: 1px solid var(--border, #3a3556);
+  border-radius: var(--r-full, 9999px);
+  padding: 4px 10px;
+  color: var(--text-muted, #9c97b8);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.constellation-zone-badge:hover,
+.constellation-zone-badge:focus-visible {
+  background: var(--surface, #1e1b2e);
+  border-color: var(--accent, #9a8bff);
+  color: var(--text, #f0eff7);
+  outline: none;
+  box-shadow: 0 0 10px rgba(154, 139, 255, 0.3);
+}
+
+/* Catalog 2.5: Tooltip */
+.constellation-star__tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-raised, #242235);
+  border: 1px solid var(--border-hover, #5a547a);
+  border-radius: var(--r-sm, 6px);
+  padding: 6px 10px;
+  font-size: var(--fs-small, 12px);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.4));
+  z-index: 30;
+  text-align: center;
+}
+
+.constellation-star__tooltip-title {
+  font-weight: 600;
+  color: var(--text, #f0eff7);
+}
+
+.constellation-star__tooltip-meta {
+  color: var(--text-muted, #9c97b8);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Catalog 2.6: Beacon */
+@keyframes orbit-beacon-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.4;
+  }
+}
+
+.constellation-star__here-beacon {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--warning, #f5a623);
+  border: 2px solid var(--surface, #1e1b2e);
+  box-shadow: 0 0 8px var(--warning, #f5a623);
+  animation: orbit-beacon-pulse 2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Catalog 2.7: Breadcrumb Mini Constellation */
+.breadcrumb-mini-orbit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@media (max-width: 767px) {
+  .breadcrumb-mini-orbit {
+    display: none !important;
+  }
+}
+
 /* Reduced motion and High contrast */
 @media (prefers-reduced-motion: reduce) {
   .constellation-star__disc,
   .constellation-hub-btn,
-  .constellation-edge-prereq {
+  .constellation-edge-prereq,
+  .constellation-star--pulse .constellation-star__disc,
+  .constellation-star__here-beacon,
+  .orbit-trail-path {
     transition: none !important;
     animation: none !important;
   }

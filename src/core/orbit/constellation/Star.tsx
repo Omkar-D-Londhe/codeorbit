@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { LayoutNode, NodeView } from './types'
 import { Icon } from '../../../components/Icon'
 
@@ -8,9 +8,13 @@ export interface StarProps {
   topicTitle?: string
   isMastered?: boolean
   isRovingActive?: boolean
+  isPulsing?: boolean
+  isLastVisited?: boolean
+  estimateMinutes?: number
   zoom?: number
   onSelect: (topicId: string) => void
   onFocus?: () => void
+  onHover?: (hovered: boolean) => void
   onKeyDown?: (e: React.KeyboardEvent) => void
 }
 
@@ -20,11 +24,16 @@ export function Star({
   topicTitle,
   isMastered = false,
   isRovingActive = false,
+  isPulsing = false,
+  isLastVisited = false,
+  estimateMinutes,
   zoom = 1,
   onSelect,
   onFocus,
+  onHover,
   onKeyDown,
 }: StarProps) {
+  const [isHovered, setIsHovered] = useState(false)
   const { topicId, state, parts, partsTotal, selected } = view
   const displayNum = String(node.index + 1).padStart(2, '0')
   const title = topicTitle || topicId
@@ -38,7 +47,8 @@ export function Star({
     statusText = 'Locked — prerequisite required'
   }
 
-  const accessibleName = `${displayNum} ${title}. ${statusText}`
+  const youAreHereText = isLastVisited ? '. Last visited (you are here)' : ''
+  const accessibleName = `${displayNum} ${title}. ${statusText}${youAreHereText}`
   const showFullLabel = zoom >= 0.9 || selected
 
   // Progress arc calculation for in-progress node
@@ -46,19 +56,48 @@ export function Star({
   const circumference = 2 * Math.PI * 25 // radius 25
   const strokeDashoffset = hasArc ? circumference * (1 - parts / partsTotal) : circumference
 
+  const handleMouseEnter = () => {
+    setIsHovered(true)
+    onHover?.(true)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovered(false)
+    onHover?.(false)
+  }
+
+  const handleFocus = () => {
+    onFocus?.()
+    onHover?.(true)
+  }
+
+  const handleBlur = () => {
+    onHover?.(false)
+  }
+
   return (
     <button
       type="button"
-      className={`constellation-star constellation-star--${state} ${selected ? 'is-selected' : ''}`}
+      className={`constellation-star constellation-star--${state} ${selected ? 'is-selected' : ''} ${
+        isPulsing ? 'constellation-star--pulse' : ''
+      } ${isLastVisited ? 'is-last-visited' : ''}`}
       style={{ left: `${node.x}px`, top: `${node.y}px` }}
       aria-label={accessibleName}
       aria-current={selected ? 'true' : undefined}
       tabIndex={isRovingActive ? 0 : -1}
       onClick={() => onSelect(topicId)}
-      onFocus={onFocus}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       onKeyDown={onKeyDown}
     >
       <div className="constellation-star__disc">
+        {/* Catalog 2.6: "You Are Here" / Last visited beacon indicator */}
+        {isLastVisited && (
+          <span className="constellation-star__here-beacon" aria-hidden="true" />
+        )}
+
         {hasArc && (
           <svg
             className="constellation-star__arc"
@@ -111,6 +150,18 @@ export function Star({
           <span className="constellation-star__title">{displayNum}</span>
         )}
       </div>
+
+      {/* Catalog 2.5: Compact Tooltip on hover/focus (Title, Status, Estimate) */}
+      {isHovered && (
+        <div className="constellation-star__tooltip" role="tooltip">
+          <div className="constellation-star__tooltip-title">{title}</div>
+          <div className="constellation-star__tooltip-meta">
+            {statusText}
+            {estimateMinutes ? ` · ~${estimateMinutes} min` : ''}
+            {isLastVisited ? ' · Last visited' : ''}
+          </div>
+        </div>
+      )}
     </button>
   )
 }

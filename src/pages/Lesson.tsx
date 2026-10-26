@@ -207,6 +207,7 @@ function LessonInner({ topicId }: { topicId: string }) {
       <ReadingProgress />
       <PageHeader
         crumbs={[{ label: 'Explore', to: '/explore' }, { label: topic.technologyId.toUpperCase(), to: trackPath(topic.technologyId) }, { label: topic.title }]}
+        miniConstellation={{ technologyId: topic.technologyId, topicId: topic.id }}
         title={topic.title}
         lede={`${getGroup(topic.groupId)?.title} · Topic ${idx + 1} of ${topics.length}`}
         actions={

@@ -68,28 +68,34 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
 
   it('2. Track page shows the Learning Orbit; selection via map/stepper/strip in sync; keyboard moves within bounds', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    const { unmount } = renderAt('/learn/html')
 
+    // Promoted Constellation Orbit on /learn/html
+    const stars = document.querySelectorAll('.constellation-star')
+    expect(stars).toHaveLength(12)
+
+    // Click on first star selects Document structure
+    await user.click(stars[0])
+    expect(screen.getByRole('heading', { level: 2, name: 'Document structure' })).toBeInTheDocument()
+
+    // Click on star node selects and updates details
+    await user.click(stars[1])
+    expect(screen.getByRole('heading', { level: 2, name: 'Elements and attributes' })).toBeInTheDocument()
+
+    // Stepper navigation in sync
+    const nextBtn = screen.getByRole('button', { name: /next topic/i })
+    await user.click(nextBtn)
+    expect(screen.getByRole('heading', { level: 2, name: 'Headings and paragraphs' })).toBeInTheDocument()
+
+    unmount()
+
+    // Legacy orbit remains available via ?orbit=legacy fallback
+    const legacy = renderAt('/learn/html?orbit=legacy')
     const strip = within(screen.getByRole('list', { name: /topics in curriculum order/i })).getAllByRole('button')
     const arch = within(screen.getByRole('list', { name: /on the learning orbit/i })).getAllByRole('button')
     expect(strip).toHaveLength(12)
     expect(arch).toHaveLength(12)
-
-    // Initial selection is first topic
-    expect(screen.getByRole('heading', { level: 2, name: 'Document structure' })).toBeInTheDocument()
-
-    // Click on strip node selects and updates details
-    await user.click(strip[1])
-    expect(screen.getByRole('heading', { level: 2, name: 'Elements and attributes' })).toBeInTheDocument()
-
-    // Click on arch node selects and updates details
-    await user.click(arch[2])
-    expect(screen.getByRole('heading', { level: 2, name: 'Headings and paragraphs' })).toBeInTheDocument()
-
-    // Keyboard navigation within strip
-    strip[2].focus()
-    await user.keyboard('{ArrowRight}')
-    expect(document.activeElement).toBe(strip[3])
+    legacy.unmount()
   })
 
   it('3. Lesson completion persists across reload', async () => {

@@ -328,3 +328,33 @@
   - ESLint: 0 errors, 0 warnings (`npm run lint`), zero forbidden `'html'` string literals.
   - Security: 0 npm audit production vulnerabilities.
   - Decision Gate O-15: Stage 10a complete; stopping for owner review prior to 10b rollout.
+
+## 2026-10-26 — Stage 10b: Learning Orbit: celestial constellation map rollout and promotion
+- **Branch:** `stage-10-constellation-orbit`
+- **Owner Approval (Decision Gate O-15):**
+  - Owner explicitly approved proceeding from Stage 10a to Stage 10b on 2026-10-26.
+  - Confirmed promotion of `<ConstellationOrbit>` as primary default on `/learn/:technologyId`.
+  - Recorded 9 known visual observations for post-10b consolidated remediation.
+- **Rollout and Promotion Scope:**
+  - Default route `/learn/:technologyId` renders `<ConstellationOrbit>` directly without requiring `?orbit=constellation`.
+  - Legacy orbit implementation retained in `src/components/orbit/` and `src/lib/orbitGeometry.ts`, accessible via fallback `?orbit=legacy`.
+  - Dev fixture gallery retained at `/__ui/orbit`.
+  - Maintained advisory-only prerequisites under Decision O-16 (no route locks, no forced redirects).
+- **Catalog Layers 2.1–2.7 Implementation:**
+  - 2.1 Star Pulse on Progress Save (`usePulse.ts`, `Star.tsx`, `constellation.css`): pulses only on genuine progress save (parts increase or completion), omitted on load/nav, suppressed under reduced motion.
+  - 2.2 Orbital Trail on Navigation (`OrbitTrail.tsx`, `Edges.tsx`): draws curved Bézier trail between stars on non-adjacent selection (|index diff| > 1), omitted on adjacent or under reduced motion.
+  - 2.3 Prerequisite Constellation Lines & Relations Live Text (`relationsLive.ts`, `Edges.tsx`, `ConstellationMap.tsx`): active edge brightening, polite screen reader announcement formatting declared prerequisites and dependents.
+  - 2.4 Topic Group Zones / Halos (`ZoneHalos.tsx`, `Edges.tsx`): group halo zones with label badge navigation to first topic, preserving star position equality invariant.
+  - 2.5 Zoom/Magnify on Hover with Compact Tooltip (`Star.tsx`, `constellation.css`): star disc scales $\le 1.08\times$ on hover/focus with compact tooltip displaying title, status, and time estimate.
+  - 2.6 "You Are Here" / Last Visited Indicator (`Star.tsx`, `constellation.css`): beacon indicator on `state.lastVisited.topicId` star with accessible text alternative.
+  - 2.7 Breadcrumb Mini Constellation Preview (`MiniConstellation.tsx`, `PageHeader.tsx`, `Lesson.tsx`, `Practice.tsx`): 48×48 px mini orbit in breadcrumb bar on lesson and practice views $\ge 768$ px, linking to track orbit.
+- **Quality Gates & Verification:**
+  - 7 new/extended constellation test files in `src/test/constellation/`: `pulse.test.ts`, `trail.test.tsx`, `relations.test.ts`, `zones.test.tsx`, `youAreHere.test.tsx`, `miniConstellation.test.tsx`, `scale42.test.ts` (71 total constellation tests across 17 files).
+  - Full Vitest suite: 64 test files, 513 tests passing (100% green).
+  - Playwright visual & smoke suite: 19 tests passing (`e2e/orbit-visual.spec.ts` 6 tests + `smoke.spec.ts` 13 tests).
+  - 13 Stage 10b rollout screenshots captured across 5 viewports in `docs/antigravity/status/screenshots/stage-10b/`.
+  - TypeScript typecheck: 0 errors (`npm run typecheck`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`), zero forbidden `'html'` string literals.
+  - Production build: `npm run build` succeeds (main JS bundle 564.96 kB, CSS 73.20 kB).
+  - Security audit: 0 vulnerabilities (`npm audit --omit=dev`).
+

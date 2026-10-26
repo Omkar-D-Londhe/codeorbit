@@ -29,7 +29,7 @@ function TrackInner({
 }) {
   useDocumentTitle(`${name} track`)
   const [searchParams] = useSearchParams()
-  const isConstellation = searchParams.get('orbit') === 'constellation'
+  const isLegacy = searchParams.get('orbit') === 'legacy'
   const { state, dispatch } = useApp()
   const list = topicsFor(technologyId)
   const stored = state.selectedTopicId ? getTopic(state.selectedTopicId) : undefined
@@ -39,21 +39,23 @@ function TrackInner({
   const tp = trackProgress(state, technologyId)
   const select = useCallback((id: string) => dispatch({ type: 'SELECT_TOPIC', topicId: id }), [dispatch])
 
-  if (isConstellation) {
+  if (isLegacy) {
     return (
       <div className="page page--wide">
         <PageHeader
           crumbs={[{ label: 'Explore', to: '/explore' }, { label: name }]}
-          title={`${name} Constellation Orbit`}
-          lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done.`}
+          title={`${name} Learning Orbit`}
+          lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done. Select a topic on the strip or the arch.`}
         />
-        <ConstellationOrbit
-          technologyId={technologyId}
-          technologyName={name}
-          technologyGlyph={glyph}
-          technologyDescription={description}
-          topics={list}
-          groups={groups}
+        <section className="card orbit-card" aria-label={`${name} Learning Orbit`}>
+          <LearningOrbit topics={list} selectedId={selected.id} progressOf={progressOf} onSelect={select} />
+        </section>
+        <TopicDetail
+          topic={selected}
+          progress={progressOf(selected.id)}
+          bookmarked={state.bookmarks.includes(selected.id)}
+          hasNote={!!state.notes[selected.id]}
+          onSelect={select}
         />
       </div>
     )
@@ -64,17 +66,15 @@ function TrackInner({
       <PageHeader
         crumbs={[{ label: 'Explore', to: '/explore' }, { label: name }]}
         title={`${name} Learning Orbit`}
-        lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done. Select a topic on the strip or the arch.`}
+        lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done.`}
       />
-      <section className="card orbit-card" aria-label={`${name} Learning Orbit`}>
-        <LearningOrbit topics={list} selectedId={selected.id} progressOf={progressOf} onSelect={select} />
-      </section>
-      <TopicDetail
-        topic={selected}
-        progress={progressOf(selected.id)}
-        bookmarked={state.bookmarks.includes(selected.id)}
-        hasNote={!!state.notes[selected.id]}
-        onSelect={select}
+      <ConstellationOrbit
+        technologyId={technologyId}
+        technologyName={name}
+        technologyGlyph={glyph}
+        technologyDescription={description}
+        topics={list}
+        groups={groups}
       />
     </div>
   )

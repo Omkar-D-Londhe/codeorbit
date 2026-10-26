@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test'
 import path from 'node:path'
 
-const SCREENSHOT_DIR = path.resolve('docs/antigravity/status/screenshots/stage-10a')
+const SCREENSHOT_DIR = path.resolve('docs/antigravity/status/screenshots/stage-10b')
 
-test.describe('Learning Orbit: Constellation Map Visual and Interactive Verification', () => {
+test.describe('Learning Orbit: Constellation Map Visual and Interactive Verification (Stage 10b Promoted)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
   })
 
-  test('captures responsive constellation map screenshots across required viewports', async ({ page }) => {
+  test('captures responsive constellation map screenshots across required viewports on default route', async ({ page }) => {
     const viewports = [
       { name: 'desktop-1440', width: 1440, height: 900 },
       { name: 'laptop-1280', width: 1280, height: 800 },
@@ -20,7 +20,8 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
 
     for (const vp of viewports) {
       await page.setViewportSize({ width: vp.width, height: vp.height })
-      await page.goto('/learn/html?orbit=constellation')
+      // Promoted default route without query parameters
+      await page.goto('/learn/html')
       await page.waitForSelector('.constellation-root')
 
       // Assert no accidental horizontal overflow on the page body
@@ -36,9 +37,9 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
     }
   })
 
-  test('topic selection, connections, and hub overview interactions', async ({ page }) => {
+  test('topic selection, connections, and hub overview interactions on promoted route', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/learn/html?orbit=constellation')
+    await page.goto('/learn/html')
     await page.waitForSelector('.constellation-root')
 
     // Click on Topic 1: Document structure
@@ -65,7 +66,7 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
 
   test('switching to list view and persistence across reload', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/learn/html?orbit=constellation')
+    await page.goto('/learn/html')
     await page.waitForSelector('.constellation-root')
 
     // Click list view toggle
@@ -96,11 +97,11 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
 
   test('expanded view and escape key handling', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/learn/html?orbit=constellation')
+    await page.goto('/learn/html')
     await page.waitForSelector('.constellation-root')
 
     // Click expand button
-    const expandBtn = page.getByRole('button', { name: /Expand map/i })
+    const expandBtn = page.getByRole('button', { name: /Expand constellation view/i })
     await expandBtn.click()
 
     await expect(page.locator('.constellation-root--expanded')).toBeVisible()
@@ -118,7 +119,7 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // Set high contrast in state
-    await page.goto('/learn/html?orbit=constellation')
+    await page.goto('/learn/html')
     await page.evaluate(() => {
       const raw = localStorage.getItem('codeorbit:app:state:v1')
       const parsed = raw ? JSON.parse(raw) : {}
@@ -145,6 +146,20 @@ test.describe('Learning Orbit: Constellation Map Visual and Interactive Verifica
 
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'orbit-reduced-motion.png'),
+    })
+  })
+
+  test('legacy orbit fallback remains accessible via ?orbit=legacy', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/learn/html?orbit=legacy')
+    await page.waitForSelector('.orbit-card')
+
+    await expect(page.locator('.orbit')).toBeVisible()
+    await expect(page.locator('.strip')).toBeVisible()
+    await expect(page.locator('.arch')).toBeVisible()
+
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'orbit-legacy-fallback.png'),
     })
   })
 })

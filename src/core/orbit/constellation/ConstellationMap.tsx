@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react'
-import type { Topic, ConstellationLayout, NodeState, NodeView } from './types'
+import React, { useEffect, useRef, useState } from 'react'
+import type { Topic, TopicGroup, ConstellationLayout, NodeState, NodeView, LayoutNode } from './types'
 import { usePanZoom } from './usePanZoom'
 import { nextNodeInDirection } from './viewport'
 import { Star } from './Star'
@@ -8,33 +8,42 @@ import { Edges } from './Edges'
 import { TopicStepper } from './TopicStepper'
 import { Starfield } from '../../atmosphere'
 import { Icon } from '../../../components/Icon'
+import { getTopicRelations } from './relationsLive'
 
 export interface ConstellationMapProps {
   layout: ConstellationLayout
   topics: Topic[]
+  groups?: TopicGroup[]
   trackTitle: string
   trackGlyph: string
   selectedTopicId?: string | null
+  lastVisitedTopicId?: string | null
+  pulsingTopicIds?: Set<string>
   nodeViews: Map<string, NodeView>
   nodeStates: Record<string, NodeState>
   isExpanded: boolean
   onToggleExpand: () => void
   onSelectTopic: (topicId: string) => void
   onSelectHub: () => void
+  onRelationsChange?: (announcement: string) => void
 }
 
 export function ConstellationMap({
   layout,
   topics,
+  groups,
   trackTitle,
   trackGlyph,
   selectedTopicId,
+  lastVisitedTopicId,
+  pulsingTopicIds,
   nodeViews,
   nodeStates,
   isExpanded,
   onToggleExpand,
   onSelectTopic,
   onSelectHub,
+  onRelationsChange,
 }: ConstellationMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -42,6 +51,31 @@ export function ConstellationMap({
   const [activeFocusedId, setActiveFocusedId] = useState<string | null>(
     selectedTopicId || (topics[0]?.id ?? null)
   )
+
+  const [hoveredTopicId, setHoveredTopicId] = useState<string | null>(null)
+
+  // Catalog 2.2: Track fromNode and toNode for Orbital Trail on non-adjacent selection
+  const prevSelectedIdRef = useRef<string | null>(selectedTopicId ?? null)
+  const [fromNode, setFromNode] = useState<LayoutNode | null>(null)
+  const [toNode, setToNode] = useState<LayoutNode | null>(null)
+
+  useEffect(() => {
+    if (selectedTopicId && prevSelectedIdRef.current && selectedTopicId !== prevSelectedIdRef.current) {
+      const fNode = layout.nodes.find((n) => n.topicId === prevSelectedIdRef.current) || null
+      const tNode = layout.nodes.find((n) => n.topicId === selectedTopicId) || null
+      setFromNode(fNode)
+      setToNode(tNode)
+    }
+    prevSelectedIdRef.current = selectedTopicId ?? null
+  }, [selectedTopicId, layout.nodes])
+
+  // Catalog 2.3: Hover/focus relations live text announcement
+  useEffect(() => {
+    if (hoveredTopicId) {
+      const rel = getTopicRelations(hoveredTopicId, topics)
+      onRelationsChange?.(rel.liveAnnouncement)
+    }
+  }, [hoveredTopicId, topics, onRelationsChange])
 
   const { transform, zoomIn, zoomOut, resetToFit } = usePanZoom({
     layout,
@@ -91,6 +125,9 @@ export function ConstellationMap({
     }
   }
 
+  // Determine which topic's connections to brighten (hover takes priority over selection)
+  const activeEdgeTopicId = hoveredTopicId || selectedTopicId
+
   return (
     <div
       ref={containerRef}
@@ -113,8 +150,15 @@ export function ConstellationMap({
           height: `${layout.height}px`,
         }}
       >
-        {/* SVG connection lines & rings */}
-        <Edges layout={layout} activeTopicId={selectedTopicId} />
+        {/* SVG connection lines, group halos (2.4), active emphasis (2.3), and orbital trail (2.2) */}
+        <Edges
+          layout={layout}
+          activeTopicId={activeEdgeTopicId}
+          groups={groups}
+          fromNode={fromNode}
+          toNode={toNode}
+          onSelectTopic={onSelectTopic}
+        />
 
         {/* Central Hub button */}
         <Hub
@@ -145,6 +189,9 @@ export function ConstellationMap({
             (!activeFocusedId && node.topicId === selectedTopicId) ||
             (!activeFocusedId && !selectedTopicId && node.index === 0)
 
+          const isPulsing = pulsingTopicIds ? pulsingTopicIds.has(node.topicId) : false
+          const isLastVisited = lastVisitedTopicId === node.topicId
+
           return (
             <Star
               key={node.topicId}
@@ -152,10 +199,16 @@ export function ConstellationMap({
               view={view}
               topicTitle={topic?.title}
               isMastered={view.status === 'mastered'}
+              isPulsing={isPulsing}
+              isLastVisited={isLastVisited}
               zoom={transform.zoom}
               isRovingActive={isRovingActive}
               onSelect={onSelectTopic}
-              onFocus={() => setActiveFocusedId(node.topicId)}
+              onHover={(hovered) => setHoveredTopicId(hovered ? node.topicId : null)}
+              onFocus={() => {
+                setActiveFocusedId(node.topicId)
+                setHoveredTopicId(node.topicId)
+              }}
               onKeyDown={(e) => handleStarKeyDown(e, node.topicId)}
             />
           )

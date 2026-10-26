@@ -29,7 +29,7 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
 
   test('Legacy orbit selection works by click and keyboard navigation', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto('/learn/html')
+    await page.goto('/learn/html?orbit=legacy')
 
     // Initial selected topic is Document structure
     const detailHeading = page.locator('.detail__title')

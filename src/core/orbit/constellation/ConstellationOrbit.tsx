@@ -10,6 +10,7 @@ import { useApp } from '../../../state/AppState'
 import { nextAction, topicProgress, type TopicProgress } from '../../../lib/progress'
 import { lessonPath } from '../../../lib/routes'
 import { Icon } from '../../../components/Icon'
+import { usePulse } from './usePulse'
 import './constellation.css'
 
 export interface ConstellationOrbitProps {
@@ -82,6 +83,9 @@ export function ConstellationOrbit({
     }
     return map
   }, [topics, state, injectedProgress])
+
+  // Catalog 2.1: Star Pulse on genuine progress save
+  const pulsingTopicIds = usePulse(topicProgressMap)
 
   // Compute completed topic IDs set
   const completedTopicIds = useMemo(() => {
@@ -253,15 +257,19 @@ export function ConstellationOrbit({
           <ConstellationMap
             layout={layout}
             topics={topics}
+            groups={groups}
             trackTitle={technologyName}
             trackGlyph={technologyGlyph}
             selectedTopicId={selectedTopicId}
+            lastVisitedTopicId={state.lastVisited?.topicId}
+            pulsingTopicIds={pulsingTopicIds}
             nodeViews={nodeViews}
             nodeStates={nodeStates}
             isExpanded={isExpanded}
             onToggleExpand={() => setIsExpanded(!isExpanded)}
             onSelectTopic={handleSelectTopic}
             onSelectHub={handleSelectHub}
+            onRelationsChange={(msg) => setAnnouncement(msg)}
           />
         ) : (
           <TopicListView

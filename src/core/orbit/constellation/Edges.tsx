@@ -1,12 +1,25 @@
-import type { ConstellationLayout } from './types'
+import type { ConstellationLayout, TopicGroup, LayoutNode } from './types'
+import { ZoneHalos } from './ZoneHalos'
+import { OrbitTrail } from './OrbitTrail'
 
 export interface EdgesProps {
   layout: ConstellationLayout
   activeTopicId?: string | null
+  groups?: TopicGroup[]
+  fromNode?: LayoutNode | null
+  toNode?: LayoutNode | null
+  onSelectTopic?: (topicId: string) => void
 }
 
-export function Edges({ layout, activeTopicId }: EdgesProps) {
-  const { hub, rings, edges, order, width, height } = layout
+export function Edges({
+  layout,
+  activeTopicId,
+  groups,
+  fromNode,
+  toNode,
+  onSelectTopic,
+}: EdgesProps) {
+  const { hub, rings, edges, order, width, height, nodes } = layout
 
   return (
     <svg
@@ -43,6 +56,15 @@ export function Edges({ layout, activeTopicId }: EdgesProps) {
         />
       ))}
 
+      {/* Catalog 2.4: Topic Group Zone Halos */}
+      {groups && onSelectTopic && (
+        <ZoneHalos
+          groups={groups}
+          nodes={nodes}
+          onSelectTopic={onSelectTopic}
+        />
+      )}
+
       {/* Curriculum order links (faint dotted) */}
       {order.map((link) => (
         <path
@@ -52,7 +74,7 @@ export function Edges({ layout, activeTopicId }: EdgesProps) {
         />
       ))}
 
-      {/* Prerequisite edges (dashed) */}
+      {/* Prerequisite edges (dashed) with active emphasis (Catalog 2.3) */}
       {edges.map((edge) => {
         const isConnected =
           activeTopicId && (edge.fromId === activeTopicId || edge.toId === activeTopicId)
@@ -66,6 +88,14 @@ export function Edges({ layout, activeTopicId }: EdgesProps) {
           />
         )
       })}
+
+      {/* Catalog 2.2: Orbital Trail on non-adjacent navigation */}
+      <OrbitTrail
+        fromNode={fromNode}
+        toNode={toNode}
+        hubX={hub.x}
+        hubY={hub.y}
+      />
     </svg>
   )
 }

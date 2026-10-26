@@ -466,7 +466,8 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
 
   const header = (
     <PageHeader
-      crumbs={[{ label: 'Explore', to: '/explore' }, { label: 'HTML', to: trackPath(topic.technologyId) }, { label: topic.title, to: lessonPath(challenge.topicId) }, { label: 'Practice' }]}
+      crumbs={[{ label: 'Explore', to: '/explore' }, { label: topic.technologyId.toUpperCase(), to: trackPath(topic.technologyId) }, { label: topic.title, to: lessonPath(challenge.topicId) }, { label: 'Practice' }]}
+      miniConstellation={{ technologyId: topic.technologyId, topicId: challenge.topicId }}
       title={challenge.title}
       lede={
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

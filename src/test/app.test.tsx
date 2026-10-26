@@ -51,8 +51,8 @@ describe('first run', () => {
 })
 
 describe('Learning Orbit', () => {
-  it('renders every topic in canonical order in BOTH the strip and the arch', () => {
-    renderAt('/learn/html')
+  it('renders every topic in canonical order in BOTH the strip and the arch (legacy fallback)', () => {
+    renderAt('/learn/html?orbit=legacy')
     const strip = within(screen.getByRole('list', { name: /topics in curriculum order/i })).getAllByRole('button')
     const arch = within(screen.getByRole('list', { name: /on the learning orbit/i })).getAllByRole('button')
     expect(strip).toHaveLength(12)
@@ -62,7 +62,7 @@ describe('Learning Orbit', () => {
   })
 
   it('selects the first topic by default and updates the details', () => {
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(screen.getByRole('heading', { level: 2, name: 'Document structure' })).toBeInTheDocument()
     const sel = document.querySelectorAll('[aria-current="true"]')
     expect(sel).toHaveLength(2) // one in strip, one in arch
@@ -70,7 +70,7 @@ describe('Learning Orbit', () => {
 
   it('syncs strip → arch and arch → strip, including first and last', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     const stripBtn = (id: string) => document.querySelector<HTMLElement>(`[data-nav="strip"][data-topic-id="${id}"]`)!
     const archBtn = (id: string) => document.querySelector<HTMLElement>(`[data-nav="arc"][data-topic-id="${id}"]`)!
 
@@ -89,7 +89,7 @@ describe('Learning Orbit', () => {
 
   it('keeps node positions identical regardless of selection (stable layout)', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     const pos = () => Array.from(document.querySelectorAll<HTMLElement>('.arch__node-wrap')).map((e) => `${e.style.left},${e.style.top}`)
     const before = pos()
     await user.click(document.querySelector('[data-nav="strip"][data-topic-id="tables"]')!)
@@ -99,7 +99,7 @@ describe('Learning Orbit', () => {
 
   it('supports keyboard navigation in logical order and keeps focus on the navigator', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     const first = document.querySelector<HTMLElement>('[data-nav="arc"][data-topic-id="html-structure"]')!
     first.focus()
     await user.keyboard('{ArrowRight}')
@@ -116,19 +116,19 @@ describe('Learning Orbit', () => {
   })
 
   it('uses roving tabindex: exactly one tab stop per navigator', () => {
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(document.querySelectorAll('[data-nav="arc"][tabindex="0"]')).toHaveLength(1)
     expect(document.querySelectorAll('[data-nav="strip"][tabindex="0"]')).toHaveLength(1)
   })
 
   it('gives each node an accessible name with position and status (not colour alone)', () => {
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(screen.getAllByRole('button', { name: /Topic 1 of 12: Document structure\. Not started\. Selected\./ }).length).toBe(2)
   })
 
   it('draws connectors only for declared prerequisites and highlights the selected topic’s', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     const total = document.querySelectorAll('.arch__edge').length
     expect(total).toBe(topics.reduce((n, t) => n + t.prerequisiteIds.length, 0))
     await user.click(document.querySelector('[data-nav="arc"][data-topic-id="semantic-layout"]')!)
@@ -138,7 +138,7 @@ describe('Learning Orbit', () => {
 
   it('shows real prerequisites and dependents, and lets you jump to them', async () => {
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     await user.click(document.querySelector('[data-nav="strip"][data-topic-id="accessibility"]')!)
     const rel = document.querySelector('.detail__rel') as HTMLElement
     expect(within(rel).getByRole('button', { name: 'Semantic page layout' })).toBeInTheDocument()
@@ -148,7 +148,7 @@ describe('Learning Orbit', () => {
   })
 
   it('links Learn / Quick quiz / Practice for the selected topic', () => {
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('href', '/lesson/html-structure')
     expect(screen.getByRole('link', { name: 'Quick quiz' })).toHaveAttribute('href', '/quiz/html-structure')
     expect(screen.getByRole('link', { name: 'Practice' })).toHaveAttribute('href', '/practice/ch-html-structure')
@@ -157,7 +157,7 @@ describe('Learning Orbit', () => {
   it('falls back to the carousel of cards on phone widths, preserving order and selection', async () => {
     setWidth(390)
     const user = userEvent.setup()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(document.querySelector('.arch')).toBeNull()
     expect(document.querySelector('.strip--cards')).not.toBeNull()
     const ids = Array.from(document.querySelectorAll('[data-nav="strip"]')).map((e) => e.getAttribute('data-topic-id'))
@@ -167,7 +167,7 @@ describe('Learning Orbit', () => {
   })
 
   it('scroll-nudge buttons exist and fades never take pointer input', () => {
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(screen.getByRole('button', { name: /scroll topics left/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /scroll topics right/i })).toBeInTheDocument()
     document.querySelectorAll('.strip__fade').forEach((f) => expect(f).toHaveAttribute('aria-hidden', 'true'))
@@ -175,11 +175,11 @@ describe('Learning Orbit', () => {
 
   it('restores the selected topic after a reload', async () => {
     const user = userEvent.setup()
-    const { unmount } = renderAt('/learn/html')
+    const { unmount } = renderAt('/learn/html?orbit=legacy')
     await user.click(document.querySelector('[data-nav="strip"][data-topic-id="forms"]')!)
     await flushSave()
     unmount()
-    renderAt('/learn/html')
+    renderAt('/learn/html?orbit=legacy')
     expect(screen.getByRole('heading', { level: 2, name: 'Forms and inputs' })).toBeInTheDocument()
   })
 })
