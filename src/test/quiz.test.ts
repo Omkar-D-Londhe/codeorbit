@@ -3,7 +3,7 @@ import { allChecked, checkAnswer, finish, goTo, isPass, isPerfect, newSession, s
 
 const quiz = getQuiz('lists')!
 const n = quiz.questions.length
-const correctOf = (i: number) => quiz.questions[i].correctIndex
+const correctOf = (i: number) => (quiz.questions[i] as { correctIndex: number }).correctIndex
 const wrongOf = (i: number) => (correctOf(i) + 1) % 4
 
 describe('quiz engine', () => {

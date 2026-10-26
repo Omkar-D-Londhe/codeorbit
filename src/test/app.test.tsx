@@ -5,6 +5,7 @@ import App from '../App'
 import { challenges } from '../data/challenges'
 import { topics } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
+import type { ChoiceQuizQuestion } from '../data/types'
 import { STORAGE_KEY } from '../lib/storage'
 
 const setWidth = (w: number) => {
@@ -230,7 +231,8 @@ describe('lesson → quiz → practice flow', () => {
     const quiz = getQuiz('lists')!
     // Q1: check is disabled until an answer is selected
     expect(screen.getByRole('button', { name: /check answer/i })).toBeDisabled()
-    await user.click(screen.getByRole('radio', { name: quiz.questions[0].options[quiz.questions[0].correctIndex] }))
+    const q0 = quiz.questions[0] as ChoiceQuizQuestion
+    await user.click(screen.getByRole('radio', { name: q0.options[q0.correctIndex] }))
     await user.click(screen.getByRole('button', { name: /check answer/i }))
     const fb = () => document.querySelector('.feedback') as HTMLElement
     expect(fb()).toHaveTextContent(/Correct/)
@@ -238,8 +240,9 @@ describe('lesson → quiz → practice flow', () => {
     expect(document.activeElement).toHaveTextContent(/next question/i)
     await user.click(screen.getByRole('button', { name: /next question/i }))
     // Q2: wrong answer
-    const wrong = (quiz.questions[1].correctIndex + 1) % 4
-    await user.click(screen.getByRole('radio', { name: quiz.questions[1].options[wrong] }))
+    const q1 = quiz.questions[1] as ChoiceQuizQuestion
+    const wrong = (q1.correctIndex + 1) % 4
+    await user.click(screen.getByRole('radio', { name: q1.options[wrong] }))
     await user.click(screen.getByRole('button', { name: /check answer/i }))
     expect(fb()).toHaveTextContent(/Not quite/)
     expect(screen.getByText(/correct answer/i)).toBeInTheDocument()
@@ -260,7 +263,7 @@ describe('lesson → quiz → practice flow', () => {
     const user = userEvent.setup()
     const { unmount } = renderAt('/quiz/links')
     await user.click(screen.getByRole('button', { name: /start quiz/i }))
-    const q = getQuiz('links')!.questions[0]
+    const q = getQuiz('links')!.questions[0] as ChoiceQuizQuestion
     await user.click(screen.getByRole('radio', { name: q.options[q.correctIndex] }))
     await user.click(screen.getByRole('button', { name: /check answer/i }))
     await flushSave()
@@ -276,7 +279,7 @@ describe('lesson → quiz → practice flow', () => {
     await user.click(screen.getByRole('button', { name: /start quiz/i }))
     const quiz = getQuiz('lists')!
     for (let i = 0; i < 3; i++) {
-      const q = quiz.questions[i]
+      const q = quiz.questions[i] as ChoiceQuizQuestion
       await user.click(screen.getByRole('radio', { name: q.options[(q.correctIndex + 1) % 4] }))
       await user.click(screen.getByRole('button', { name: /check answer/i }))
       await user.click(screen.getByRole('button', { name: i === 2 ? /see results/i : /next question/i }))

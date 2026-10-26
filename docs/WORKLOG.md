@@ -247,3 +247,48 @@
   - Full suite verified: 26 test files, 318 tests passing.
   - Build size verified: 422.74 kB (130.28 kB gzip) — within 450 kB budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences; legacy orbit files untouched.
+
+## 2026-10-26 — Stage 09: Quiz engine: new question types, timed mode, breakdown
+- **Branch:** `stage-09-quiz-engine`
+- **Data Contracts & Union Types (`src/data/types.ts`):**
+  - Extended `QuizAnswer = number | string | string[] | null`.
+  - Upgraded `QuizQuestion` to a discriminated union supporting `ChoiceQuizQuestion`, `OutputPredictorQuizQuestion`, `SorterQuizQuestion`, `SpotBugQuizQuestion`, and `BlankQuizQuestion`.
+  - Preserved backward compatibility for choice questions with optional `kind: 'choice'`.
+- **Quiz Scoring & Session Engine (`src/lib/quiz.ts`):**
+  - Implemented `scoreQuestion(q, answer): 0 | 1` supporting:
+    - `'choice'`: checks selected option against `correctIndex`.
+    - `'output'`: checks selected SVG option ID against `answer`.
+    - `'sort'`: checks reordered array sequence against expected `order`.
+    - `'bug'`: checks highlighted bug line index against `answer`.
+    - `'blank'`: checks input against `answers` with whitespace trimming, case-sensitivity by default and `caseInsensitive` flag.
+  - Updated `scoreSession` to compute `{ correct, total, unanswered }` and preserved `isPass` (≥ 2/3) and `isPerfect` semantics.
+  - Enhanced `sanitizeSession` supporting both `Quiz` and `questionCount` numbers, rejecting malformed data while cleanly loading legacy stored sessions.
+  - Added `setAnswer(s, qi, answer)` preserving existing `selectOption`.
+- **New Question Components & Interactive Tools:**
+  - `src/core/learning/questions/ChoiceQuestion.tsx`: multiple choice options with checked feedback.
+  - `src/core/learning/questions/OutputPredictorQuestion.tsx`: displays question prompt, HTML code snippet, and static authored SVG render previews.
+  - `src/core/learning/Sorter.tsx` & `src/core/learning/questions/SorterQuestion.tsx`: keyboard-first drag-and-drop code sorter with 48px touch targets, grab handle, Move Up/Down buttons, Space grab/drop, Arrow reordering, Esc cancel, and polite `aria-live` position announcements without external DnD libraries (FC-18, 5.2).
+  - `src/core/learning/questions/SpotBugQuestion.tsx`: code lines list with line numbers, selecting line containing the bug (5.3).
+  - `src/core/learning/questions/BlankQuestion.tsx`: fill-in-the-blank input matching `___` marker with accessible label and validation badge (5.4).
+  - `src/core/learning/QuizTimer.tsx`: calm text chip (`role="timer"`) with clock icon, tabular numbers, font-weight 700 under 10s (no red panic colors), and automatic pausing on `visibilitychange` (5.5).
+  - `src/core/learning/QuizBreakdown.tsx`: detailed per-question table with status (✓/✗ + text), question type badge, prompt, human-readable your answer vs correct answer, explanation, and one-click "Save to Error Notebook" action (5.6).
+- **Page Integration (`src/pages/Quiz.tsx`):**
+  - Updated question flow to render dynamically by `q.kind`.
+  - Added opt-in timed challenge mode toggle in intro screen with upfront explanation (60s/question).
+  - Integrated calm `QuizTimer` with auto-expiry handling.
+  - Integrated `QuizBreakdown` on the results screen.
+- **Curriculum Authoring (`src/data/quizzes.ts`):**
+  - Authored 8+ typed new questions across curriculum topics while keeping `html-structure`, `lists`, and `links` at 3 multiple-choice questions to preserve existing test contracts.
+- **Verification & Gates:**
+  - Added unit test suites:
+    - `src/test/quiz.scoring.test.ts` (10 tests)
+    - `src/test/Sorter.test.tsx` (5 tests)
+    - `src/test/QuizTimer.test.tsx` (5 tests)
+    - `src/test/QuizBreakdown.test.tsx` (5 tests)
+  - Full Vitest suite: 47 test files, 442 tests passing (100% green).
+  - Full Playwright E2E: 13 browser smoke tests passing (`e2e/smoke.spec.ts`).
+  - TypeScript typecheck & ESLint: 0 errors, 0 warnings.
+  - Production build: main JS bundle 520.66 kB (158.09 kB gzip), CSS 62.15 kB (14.68 kB gzip), CodeMirror chunk 496.16 kB (172.06 kB gzip).
+  - Production audit clean: 0 vulnerabilities.
+  - Zero forbidden `'html'` occurrences in `src/pages/**`, `src/components/**`, `src/core/**`, `src/lib/**`.
+  - Legacy orbit files (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`) completely untouched.

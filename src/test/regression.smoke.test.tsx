@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import App from '../App'
 import { SandboxedPreview } from '../components/SandboxedPreview'
 import { getQuiz } from '../data/quizzes'
+import type { ChoiceQuizQuestion } from '../data/types'
 import { isPass, isPerfect } from '../lib/quiz'
 import { trackProgress } from '../lib/progress'
 import { BACKUP_KEY, STORAGE_KEY, createDefaultState, loadState, saveState, SCHEMA_VERSION } from '../lib/storage'
@@ -120,7 +121,8 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
     const quiz = getQuiz('html-structure')!
 
     // Answer Q1 correctly
-    await user.click(screen.getByRole('radio', { name: quiz.questions[0].options[quiz.questions[0].correctIndex] }))
+    const q0 = quiz.questions[0] as ChoiceQuizQuestion
+    await user.click(screen.getByRole('radio', { name: q0.options[q0.correctIndex] }))
     await user.click(screen.getByRole('button', { name: /check answer/i }))
     await user.click(screen.getByRole('button', { name: /next question/i }))
 

@@ -446,4 +446,81 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     await expect(focusRegion).not.toBeVisible()
     await expect(focusModeBtn).toBeFocused()
   })
+
+  test('Quiz engine: typed questions, opt-in timed mode, and results breakdown (5.1-5.6)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/quiz/putting-together')
+
+    // 1. Timed mode toggle in intro (5.5) - off by default
+    const timedToggle = page.getByRole('checkbox', { name: /enable timed challenge mode/i })
+    await expect(timedToggle).toBeVisible()
+    await expect(timedToggle).not.toBeChecked()
+
+    // Enable timed mode
+    await timedToggle.check()
+    await expect(timedToggle).toBeChecked()
+
+    // Start quiz
+    const startBtn = page.getByRole('button', { name: /start quiz/i })
+    await startBtn.click()
+
+    // 2. Timer presence
+    const timer = page.getByRole('timer')
+    await expect(timer).toBeVisible()
+    await expect(timer).toContainText(':')
+
+    // 3. Question 1 (choice)
+    const radio = page.getByRole('radio').first()
+    await radio.click()
+    const checkBtn = page.getByRole('button', { name: /check answer/i })
+    await checkBtn.click()
+    const nextBtn = page.getByRole('button', { name: /next question/i })
+    await expect(nextBtn).toBeVisible()
+    await nextBtn.click()
+
+    // 4. Question 2 (skip to advance)
+    const skipBtn = page.getByRole('button', { name: /skip question/i })
+    await skipBtn.click()
+    await nextBtn.click()
+
+    // 5. Question 3 (skip to advance)
+    await skipBtn.click()
+    await nextBtn.click()
+
+    // 6. Question 4 (sorter question 5.2 with 48px items & move buttons)
+    const sorterList = page.getByRole('list', { name: /sortable items list/i })
+    await expect(sorterList).toBeVisible()
+    const moveDownBtn = page.getByRole('button', { name: /move .* down/i }).first()
+    if (await moveDownBtn.isEnabled()) {
+      await moveDownBtn.click()
+    }
+    await checkBtn.click()
+
+    const resultsBtn = page.getByRole('button', { name: /see results/i })
+    await expect(resultsBtn).toBeVisible()
+    await resultsBtn.click()
+
+    // 7. Results & Breakdown Table (5.6)
+    const scoreHeading = page.locator('#res-h')
+    await expect(scoreHeading).toBeVisible()
+    await expect(scoreHeading).toContainText('correct')
+
+    const breakdownTable = page.getByRole('table')
+    await expect(breakdownTable).toBeVisible()
+    await expect(page.getByText('Detailed Breakdown')).toBeVisible()
+
+    // Status pill with text and ✓/✗
+    const statusCells = page.locator('.status-text')
+    await expect(statusCells.first()).toBeVisible()
+
+    // Verify Sorter tag exists in breakdown table
+    await expect(page.getByText('Code Sorter')).toBeVisible()
+
+    // Save to Error Notebook for skipped/missed question
+    const saveButtons = page.getByRole('button', { name: /save to error notebook/i })
+    if ((await saveButtons.count()) > 0) {
+      await saveButtons.first().click()
+      await expect(page.locator('.toast')).toContainText('Added to your Error Notebook.')
+    }
+  })
 })

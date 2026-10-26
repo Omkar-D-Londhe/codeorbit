@@ -2,9 +2,8 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 43 files (417 tests)
+## Automated (Vitest, jsdom) — 47 files (442 tests)
 | File | Covers |
-|---|---|
 |---|---|
 | `curriculum.test.ts` | stable unique IDs/order; prerequisite edges valid, acyclic, not a chain; every topic has lesson/quiz/challenge; quiz shape; previews have no topics |
 | `orbit.geometry.test.ts` | upper arch (apex mid, ends lower, monotone), symmetric, deterministic, in-bounds at 9 widths, even arc spacing, mode selection (desktop `arch`, phones `carousel`), mode monotone in width, no label collisions in `arch`, edge paths |
@@ -49,8 +48,12 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `DefinitionTerm.test.tsx` | Accessible trigger button with `aria-describedby` and `aria-expanded`, popover tooltip toggle on click, Escape dismissal with trigger refocus, outside click dismissal, and injection-safe `renderTextWithTerms` parser (4.5) |
 | `FocusMode.test.tsx` | Dark-room focus mode suppression of non-reading chrome, `aria-live="assertive"` screen reader announcement, visible 'Exit focus mode' button, Escape key exit, and focus restoration to opener button (4.10) |
 | `LiveDemo.test.tsx` | Live interactive demo mini-editor, sandboxed preview iframe with empty `sandbox=""` and strict CSP, local component state isolation, and reset demo restoration without draft leakage (4.4) |
+| `quiz.scoring.test.ts` | Exhaustive `scoreQuestion` per kind (choice, output, sort, bug, blank whitespace trimming/case sensitivity), `scoreSession` mixed kinds, `sanitizeSession` backwards compatibility and validation |
+| `Sorter.test.tsx` | Keyboard-first drag-and-drop sorter (5.2, FC-18): 48px item touch targets, Move up/down buttons, Space grab/drop, Arrow reordering, Esc cancel, polite `aria-live` announcements |
+| `QuizTimer.test.tsx` | Opt-in calm quiz timer (5.5): `role="timer"` chip, tabular countdown, weight increase under 10s without panic colors, auto-pausing on `visibilitychange`, onExpire triggering |
+| `QuizBreakdown.test.tsx` | Result breakdown table (5.6): per-question table rendering, kind badges, ✓/✗ + status text, your answer vs correct answer, explanations, and "Save to Error Notebook" action |
 
-## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (12 tests)
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (13 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
 1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
 2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
@@ -64,6 +67,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 10. **Practice Workspace Platform**: Multi-file tab UI, DeviceFrame viewport dimensions (Desktop, Tablet 768px, Mobile 375px), Snippets drawer insertion, A11y linter detection, and Diff gating strictly disabled until solution revealed.
 11. **Feedback & Code Coach Platform**: Initial empty state, progress bar (`role="progressbar"`) met/total reflection, Code Coach persona label with strict L-05 compliance, expandable requirement explanations (`details.req-explanation`), and attempt history entry inspection.
 12. **Lesson Studio Platform**: Reading progress bar, estimated time badge (`about N min (estimate)`), takeaways card, TOC navigation with keyboard focus movement to section heading, accessible definition tooltip opening and Esc dismissal with focus return, section bookmark toggling and persistence across reloads (Schema v4), sandboxed live interactive demo with reset, and dark-room focus mode with Esc dismissal and focus restoration to opener.
+13. **Quiz Engine & Results Breakdown Platform**: Intro timed mode toggle (off by default), calm QuizTimer display during timed quiz, typed questions execution (choices, sorter 48px touch targets, blank code input), results score calculation, breakdown table with ✓/✗ + status text, and one-click "Save to Error Notebook" action.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

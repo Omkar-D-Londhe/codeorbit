@@ -66,13 +66,61 @@ export interface Lesson {
   estimatedMinutes?: number
 }
 
-export interface QuizQuestion {
+export type QuizAnswer = number | string | string[] | null
+
+export interface ChoiceQuizQuestion {
+  kind?: 'choice'
   id: string
   prompt: string
   options: string[]
+  answer?: number
   correctIndex: number
   explanation: string
 }
+
+export interface OutputPredictorQuizQuestion {
+  kind: 'output'
+  id: string
+  prompt: string
+  code: string
+  options: Array<{ id: string; svg: string }>
+  answer: string
+  explanation: string
+}
+
+export interface SorterQuizQuestion {
+  kind: 'sort'
+  id: string
+  prompt: string
+  items: Array<{ id: string; text: string }>
+  order: string[]
+  explanation: string
+}
+
+export interface SpotBugQuizQuestion {
+  kind: 'bug'
+  id: string
+  prompt: string
+  lines: string[]
+  answer: number
+  explanation: string
+}
+
+export interface BlankQuizQuestion {
+  kind: 'blank'
+  id: string
+  prompt: string
+  answers: string[]
+  caseInsensitive?: boolean
+  explanation: string
+}
+
+export type QuizQuestion =
+  | ChoiceQuizQuestion
+  | OutputPredictorQuizQuestion
+  | SorterQuizQuestion
+  | SpotBugQuizQuestion
+  | BlankQuizQuestion
 
 export interface Quiz {
   topicId: string

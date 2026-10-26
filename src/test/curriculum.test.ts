@@ -2,6 +2,7 @@ import { challenges } from '../data/challenges'
 import { groups, topics, prerequisiteEdges, technologies } from '../data/curriculum'
 import { lessons } from '../data/lessons'
 import { quizzes } from '../data/quizzes'
+import type { ChoiceQuizQuestion } from '../data/types'
 
 describe('curriculum data', () => {
   it('has unique, kebab-case, stable topic IDs in canonical order', () => {
@@ -47,17 +48,37 @@ describe('curriculum data', () => {
   it('has well-formed quiz questions', () => {
     quizzes.forEach((quiz) =>
       quiz.questions.forEach((q) => {
-        expect(q.options).toHaveLength(4)
-        expect(new Set(q.options).size).toBe(4)
-        expect(q.correctIndex).toBeGreaterThanOrEqual(0)
-        expect(q.correctIndex).toBeLessThan(q.options.length)
+        if (!q.kind || q.kind === 'choice') {
+          expect(q.options).toHaveLength(4)
+          expect(new Set(q.options).size).toBe(4)
+          expect(q.correctIndex).toBeGreaterThanOrEqual(0)
+          expect(q.correctIndex).toBeLessThan(q.options.length)
+        } else if (q.kind === 'output') {
+          expect(q.options.length).toBeGreaterThanOrEqual(2)
+          expect(q.answer).toBeTruthy()
+        } else if (q.kind === 'sort') {
+          expect(q.items.length).toBeGreaterThanOrEqual(2)
+          expect(q.order).toHaveLength(q.items.length)
+        } else if (q.kind === 'bug') {
+          expect(q.lines.length).toBeGreaterThanOrEqual(2)
+          expect(q.answer).toBeGreaterThanOrEqual(0)
+          expect(q.answer).toBeLessThan(q.lines.length)
+        } else if (q.kind === 'blank') {
+          expect(q.answers.length).toBeGreaterThanOrEqual(1)
+        }
         expect(q.explanation.length).toBeGreaterThan(10)
       }),
     )
   })
 
   it('spreads correct answers across more than one position', () => {
-    const positions = new Set(quizzes.flatMap((q) => q.questions.map((x) => x.correctIndex)))
+    const positions = new Set(
+      quizzes.flatMap((q) =>
+        q.questions
+          .filter((x): x is ChoiceQuizQuestion => !x.kind || x.kind === 'choice')
+          .map((x) => x.correctIndex),
+      ),
+    )
     expect(positions.size).toBeGreaterThan(1)
   })
 
