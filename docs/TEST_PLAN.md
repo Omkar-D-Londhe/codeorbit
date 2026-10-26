@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 37 files (387 tests)
+## Automated (Vitest, jsdom) — 43 files (417 tests)
 | File | Covers |
 |---|---|
 |---|---|
@@ -25,7 +25,7 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `devRoute.test.tsx` | Dev-only `/__ui` gallery route isolation from production builds |
 | `streak.test.ts` | Streak computation, freeze window, milestone alerts, and streak-best logic across leap years and clock shifts |
 | `activity.test.ts` | Meaningful activity predicate rules, daily deduplication, and activity event formatting |
-| `migrations.test.ts` | Schema v1 to v2 to v3 migration, preservation of reference-era activity days and daily done, sanitization, challenge history initialization, and repair |
+| `migrations.test.ts` | Schema v1 to v2 to v3 to v4 migration, preservation of reference-era activity days and daily done, sanitization, challenge history initialization, and sectionBookmarks initialization |
 | `exportImport.test.ts` | Backup JSON export structure, schema validation, size limits (≤ 4 MiB), and preview summaries |
 | `persistence.test.tsx` | 300ms save debounce, flush on pagehide/visibilitychange, cross-tab synchronization, quota warning |
 | `Settings.test.tsx` | Profile name length validation, FC-07 compliant form controls, typed "RESET" modal confirmation, atmosphere toggles and motion selector |
@@ -43,8 +43,14 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `sourcePositions.test.ts` | HTML source offset-to-line/column mapping (7.1), doctype/selector/attribute/heading/control location detection, multi-line and void element handling |
 | `diagnostics.test.ts` | Mapping `RequirementResult` to `EditorDiagnostic` objects (7.1), severity assignment, line/column preservation |
 | `FeedbackPanel.test.tsx` | Progress bar (`role="progressbar"`) met/total accuracy (7.2), grouped requirement rows (7.3), expandable explanations (7.5), check history persistence & cap at 20 (7.4), L-05 Code Coach copy test (7.6) |
+| `readingTime.test.ts` | Word count calculation (200 wpm), interactive demo allowance (+1 min/demo), honest estimate formatting (`about N min (estimate)`), lesson object computation, and authored override support (4.6, L-05) |
+| `lessonSections.test.ts` | Section ID uniqueness, slug validity, 3-5 takeaways per lesson, glossary terms, a11y notes, and live demo configurations across all 12 curriculum lessons |
+| `Toc.test.tsx` | TOC render suppression when sections $\le 1$, desktop `<nav>` and mobile `<details>` disclosure, `aria-current="true"` active tracking, link smooth scroll and keyboard focus movement (4.7) |
+| `DefinitionTerm.test.tsx` | Accessible trigger button with `aria-describedby` and `aria-expanded`, popover tooltip toggle on click, Escape dismissal with trigger refocus, outside click dismissal, and injection-safe `renderTextWithTerms` parser (4.5) |
+| `FocusMode.test.tsx` | Dark-room focus mode suppression of non-reading chrome, `aria-live="assertive"` screen reader announcement, visible 'Exit focus mode' button, Escape key exit, and focus restoration to opener button (4.10) |
+| `LiveDemo.test.tsx` | Live interactive demo mini-editor, sandboxed preview iframe with empty `sandbox=""` and strict CSP, local component state isolation, and reset demo restoration without draft leakage (4.4) |
 
-## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (11 tests)
+## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (12 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
 1. **Viewport horizontal overflow**: Home verified at 1280×800, 820×1180, and 390×844 px — zero horizontal page overflow (`scrollWidth <= clientWidth`).
 2. **Legacy Learning Orbit navigation**: Selection works by click on strip and arch nodes; keyboard navigation moves selection with arrow keys in bounds.
@@ -57,6 +63,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 9. **Editor Platform & Preferences**: Splitter separator with keyboard controls, AutoSaveIndicator, Fullscreen dialog modal with Esc exit and focus restoration, and Settings Editor preferences controls (engine, font size, tab indentation).
 10. **Practice Workspace Platform**: Multi-file tab UI, DeviceFrame viewport dimensions (Desktop, Tablet 768px, Mobile 375px), Snippets drawer insertion, A11y linter detection, and Diff gating strictly disabled until solution revealed.
 11. **Feedback & Code Coach Platform**: Initial empty state, progress bar (`role="progressbar"`) met/total reflection, Code Coach persona label with strict L-05 compliance, expandable requirement explanations (`details.req-explanation`), and attempt history entry inspection.
+12. **Lesson Studio Platform**: Reading progress bar, estimated time badge (`about N min (estimate)`), takeaways card, TOC navigation with keyboard focus movement to section heading, accessible definition tooltip opening and Esc dismissal with focus return, section bookmark toggling and persistence across reloads (Schema v4), sandboxed live interactive demo with reset, and dark-room focus mode with Esc dismissal and focus restoration to opener.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

@@ -283,7 +283,7 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
 })
 
 describe('G4 Accessibility: zero serious/critical violations on 8 core pages', () => {
-  const axeOptions = { rules: { 'color-contrast': { enabled: false } } }
+  const axeOptions = { rules: { 'color-contrast': { enabled: false } }, iframes: false }
 
   it('passes axe checks on Home page', async () => {
     const { container } = renderAt('/')

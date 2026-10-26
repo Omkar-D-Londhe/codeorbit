@@ -79,6 +79,58 @@
   - Build verified: 412.76 kB (127.50 kB gzip), well within budget.
   - Zero npm audit production vulnerabilities; zero forbidden `'html'` occurrences.
 
+## 2026-10-26 — Stage 08: Lesson Studio: reading experience, TOC, tooltips, bookmarks, demos, focus mode
+- **Branch:** `stage-08-lesson-studio`
+- **Schema v4 & Section Bookmarks Foundation (4.2):**
+  - Bumped `SCHEMA_VERSION` to 4.
+  - Added `sectionBookmarks?: string[]` (`topicId#sectionId`) to `CodeOrbitState` and helper `sectionBookmarkId(topicId, sectionId)` in `src/state/types.ts`.
+  - Added `TOGGLE_SECTION_BOOKMARK` action and handler to `src/state/reducer.ts`.
+  - Implemented migration `migrateV3toV4` in `src/core/storage/migrations.ts` initializing `sectionBookmarks: []`.
+  - Updated `src/lib/storage.ts`: registered migration, updated `createDefaultState`, and added sanitization for `sectionBookmarks` validating against composite IDs and known topics.
+  - Updated `src/test/migrations.test.ts` (8 tests passing).
+- **Reading Progress Bar & Estimated Reading Time (4.1, 4.6):**
+  - Created `src/lib/readingTime.ts` implementing `calculateReadingMinutes` (200 wpm + 1 min demo allowance), `formatEstimatedTime` with truthful estimate labelling (`about N min (estimate)` per L-05), and `estimateLessonReadingTime`. Added `src/test/readingTime.test.ts` (5 tests passing).
+  - Created `src/core/learning/ReadingProgress.tsx`: 2px top fixed bar (`role="progressbar"`), throttled with rAF and passive listeners, hidden for short lessons where content fits without scrolling.
+  - Created `src/core/learning/EstimatedTime.tsx`: badge displaying clock icon and truthful reading estimate.
+- **Table of Contents (4.7):**
+  - Created `src/core/learning/Toc.tsx`: sticky left rail (200px) on desktop ($\ge 1100$ px); collapses to "On this page" disclosure on mobile (< 900 px); hidden when sections $\le 1$.
+  - Section tracking with `IntersectionObserver` setting `aria-current="true"`.
+  - Clicking TOC links smoothly scrolls to target heading and moves keyboard focus (`tabindex="-1"` and `focus()`). Added `src/test/Toc.test.tsx` (4 tests passing).
+- **Definition Terms & Popover Tooltips (4.5):**
+  - Created `src/core/learning/DefinitionTerm.tsx` (`DefinitionTerm` component and `renderTextWithTerms` parser).
+  - Accessible button popover with `aria-describedby` and `aria-expanded`, toggling on click/keyboard, dismissing on Escape with focus restoration to trigger, and dismissing on outside click.
+  - Parsed `{{term:key}}` markers safely into React components without `dangerouslySetInnerHTML` or HTML injection vulnerability. Added `src/test/DefinitionTerm.test.tsx` (7 tests passing).
+- **Live Interactive Demos (4.4):**
+  - Created `src/core/learning/LiveDemo.tsx`: editable mini-editor + live sandboxed iframe preview (`sandbox=""`, strict CSP `default-src 'none'`), 'Reset demo' button restoring authored starter code.
+  - Demo edits are strictly local component state (`useState`)—never leaked or persisted to user drafts or AppState. Added `src/test/LiveDemo.test.tsx` (2 tests passing).
+- **Authoring Fields & 12 HTML Lessons (4.8, 4.9):**
+  - Extended `src/data/types.ts`: `LessonSection` with optional `id?: string`, `LessonFile`, `LessonDemo`, `LessonTerm`, and `Lesson` with optional `takeaways`, `terms`, `demos`, `a11yNotes`, `estimatedMinutes`.
+  - Updated `src/data/lessons.ts`:
+    - Stable, unique, non-empty `id` on each section across all 12 curriculum lessons.
+    - Exported `getSectionId` and `slugifyHeading`.
+    - Authored 3-5 key takeaways for all 12 lessons.
+    - Authored glossary terms (`terms`) and embedded `{{term:key}}` in section prose for all 12 lessons.
+    - Authored practical accessibility check notes (`a11yNotes`) for all 12 lessons.
+    - Added interactive live demos for `html-structure`, `text-semantics`, and `forms`. Added `src/test/lessonSections.test.ts` (6 tests passing).
+- **Key Takeaways Box & Accessibility Check Sidebox (4.8, 4.9):**
+  - Created `src/core/learning/Takeaways.tsx`: quiet neutral card presenting takeaways without lime accent (reserved for success). Renders null when empty.
+  - Created `src/core/learning/A11yBox.tsx`: quiet card presenting accessibility checklist notes. Renders null when empty.
+- **Dark-Room Focus Mode (4.10):**
+  - Created `src/core/learning/FocusMode.tsx`: dark-room reading container suppressing shell chrome, TOC, and study panel; displays centered 72ch reading column on `--bg`; exits on Escape key or visible 'Exit focus mode' button and restores focus to opener button; announces via `aria-live="assertive"`. Added `src/test/FocusMode.test.tsx` (4 tests passing).
+- **Lesson Page Integration & Responsive Layout:**
+  - Updated `src/pages/Lesson.tsx`:
+    - Integrated `ReadingProgress`, `EstimatedTime`, `Toc` (3-column layout $\ge 1100$ px, mobile disclosure < 900 px), `renderTextWithTerms`, section bookmark buttons with toast feedback, `LiveDemo`, `Takeaways`, `A11yBox`, and `FocusMode`.
+    - Added clock icon to `src/components/Icon.tsx`.
+    - Added Lesson Studio CSS styles in `src/styles/pages.css`.
+- **Verification & Quality Gates:**
+  - Unit/integration tests: 43 test files, 417 tests passing cleanly (100% green).
+  - Playwright E2E: 12 tests passing including Test 12 for Lesson Studio (TOC navigation, term tooltip Esc dismissal, section bookmark reload persistence, live demo sandboxed preview & reset, focus mode Esc dismissal & focus restoration).
+  - TypeScript typecheck and ESLint clean: 0 errors, 0 warnings.
+  - Production build: `index-*.js` 498.16 kB (152.00 kB gzip), `codemirrorAdapter-*.js` 496.16 kB (172.06 kB gzip), `index-*.css` 62.15 kB (14.68 kB gzip).
+  - Security audit (`npm audit --omit=dev`): 0 vulnerabilities.
+  - Architecture restrictions: 0 forbidden `'html'` string literals across pages, components, core, and lib.
+  - Legacy Learning Orbit (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`): 0 diff against master.
+
 ## 2026-10-26 — Stage 07: Feedback and Code Coach framework
 - **Branch:** `stage-07-feedback-code-coach`
 - **Schema v3 & Attempt History (7.4):**

@@ -367,4 +367,83 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
     await viewBtn.click()
     await expect(page.locator('text=Unmet requirement IDs:')).toBeVisible()
   })
+
+  test('Stage 08: Lesson Studio: TOC, reading estimate, tooltips, bookmarks, live demo, and focus mode', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/lesson/html-structure')
+    await page.waitForLoadState('networkidle')
+
+    // 1. Estimated time display and Key Takeaways
+    const estimateBadge = page.locator('.estimated-time')
+    await expect(estimateBadge).toBeVisible()
+    await expect(estimateBadge).toContainText('about')
+    await expect(estimateBadge).toContainText('(estimate)')
+
+    const takeaways = page.locator('.takeaways-box')
+    await expect(takeaways).toBeVisible()
+    await expect(takeaways).toContainText('Key Takeaways')
+
+    // 2. Table of Contents navigation and focus management
+    const toc = page.locator('.lesson-toc--desktop')
+    await expect(toc).toBeVisible()
+    const tocLink = page.getByRole('link', { name: 'What goes in the head' })
+    await expect(tocLink).toBeVisible()
+    await tocLink.click()
+
+    const targetHeading = page.locator('#what-goes-in-the-head')
+    await expect(targetHeading).toBeFocused()
+    await expect(targetHeading).toHaveAttribute('tabindex', '-1')
+
+    // 3. Definition Tooltip: toggle open and Esc dismissal
+    const termTrigger = page.getByRole('button', { name: 'Doctype' })
+    await expect(termTrigger).toBeVisible()
+    await termTrigger.click()
+    const tooltip = page.getByRole('tooltip')
+    await expect(tooltip).toBeVisible()
+    await expect(tooltip).toContainText('modern HTML standards mode')
+
+    await page.keyboard.press('Escape')
+    await expect(tooltip).not.toBeVisible()
+    await expect(termTrigger).toBeFocused()
+
+    // 4. Section Bookmarks persist across reload
+    const sectionBookmarkBtn = page.getByRole('button', { name: /Bookmark What goes in the head/i })
+    await expect(sectionBookmarkBtn).toBeVisible()
+    await sectionBookmarkBtn.click()
+
+    const bookmarkedBtn = page.getByRole('button', { name: /Remove bookmark for What goes in the head/i })
+    await expect(bookmarkedBtn).toHaveAttribute('aria-pressed', 'true')
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    const reloadedSectionBookmarkBtn = page.getByRole('button', { name: /Remove bookmark for What goes in the head/i })
+    await expect(reloadedSectionBookmarkBtn).toHaveAttribute('aria-pressed', 'true')
+
+    // 5. Live Interactive Demo: sandboxed preview and reset
+    const demo = page.locator('.live-demo')
+    await expect(demo).toBeVisible()
+    const demoIframe = demo.locator('iframe')
+    await expect(demoIframe).toHaveAttribute('sandbox', '')
+
+    const demoEditor = demo.locator('textarea')
+    await demoEditor.fill('<h1>Tweaked live demo</h1>')
+    const resetDemoBtn = demo.getByRole('button', { name: /reset/i })
+    await resetDemoBtn.click()
+    await expect(demoEditor).toContainText('<!DOCTYPE html>')
+
+    // 6. Focus Mode: dark-room view, Esc dismissal, focus restoration
+    const focusModeBtn = page.getByRole('button', { name: /enter focus reading mode/i })
+    await expect(focusModeBtn).toBeVisible()
+    await focusModeBtn.click()
+
+    const focusRegion = page.getByRole('region', { name: /reading focus mode/i })
+    await expect(focusRegion).toBeVisible()
+    // Shell PageHeader and TOC are suppressed
+    await expect(page.locator('.lesson-toc--desktop')).not.toBeVisible()
+
+    // Press Escape to exit
+    await page.keyboard.press('Escape')
+    await expect(focusRegion).not.toBeVisible()
+    await expect(focusModeBtn).toBeFocused()
+  })
 })

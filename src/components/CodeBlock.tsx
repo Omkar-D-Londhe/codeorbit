@@ -64,7 +64,7 @@ export function CodeBlock({ code, label, copyable = true }: Props) {
         <figcaption className="code-block__bar">
           <span className="code-block__label">{label ?? 'HTML'}</span>
           {copyable && (
-            <button type="button" className="btn btn--ghost btn--sm" onClick={copy}>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={copy} aria-live="polite">
               <Icon name={copied ? 'check' : 'copy'} size={16} />
               {copied ? 'Copied' : 'Copy'}
             </button>

@@ -30,16 +30,40 @@ export interface Topic {
 }
 
 export interface LessonSection {
+  id?: string
   heading: string
   body: string[]
   code?: { label: string; code: string }
   callout?: { kind: 'why' | 'mistake'; text: string }
 }
 
+export interface LessonFile {
+  name: string
+  content: string
+  readOnly?: boolean
+  hidden?: boolean
+}
+
+export interface LessonDemo {
+  id: string
+  title: string
+  files: LessonFile[]
+}
+
+export interface LessonTerm {
+  term: string
+  definition: string
+}
+
 export interface Lesson {
   topicId: string
   objective: string
   sections: LessonSection[]
+  takeaways?: string[]
+  terms?: Record<string, LessonTerm>
+  demos?: LessonDemo[]
+  a11yNotes?: string[]
+  estimatedMinutes?: number
 }
 
 export interface QuizQuestion {

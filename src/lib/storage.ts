@@ -4,12 +4,12 @@ import { getQuiz } from '../data/quizzes'
 import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -30,6 +30,7 @@ export const createDefaultState = (): CodeOrbitState => {
     challenges: {},
     notes: {},
     bookmarks: [],
+    sectionBookmarks: [],
     errorNotebook: [],
     settings: {
       ...DEFAULT_SETTINGS,
@@ -67,6 +68,7 @@ export const migrations: Array<(old: Json) => Json> = [
   },
   migrateV1toV2,
   migrateV2toV3,
+  migrateV3toV4,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -172,6 +174,20 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
   if (Array.isArray(raw.bookmarks)) {
     s.bookmarks = Array.from(new Set(raw.bookmarks.filter((b): b is string => typeof b === 'string' && !!getTopic(b))))
     if (s.bookmarks.length !== raw.bookmarks.length) drop()
+  }
+
+  if (Array.isArray(raw.sectionBookmarks)) {
+    s.sectionBookmarks = Array.from(
+      new Set(
+        raw.sectionBookmarks.filter(
+          (b): b is string =>
+            typeof b === 'string' &&
+            b.includes('#') &&
+            Boolean(getTopic(b.split('#')[0]))
+        )
+      )
+    )
+    if (s.sectionBookmarks.length !== raw.sectionBookmarks.length) drop()
   }
 
   if (Array.isArray(raw.errorNotebook)) {

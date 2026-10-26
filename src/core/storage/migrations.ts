@@ -71,3 +71,15 @@ export function migrateV2toV3(old: Json): Json {
     challenges,
   }
 }
+
+/**
+ * Migrates a version-3 state object to version-4 (Stage 08).
+ * Ensures sectionBookmarks array is initialized.
+ */
+export function migrateV3toV4(old: Json): Json {
+  return {
+    ...old,
+    schemaVersion: 4,
+    sectionBookmarks: Array.isArray(old.sectionBookmarks) ? old.sectionBookmarks : [],
+  }
+}

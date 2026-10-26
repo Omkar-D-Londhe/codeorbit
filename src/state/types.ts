@@ -142,6 +142,7 @@ export interface CodeOrbitState {
   challenges: Record<string, ChallengeRecord>
   notes: Record<string, NoteRecord>
   bookmarks: string[]
+  sectionBookmarks?: string[]
   errorNotebook: ErrorEntry[]
   settings: Settings
   activity: ActivityEvent[]
@@ -150,3 +151,7 @@ export interface CodeOrbitState {
   dailyAssigned?: Record<string, string>
   streakBest: number
 }
+
+/** Helper to generate composite section bookmark ID (8.2) */
+export const sectionBookmarkId = (topicId: string, sectionId: string): string => `${topicId}#${sectionId}`
+

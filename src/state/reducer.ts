@@ -18,6 +18,7 @@ export type Action =
   | { type: 'REVEAL_SOLUTION'; challengeId: string }
   | { type: 'SET_NOTE'; topicId: string; text: string; now: number }
   | { type: 'TOGGLE_BOOKMARK'; topicId: string }
+  | { type: 'TOGGLE_SECTION_BOOKMARK'; topicId: string; sectionId: string }
   | { type: 'ADD_ERROR'; entry: ErrorEntry }
   | { type: 'SET_ERROR_STATUS'; id: string; status: ErrorStatus }
   | { type: 'DELETE_ERROR'; id: string }
@@ -196,6 +197,14 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         ...state,
         bookmarks: state.bookmarks.includes(action.topicId) ? state.bookmarks.filter((b) => b !== action.topicId) : [...state.bookmarks, action.topicId],
       }
+    case 'TOGGLE_SECTION_BOOKMARK': {
+      const key = `${action.topicId}#${action.sectionId}`
+      const existing = state.sectionBookmarks ?? []
+      return {
+        ...state,
+        sectionBookmarks: existing.includes(key) ? existing.filter((b) => b !== key) : [...existing, key],
+      }
+    }
     case 'ADD_ERROR': {
       // One open entry per source+ref: update it rather than piling up duplicates.
       const i = state.errorNotebook.findIndex((e) => e.source === action.entry.source && e.refId === action.entry.refId && e.status === 'open')
