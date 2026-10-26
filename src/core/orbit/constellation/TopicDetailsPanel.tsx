@@ -100,7 +100,7 @@ export function TopicDetailsPanel({
     <aside className="constellation-panel" aria-label="Selected topic details">
       <div className="card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <span className="small muted" style={{ fontWeight: 600 }}>
+          <span className="small muted constellation-panel__badge" style={{ fontWeight: 600 }}>
             Topic {index + 1} of {totalTopics}
           </span>
           <span

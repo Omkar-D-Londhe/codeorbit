@@ -404,5 +404,35 @@
   - Architecture: 0 forbidden `'html'` string literals in `src/core/orbit/`.
   - Final status: **PASS**.
 
+## 2026-10-26 — Stage 10 Final Acceptance Fixes: Node Auto-Centering, Expanded Card Bounds, SPA Routing, and Topic Counter Verification
+- **Branch:** `stage-10-constellation-orbit`
+- **Scope & Implemented Changes:**
+  - **Acceptance 1 (Narrow Mobile Map Boundaries & Node Discoverability at 390×844 and 320×640):**
+    - Extended `usePanZoom.ts` with `selectedTopicId` monitoring: when a topic node is selected (via stepper, keyboard, or direct interaction) and its coordinates lie outside a 60px viewport threshold, `usePanZoom` smoothly auto-centers the viewport on the selected node using `clampTransform`.
+    - Added responsive font size and max-width (`font-size: 11px; max-width: 110px;`) for `.constellation-star__label` at `@media (max-width: 640px)`.
+    - Guarantees all 12 topic nodes and labels are discoverable, fully legible, and never permanently clipped outside the usable map viewport on narrow devices without introducing horizontal window scroll.
+  - **Acceptance 2 (Expanded Details-Card Overflow & SPA Routing):**
+    - Added `max-height: calc(100% - 100px); overflow-y: auto;` on desktop and `max-height: calc(100% - 90px); overflow-y: auto; padding: 12px 14px; gap: 8px;` at `@media (max-width: 560px)` to `.constellation-expanded-card`.
+    - Replaced hardcoded anchor tags (`<a href="...">`) in `.constellation-expanded-card__actions` with React Router `<Link>` components using route helpers `lessonPath`, `quizPath`, and `practicePath`.
+    - Prevents 404 navigation and maintains client-side SPA routing while keeping Lesson, Quiz, and Practice action buttons fully accessible within viewport bounds.
+  - **Acceptance 3 (Bottom-Right Toolbar Verification):**
+    - Confirmed all 4 controls (Zoom in, Zoom out, Reset/fit, Expand/collapse) are visible, operational, and accessible via mouse, keyboard (WAI-ARIA arrow key navigation), and touch (`touch-action: manipulation;`).
+    - Verified fit/reset centering behavior and zero translation drift on repeated zoom cycles.
+  - **Acceptance 4 (Topic-Counter Dynamic Derivation & Inconsistency Resolution):**
+    - Traced topic counter to its source in `src/data/curriculum.ts` (`topicsFor('html')` contains 12 topics). Confirmed the codebase never hardcoded 10 topics; the previous mention of `1 / 10` was a typographical error in report documentation.
+    - Verified stepper, panel badge (`Topic 1 of 12`), and expanded details card dynamically evaluate `topics.length` (`1 / 12` through `12 / 12`).
+    - Added comprehensive unit test suite `src/test/constellation/topicCounter.test.tsx` (4 tests) and E2E Playwright regression check in `e2e/remediation-visual.spec.ts`.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (66 test files, 525 tests passed 100% green).
+  - Playwright E2E suite (`npx playwright test`): PASS (31 tests passed across 3 spec files).
+  - Production build (`npm run build`): PASS (built in 399ms).
+  - Production security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Architecture integrity: 0 forbidden `'html'` string literals in `src/core/orbit/`.
+  - Captured updated screenshot `remediation-mobile-expanded-card.png` in `docs/antigravity/status/screenshots/stage-10-remediation/`.
+  - Final status: **PASS**.
+
+
 
 

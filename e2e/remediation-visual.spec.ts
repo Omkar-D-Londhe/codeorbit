@@ -213,6 +213,90 @@ test.describe('Learning Orbit: Constellation Final Remediation Verification (Sta
     }
   })
 
+  test('Acceptance 4: Expanded details-card bounds, deep-link actions, and narrow mobile expanded view', async ({ page }) => {
+    for (const size of [{ name: 'mobile-390', w: 390, h: 844 }, { name: 'narrow-320', w: 320, h: 640 }]) {
+      await page.setViewportSize({ width: size.w, height: size.h })
+      await page.goto('/learn/html')
+      await page.waitForSelector('.constellation-root')
+
+      // Select first star
+      const star = page.locator('.constellation-star').first()
+      await star.click()
+
+      // Expand map view via toolbar
+      const expandBtn = page.getByRole('button', { name: /Expand map view/i })
+      await expandBtn.click()
+
+      await expect(page.locator('.constellation-root--expanded')).toBeVisible()
+
+      const card = page.locator('.constellation-expanded-card')
+      await expect(card).toBeVisible()
+
+      const cardBox = await card.boundingBox()
+      expect(cardBox).not.toBeNull()
+
+      if (cardBox) {
+        // Floating card is fully within viewport bounds
+        expect(cardBox.x).toBeGreaterThanOrEqual(0)
+        expect(cardBox.x + cardBox.width).toBeLessThanOrEqual(size.w + 1)
+        expect(cardBox.y).toBeGreaterThanOrEqual(0)
+        expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(size.h)
+      }
+
+      // Deep-link actions route to valid application URLs
+      const lessonLink = card.getByRole('link', { name: /Lesson/i })
+      const quizLink = card.getByRole('link', { name: /Quiz/i })
+      const practiceLink = card.getByRole('link', { name: /Practice/i })
+
+      await expect(lessonLink).toBeVisible()
+      await expect(quizLink).toBeVisible()
+      await expect(practiceLink).toBeVisible()
+
+      const lessonHref = await lessonLink.getAttribute('href')
+      const quizHref = await quizLink.getAttribute('href')
+      const practiceHref = await practiceLink.getAttribute('href')
+
+      expect(lessonHref).toBe('/lesson/html-structure')
+      expect(quizHref).toBe('/quiz/html-structure')
+      expect(practiceHref).toMatch(/^\/practice\/[a-z0-9-]+$/)
+
+      // Stepper and toolbar are still reachable in expanded view
+      await expect(page.locator('.constellation-toolbar')).toBeVisible()
+      await expect(page.locator('.constellation-stepper-wrap')).toBeVisible()
+
+      if (size.name === 'mobile-390') {
+        await page.screenshot({
+          path: path.join(SCREENSHOT_DIR, 'remediation-mobile-expanded-card.png'),
+        })
+      }
+
+      // Exit expanded view via card minimize button
+      const minimizeBtn = card.getByRole('button', { name: /Exit expanded view/i })
+      await minimizeBtn.click()
+      await expect(page.locator('.constellation-root--expanded')).not.toBeVisible()
+    }
+  })
+
+  test('Acceptance 5: Topic counter reflects exactly 12 topics on HTML track dynamically', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 })
+    await page.goto('/learn/html')
+    await page.waitForSelector('.constellation-root')
+
+    const counter = page.locator('.constellation-stepper-counter')
+    await expect(counter).toBeVisible()
+    await expect(counter).toHaveText('1 / 12')
+
+    // Click next topic in stepper
+    const nextBtn = page.getByRole('button', { name: 'Next topic' })
+    await nextBtn.click()
+    await expect(counter).toHaveText('2 / 12')
+
+    // At desktop size, details panel badge also displays Topic 2 of 12
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const panelBadge = page.locator('.constellation-panel__badge')
+    await expect(panelBadge).toHaveText('Topic 2 of 12')
+  })
+
   test('Acceptance 3: Toolbar controls verification through click, keyboard focus, and expand/collapse', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/learn/html')

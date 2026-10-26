@@ -81,6 +81,7 @@ export function ConstellationMap({
     layout,
     containerRef,
     contentRef,
+    selectedTopicId,
   })
 
   const selectedIndex = topics.findIndex((t) => t.id === selectedTopicId)

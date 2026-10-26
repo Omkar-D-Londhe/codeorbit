@@ -8,6 +8,7 @@ export interface UsePanZoomOptions {
   contentRef: React.RefObject<HTMLDivElement | null>
   onTransformChange?: (transform: ViewTransform) => void
   disabled?: boolean
+  selectedTopicId?: string | null
 }
 
 export function usePanZoom({
@@ -16,6 +17,7 @@ export function usePanZoom({
   contentRef,
   onTransformChange,
   disabled = false,
+  selectedTopicId,
 }: UsePanZoomOptions) {
   const [transform, setTransformState] = useState<ViewTransform>({ x: 0, y: 0, zoom: 1 })
   const transformRef = useRef<ViewTransform>({ x: 0, y: 0, zoom: 1 })
@@ -135,6 +137,46 @@ export function usePanZoom({
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
     }
   }, [disabled, containerRef, layout, applyTransform])
+
+  // Center selected node if it falls outside the comfortable viewport boundary
+  const prevSelectedTopicIdRef = useRef<string | null>(selectedTopicId ?? null)
+  useEffect(() => {
+    if (disabled || !containerRef.current || !selectedTopicId) return
+    if (prevSelectedTopicIdRef.current === selectedTopicId) return
+    prevSelectedTopicIdRef.current = selectedTopicId
+
+    const node = layout.nodes.find((n) => n.topicId === selectedTopicId)
+    if (!node) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    const fitScale = baseFitScale(layout, { w: rect.width, h: rect.height })
+    const effectiveScale = fitScale * transformRef.current.zoom
+
+    const nodeScreenX = transformRef.current.x + node.x * effectiveScale
+    const nodeScreenY = transformRef.current.y + node.y * effectiveScale
+
+    const pad = 60
+    const isOutOfBounds =
+      nodeScreenX < pad ||
+      nodeScreenX > rect.width - pad ||
+      nodeScreenY < pad ||
+      nodeScreenY > rect.height - pad
+
+    if (isOutOfBounds) {
+      const targetX = rect.width / 2 - node.x * effectiveScale
+      const targetY = rect.height / 2 - node.y * effectiveScale
+
+      const clamped = clampTransform(
+        { x: targetX, y: targetY, zoom: transformRef.current.zoom },
+        layout,
+        { w: rect.width, h: rect.height }
+      )
+      applyTransform(clamped)
+      setTransformState(clamped)
+    }
+  }, [disabled, selectedTopicId, layout, containerRef, applyTransform])
 
   // Pointer & Touch handlers
   useEffect(() => {

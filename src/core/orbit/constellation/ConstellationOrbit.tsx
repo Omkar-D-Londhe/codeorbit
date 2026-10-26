@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import type { Topic, TopicGroup, NodeState, NodeView, ConstellationTrackMeta } from './types'
 import { computeConstellationLayout } from './layout'
 import { deriveNodeState, computeConstellationCounts } from './state'
@@ -8,7 +9,8 @@ import { TopicDetailsPanel } from './TopicDetailsPanel'
 import { ProgressCard } from './ProgressCard'
 import { useApp } from '../../../state/AppState'
 import { nextAction, topicProgress, type TopicProgress } from '../../../lib/progress'
-import { lessonPath } from '../../../lib/routes'
+import { lessonPath, quizPath, practicePath } from '../../../lib/routes'
+import { challengesForTopic } from '../../../data/challenges'
 import { Icon } from '../../../components/Icon'
 import { usePulse } from './usePulse'
 import './constellation.css'
@@ -333,27 +335,33 @@ export function ConstellationOrbit({
               </p>
 
               <div className="constellation-expanded-card__actions">
-                <a
-                  href={`/learn/${technologyId}/lesson/${selectedTopic.id}`}
+                <Link
+                  to={lessonPath(selectedTopic.id)}
                   className="btn btn--primary btn--sm"
                 >
                   <Icon name="book" size={14} />
                   <span>Lesson</span>
-                </a>
-                <a
-                  href={`/learn/${technologyId}/quiz/${selectedTopic.id}`}
+                </Link>
+                <Link
+                  to={quizPath(selectedTopic.id)}
                   className="btn btn--ghost btn--sm"
                 >
                   <Icon name="help" size={14} />
                   <span>Quiz</span>
-                </a>
-                <a
-                  href={`/learn/${technologyId}/practice/${selectedTopic.id}`}
-                  className="btn btn--ghost btn--sm"
-                >
-                  <Icon name="code" size={14} />
-                  <span>Practice</span>
-                </a>
+                </Link>
+                {(() => {
+                  const challenge = challengesForTopic(selectedTopic.id)[0]
+                  const pPath = challenge ? practicePath(challenge.id) : lessonPath(selectedTopic.id)
+                  return (
+                    <Link
+                      to={pPath}
+                      className="btn btn--ghost btn--sm"
+                    >
+                      <Icon name="code" size={14} />
+                      <span>Practice</span>
+                    </Link>
+                  )
+                })()}
               </div>
             </aside>
           )
