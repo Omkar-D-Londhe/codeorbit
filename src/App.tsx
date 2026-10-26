@@ -17,6 +17,7 @@ import Settings from './pages/Settings'
 import { ClockProvider } from './core/time/Clock'
 
 const UiGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiGallery')) : null
+const UiOrbitGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiOrbitGallery')) : null
 
 export default function App() {
   return (
@@ -41,6 +42,16 @@ export default function App() {
                     element={
                       <Suspense fallback={<div className="page">Loading gallery...</div>}>
                         <UiGallery />
+                      </Suspense>
+                    }
+                  />
+                )}
+                {import.meta.env.DEV && UiOrbitGallery && (
+                  <Route
+                    path="__ui/orbit"
+                    element={
+                      <Suspense fallback={<div className="page">Loading orbit fixture...</div>}>
+                        <UiOrbitGallery />
                       </Suspense>
                     }
                   />

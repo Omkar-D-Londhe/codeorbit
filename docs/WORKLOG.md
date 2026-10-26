@@ -292,3 +292,39 @@
   - Production audit clean: 0 vulnerabilities.
   - Zero forbidden `'html'` occurrences in `src/pages/**`, `src/components/**`, `src/core/**`, `src/lib/**`.
   - Legacy orbit files (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`) completely untouched.
+
+## 2026-10-26 — Stage 10a: Learning Orbit: celestial constellation map prototype
+- **Branch:** `stage-10-constellation-orbit`
+- **Prototype Scope & Architecture (Decision Gate O-15, Decision O-16):**
+  - Preserved legacy `LearningOrbit` (`src/components/orbit/*`, `src/lib/orbitGeometry.ts`) as default and untouched.
+  - Integrated `ConstellationOrbit` on `/learn/:technologyId?orbit=constellation` and dev gallery at `/__ui/orbit`.
+  - Maintained advisory-only prerequisites (Decision O-16); locked topics show "Recommended first" callout without blocking routes.
+- **Pure Mathematical Core (`src/core/orbit/constellation/`):**
+  - `types.ts`: typed models for `NodeState`, `LayoutNode`, `LayoutEdge`, `OrderLink`, `ConstellationLayout`, `NodeView`, `ViewTransform`, `ConstellationTopicMeta`, `ConstellationTrackMeta`, `ValidationIssue`.
+  - `validate.ts`: `validateConstellation` DAG validator enforcing unique IDs, $\le 42$ capacity, valid prereq IDs, cycle detection, and authored coordinate all-or-nothing rules.
+  - `layout.ts`: `computeConstellationLayout` deterministic placement in counter-clockwise spiral starting at 12 o'clock, center hub clearance, collision relaxation ($\ge 96$px separation), aspect ratio bucketing (`landscape` vs `portrait`), and smooth Bézier curve routing.
+  - `state.ts`: `deriveNodeState` computing node states (`completed`, `in-progress`, `available`, `locked`) and `computeConstellationCounts` with exact sum invariant $\sum \text{counts} = n$.
+  - `viewport.ts`: `fitTransform`, `clampTransform` (zoom 0.75-3.0, $\ge 25\%$ visibility maintenance), and spatial direction arrow navigation cone (`nextNodeInDirection`).
+- **Interactive Component Architecture:**
+  - `usePanZoom.ts`: custom pointer drag, touch pinch, Ctrl/Cmd+wheel zoom, keyboard pan/zoom, rAF direct DOM transforms, defensive pointer capture handling for jsdom.
+  - `constellation.css`: complete `--orbit-*` token styling, glassmorphism, responsive breakpoints, reduced-motion and high-contrast support.
+  - `Star.tsx`: 56px interactive star button with roving tabindex, circular progress arc SVG, status badges, and directional label placements.
+  - `Hub.tsx`: track center hub button triggering track overview in details panel.
+  - `Edges.tsx`: SVG rings, dashed prerequisite edges with active highlighting, and dotted curriculum order links.
+  - `ProgressCard.tsx`: Your Progress card with progress ring SVG, percentage bar, and 4 state counts strictly summing to $n$.
+  - `LegendCard.tsx`: Legend explaining node states and line types.
+  - `TopicDetailsPanel.tsx`: Right column details panel with direct Lesson, Quiz, Practice deep-links, advisory prerequisite warnings, and track overview.
+  - `TopicStepper.tsx`: Previous/Next navigation controls with pager dots.
+  - `TopicListView.tsx`: Accessible `<ol>` curriculum sequence list view with non-nested interactive buttons (0 axe violations).
+  - `ConstellationMap.tsx`: Canvas/SVG/DOM integration wrapper with `<Starfield />` backdrop and pan/zoom toolbar.
+  - `ConstellationOrbit.tsx`: Top-level orchestrator with Map/List toggle, expand mode, polite live regions, and `injectedProgress` fixture support.
+  - `UiOrbitGallery.tsx`: Dev-only visual testing harness at `/__ui/orbit` with simulated progress fixtures.
+- **Quality Gates & Verification:**
+  - Unit & Component Test Suite: 10 test files, 46 tests passing in `src/test/constellation/` (layout, connections, state, navigation, ConstellationMap, pan-zoom, a11y, responsive, motion, ProgressCard).
+  - Full Vitest Suite: 57 test files, 488 tests passing (100% green).
+  - Playwright Visual Suite (`e2e/orbit-visual.spec.ts`): 5 tests passing; generated 12 visual screenshots across 5 viewports into `docs/antigravity/status/screenshots/stage-10a/`.
+  - Full E2E Smoke Suite (`npm run test:e2e`): 18 tests passing (13 smoke + 5 visual).
+  - TypeScript: 0 errors (`npm run typecheck`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`), zero forbidden `'html'` string literals.
+  - Security: 0 npm audit production vulnerabilities.
+  - Decision Gate O-15: Stage 10a complete; stopping for owner review prior to 10b rollout.

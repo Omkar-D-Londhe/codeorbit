@@ -2,7 +2,7 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 47 files (442 tests)
+## Automated (Vitest, jsdom) — 57 files (488 tests)
 | File | Covers |
 |---|---|
 | `curriculum.test.ts` | stable unique IDs/order; prerequisite edges valid, acyclic, not a chain; every topic has lesson/quiz/challenge; quiz shape; previews have no topics |
@@ -52,6 +52,16 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `Sorter.test.tsx` | Keyboard-first drag-and-drop sorter (5.2, FC-18): 48px item touch targets, Move up/down buttons, Space grab/drop, Arrow reordering, Esc cancel, polite `aria-live` announcements |
 | `QuizTimer.test.tsx` | Opt-in calm quiz timer (5.5): `role="timer"` chip, tabular countdown, weight increase under 10s without panic colors, auto-pausing on `visibilitychange`, onExpire triggering |
 | `QuizBreakdown.test.tsx` | Result breakdown table (5.6): per-question table rendering, kind badges, ✓/✗ + status text, your answer vs correct answer, explanations, and "Save to Error Notebook" action |
+| `constellation/layout.test.ts` | Constellation layout engine: deterministic counter-clockwise placement, hub clearance, collision relaxation (≥ 96px), aspect ratio bucketing, and Bézier prerequisite edge routing |
+| `constellation/connections.test.ts` | Constellation edge connections: SVG Bézier paths for declared prerequisites, directional arrows, and sequential curriculum order links |
+| `constellation/state.test.ts` | Node state derivation (completed, in-progress, available, locked) and counts strictly summing to total n |
+| `constellation/navigation.test.ts` | Viewport transform math: fitTransform, clampTransform (zoom 0.75-3.0, keeps ≥ 25% visible), and spatial arrow navigation cone |
+| `constellation/ConstellationMap.test.tsx` | ConstellationMap integration: renders one star per topic, SELECT_TOPIC updates details panel, View topic/Lesson/Quiz/Practice links, advisory locked notice, hub selection track overview |
+| `constellation/ConstellationMap.pan-zoom.test.tsx` | ConstellationMap pan/zoom: drag pans past 4px threshold without changing selection, zoom buttons and wheel limits, Fit view reset |
+| `constellation/ConstellationMap.a11y.test.tsx` | Automated axe checks in Map and List views (zero serious/critical violations), roving tabindex, polite live-region announcements |
+| `constellation/ConstellationMap.responsive.test.tsx` | Responsive layout: viewports 1280, 820, 390, 320 px, Rule P-12 fallback to list view on narrow screen when topic count > 14 |
+| `constellation/ConstellationMap.motion.test.tsx` | Reduced motion disables twinkle; high contrast removes decorative starfield backdrop |
+| `constellation/ProgressCard.test.tsx` | ProgressCard: 4 state counts strictly sum to n, progress ring & percentage never 100% unless all topics complete |
 
 ## Browser Smoke Suite (Playwright, production build preview) — `e2e/smoke.spec.ts` (13 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
@@ -68,6 +78,7 @@ Real committed Playwright script executed against `vite preview` (`npm run test:
 11. **Feedback & Code Coach Platform**: Initial empty state, progress bar (`role="progressbar"`) met/total reflection, Code Coach persona label with strict L-05 compliance, expandable requirement explanations (`details.req-explanation`), and attempt history entry inspection.
 12. **Lesson Studio Platform**: Reading progress bar, estimated time badge (`about N min (estimate)`), takeaways card, TOC navigation with keyboard focus movement to section heading, accessible definition tooltip opening and Esc dismissal with focus return, section bookmark toggling and persistence across reloads (Schema v4), sandboxed live interactive demo with reset, and dark-room focus mode with Esc dismissal and focus restoration to opener.
 13. **Quiz Engine & Results Breakdown Platform**: Intro timed mode toggle (off by default), calm QuizTimer display during timed quiz, typed questions execution (choices, sorter 48px touch targets, blank code input), results score calculation, breakdown table with ✓/✗ + status text, and one-click "Save to Error Notebook" action.
+14. **Learning Orbit Constellation Map (10a prototype)** (`e2e/orbit-visual.spec.ts`): Captures 12 responsive visual screenshots across 5 viewports (1440, 1280, 820, 390, 320 px), verifies interactive star selection updates details panel with accurate routes, verifies hub selection track overview with truthful `nextAction()`, tests List view toggle and reload persistence, validates expanded view and Escape dismissal, and verifies high-contrast and reduced-motion states with zero horizontal page overflow.
 
 ## Browser (headless Chromium via puppeteer-core, production build, web security ON)
 Scripts live outside the repo (`/home/claude/browser/*.mjs`, not shipped). 41 checks covering: first run; arch apex/ends/order/touch size; strip⇄arch sync incl. first & last; no jitter on strip scroll; keyboard; lesson note persistence; quiz feedback; **sandbox attack** (script, `onerror`, form, popup link) — parent title/window untouched, script not executed in frame, `SecurityError` reading frame from parent, browser console confirms script + remote-image blocks; incomplete check; hints; confirmed solution reveal; focus mode in/out with draft intact; completion + reload + Resume; reduced motion; focus ring; mobile carousel/tap/tabs. Run 4× for stability. Page-level horizontal overflow checked on 8 routes × 6 viewports (1440, 1280, 1024, 768, 390, 360): none.

@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx vite preview --port 4173 --host 127.0.0.1',
+    command: 'npx vite preview --port 4173 --host 127.0.0.1 --strictPort',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
