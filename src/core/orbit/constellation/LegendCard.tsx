@@ -91,7 +91,7 @@ export function LegendCard() {
                 borderTop: '2px dashed var(--orbit-edge-prereq, #a79aff)',
               }}
             />
-            <span>Prerequisite (required)</span>
+            <span>Prerequisite (advisory)</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const SCREENSHOT_DIR = path.resolve('docs/antigravity/status/screenshots/stage-10-remediation')
 
-test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 Consolidated)', () => {
+test.describe('Learning Orbit: Constellation Final Remediation Verification (Stage 10 Consolidated)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
@@ -36,6 +36,31 @@ test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 
     }
   })
 
+  test('Issue 2 (Toolbar): bottom-right toolbar renders all 4 working control icons with visible paths', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/learn/html')
+    await page.waitForSelector('.constellation-root')
+
+    const toolbar = page.locator('.constellation-toolbar')
+    await expect(toolbar).toBeVisible()
+
+    // Assert that each button has an icon with a non-empty svg path
+    const buttons = toolbar.locator('button')
+    await expect(buttons).toHaveCount(4)
+
+    for (let i = 0; i < 4; i++) {
+      const btn = buttons.nth(i)
+      const pathD = await btn.locator('svg path').getAttribute('d')
+      expect(pathD).toBeTruthy()
+      expect(pathD!.length).toBeGreaterThan(5)
+    }
+
+    // Capture focused screenshot of the toolbar in its corrected state
+    await toolbar.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'remediation-toolbar-corrected.png'),
+    })
+  })
+
   test('Issue 1: repeated zoom out remains centered without drifting to top-left corner', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/learn/html')
@@ -48,15 +73,15 @@ test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 
     await zoomOutBtn.click()
     await zoomOutBtn.click()
 
-    // Constellation hub should remain visible and well within container
+    // Constellation hub should remain visible and centered
     const hub = page.locator('.constellation-hub-btn')
     await expect(hub).toBeVisible()
 
     const hubBox = await hub.boundingBox()
     expect(hubBox).not.toBeNull()
     if (hubBox) {
-      // Hub center should be near the middle of the container, not drifting off-screen or top-left
-      expect(hubBox.x).toBeGreaterThan(100)
+      // Hub center should be near middle of container, not drifting off-screen or top-left
+      expect(hubBox.x).toBeGreaterThan(150)
       expect(hubBox.y).toBeGreaterThan(100)
     }
 
@@ -95,7 +120,7 @@ test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 
     await star.click()
 
     // Click expand
-    const expandBtn = page.getByRole('button', { name: /Expand constellation view/i })
+    const expandBtn = page.getByRole('button', { name: /Expand map view/i })
     await expandBtn.click()
 
     await expect(page.locator('.constellation-root--expanded')).toBeVisible()
@@ -117,17 +142,39 @@ test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 
     await expect(page.locator('.constellation-panel')).toBeVisible()
   })
 
+  test('Issue 6 (Mobile List View): switching to list view on mobile 390px', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/learn/html')
+    await page.waitForSelector('.constellation-root')
+
+    const listBtn = page.getByRole('button', { name: 'List', exact: true })
+    await listBtn.click()
+
+    await expect(page.locator('.constellation-list-view')).toBeVisible()
+
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, 'remediation-mobile-list-view.png'),
+    })
+  })
+
   test('Issue 9: high contrast and reduced motion modes', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/learn/html')
 
-    // Enable high contrast
+    // Enable high contrast in app state and emulate forced-colors
     await page.evaluate(() => {
-      const raw = localStorage.getItem('codeorbit:app:state:v1')
+      localStorage.setItem('codeorbit:settings:early', JSON.stringify({
+        v: 1,
+        theme: 'obsidian',
+        accent: 'violet',
+        contrast: 'high',
+      }))
+      const raw = localStorage.getItem('codeorbit:state')
       const parsed = raw ? JSON.parse(raw) : {}
-      parsed.settings = { ...parsed.settings, contrast: 'high' }
-      localStorage.setItem('codeorbit:app:state:v1', JSON.stringify(parsed))
+      parsed.settings = { ...(parsed.settings || {}), contrast: 'high' }
+      localStorage.setItem('codeorbit:state', JSON.stringify(parsed))
     })
+    await page.emulateMedia({ forcedColors: 'active' })
     await page.reload()
     await page.waitForSelector('.constellation-root')
 
@@ -136,13 +183,20 @@ test.describe('Learning Orbit: Constellation Remediation Verification (Stage 10 
     })
 
     // Enable reduced motion
+    await page.emulateMedia({ forcedColors: 'none', reducedMotion: 'reduce' })
     await page.evaluate(() => {
-      const raw = localStorage.getItem('codeorbit:app:state:v1')
+      localStorage.setItem('codeorbit:settings:early', JSON.stringify({
+        v: 1,
+        theme: 'obsidian',
+        accent: 'violet',
+        contrast: 'normal',
+        motion: 'reduced',
+      }))
+      const raw = localStorage.getItem('codeorbit:state')
       const parsed = raw ? JSON.parse(raw) : {}
-      parsed.settings = { ...parsed.settings, contrast: 'normal', motion: 'reduced' }
-      localStorage.setItem('codeorbit:app:state:v1', JSON.stringify(parsed))
+      parsed.settings = { ...(parsed.settings || {}), contrast: 'normal', motion: 'reduced' }
+      localStorage.setItem('codeorbit:state', JSON.stringify(parsed))
     })
-    await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.reload()
     await page.waitForSelector('.constellation-root')
 

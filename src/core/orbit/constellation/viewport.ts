@@ -6,9 +6,13 @@ export function baseFitScale(
   padding = 50
 ): number {
   if (container.w <= 0 || container.h <= 0) return 1
-  const availW = Math.max(100, container.w - padding * 2)
-  const availH = Math.max(100, container.h - padding * 2)
-  return Math.min(availW / layout.width, availH / layout.height)
+  const effectivePadding = Math.min(padding, Math.max(12, Math.min(container.w, container.h) * 0.08))
+  const availW = Math.max(100, container.w - effectivePadding * 2)
+  const availH = Math.max(100, container.h - effectivePadding * 2)
+  const rawScale = Math.min(availW / layout.width, availH / layout.height)
+  // Prevent shrinking to an unusable microscopic dust cloud on very small screens:
+  // ensure scale is at least 0.40 so stars (56px -> 23px) and labels remain legible and touchable
+  return Math.max(0.40, rawScale)
 }
 
 export function fitTransform(

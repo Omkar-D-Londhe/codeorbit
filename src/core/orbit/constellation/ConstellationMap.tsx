@@ -234,40 +234,40 @@ export function ConstellationMap({
       <div className="constellation-toolbar" role="toolbar" aria-label="Map controls">
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost btn--sm constellation-toolbar__btn"
           onClick={zoomIn}
           aria-label="Zoom in (+)"
-          title="Zoom in"
+          title="Zoom in (+)"
         >
           <Icon name="plus" size={16} />
         </button>
 
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost btn--sm constellation-toolbar__btn"
           onClick={zoomOut}
           aria-label="Zoom out (-)"
-          title="Zoom out"
+          title="Zoom out (-)"
         >
           <Icon name="minus" size={16} />
         </button>
 
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost btn--sm constellation-toolbar__btn"
           onClick={resetToFit}
-          aria-label="Fit to screen (0)"
-          title="Fit view"
+          aria-label="Fit view to screen (0)"
+          title="Fit view (0)"
         >
           <Icon name="rotate-ccw" size={16} />
         </button>
 
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className="btn btn--ghost btn--sm constellation-toolbar__btn"
           onClick={onToggleExpand}
           aria-label={isExpanded ? 'Exit expanded view' : 'Expand map view'}
-          title={isExpanded ? 'Collapse' : 'Expand'}
+          title={isExpanded ? 'Exit expanded view (Esc)' : 'Expand map view'}
         >
           <Icon name={isExpanded ? 'minimize' : 'maximize'} size={16} />
         </button>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Topic, TopicGroup, NodeState, NodeView, ConstellationTrackMeta } from './types'
-import { computeConstellationLayout, aspectBucket } from './layout'
+import { computeConstellationLayout } from './layout'
 import { deriveNodeState, computeConstellationCounts } from './state'
 import { ConstellationMap } from './ConstellationMap'
 import { TopicListView } from './TopicListView'
@@ -57,11 +57,13 @@ export function ConstellationOrbit({
   const [isExpanded, setIsExpanded] = useState(false)
   const [announcement, setAnnouncement] = useState('')
 
-  // Determine aspect bucket
+  // Determine aspect bucket (landscape for desktop and mobile map container; portrait for tablet portrait)
   const [aspect, setAspect] = useState<'landscape' | 'portrait'>('landscape')
   useEffect(() => {
     const updateAspect = () => {
-      setAspect(aspectBucket({ w: window.innerWidth, h: window.innerHeight }))
+      const isMobile = window.innerWidth < 640
+      const isTabletPortrait = window.innerWidth >= 640 && window.innerHeight / window.innerWidth > 1.15
+      setAspect(isTabletPortrait && !isMobile ? 'portrait' : 'landscape')
     }
     updateAspect()
     window.addEventListener('resize', updateAspect)

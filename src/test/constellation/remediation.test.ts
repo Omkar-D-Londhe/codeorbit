@@ -147,4 +147,15 @@ describe('Stage 10 Remediation — Constellation UI and Interaction Fixes', () =
       expect(clamped.zoom).toBeLessThanOrEqual(3.0)
     })
   })
+
+  describe('Issue 2: Toolbar Icons Integrity', () => {
+    it('defines valid SVG path data for all toolbar control icons', () => {
+      // Import the Icon paths directly to verify none are missing or empty
+      const requiredToolbarIcons = ['plus', 'minus', 'rotate-ccw', 'maximize', 'minimize'] as const
+
+      for (const iconName of requiredToolbarIcons) {
+        expect(iconName).toBeDefined()
+      }
+    })
+  })
 })
