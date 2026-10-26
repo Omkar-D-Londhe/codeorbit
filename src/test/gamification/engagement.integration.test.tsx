@@ -31,10 +31,10 @@ describe('Stage 11b Engagement UI & Integration (Catalog 8.1, 8.2, 8.6, 5.7, P-0
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     expect(screen.getByText(/Level 0 · 0 XP/)).toBeInTheDocument()
 
-    // Daily challenge card
+    // Daily challenge summary link (Stage 12: canonical DailyChallengeCard is on Dashboard)
     expect(screen.getByText('Daily challenge')).toBeInTheDocument()
-    expect(screen.getByText(/Turn text into lists/i)).toBeInTheDocument()
-    expect(screen.getByText(/Picked from this device/i)).toBeInTheDocument()
+    expect(screen.getByText(/available on your dashboard/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Go to Dashboard/i })).toHaveAttribute('href', '/')
 
     // Personal bests
     expect(screen.getByRole('heading', { name: /Personal bests/i })).toBeInTheDocument()

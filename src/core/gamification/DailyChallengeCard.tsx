@@ -28,7 +28,7 @@ export function DailyChallengeCard() {
   const topic = challenge ? getTopic(challenge.topicId) : undefined
 
   return (
-    <section className="card card--quiet daily" aria-labelledby="daily-h">
+    <section className="card card--quiet daily" id="daily-challenge" aria-labelledby="daily-h">
       <p className="eyebrow">Daily challenge</p>
       {challenge ? (
         <>

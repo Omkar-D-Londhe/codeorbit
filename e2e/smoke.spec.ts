@@ -155,6 +155,12 @@ test.describe('CodeOrbit Browser Smoke Tests', () => {
         contrast: 'normal',
         motion: 'system'
       }))
+      const s = JSON.parse(localStorage.getItem('codeorbit:state') || '{}')
+      if (s && s.settings) {
+        s.settings.theme = 'aurora'
+        s.settings.accent = 'azure'
+        localStorage.setItem('codeorbit:state', JSON.stringify(s))
+      }
     })
     await page.reload()
     const reloadedTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'))

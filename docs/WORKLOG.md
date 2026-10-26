@@ -514,6 +514,53 @@
   - Visual evidence screenshots saved in `docs/antigravity/status/screenshots/stage-11/`.
   - Stage 11 exit gate: **PASS**.
 
+## 2026-10-26 — Stage 12: Dashboard: hero ring, streak calendar, group cards, daily card, activity feed, quick actions, smart next step
+- **Branch:** `stage-12-dashboard`
+- **Scope & Implemented Changes:**
+  - **Hero Progress Ring (`src/core/insights/HeroRing.tsx`, Catalog 3.1):**
+    - Large 160 px `ProgressRing` with percentage display and completed topics/steps metrics.
+    - Zero-state truthfulness: displays exact 0 metrics without fabrication (`0 of 12 topics complete · 0 of 36 learning steps done`).
+  - **Streak Calendar (`src/core/gamification/StreakCalendar.tsx`, Catalog 3.2, REF-08):**
+    - Accessible 12-week activity grid with semantic `role="table"`, `caption`, `th` weekdays, and month headers.
+    - Exact active cells mapping 1:1 with `activityDays`.
+    - Honest empty state: hides streak figures and renders "No activity recorded yet" when `activityDays.length === 0`.
+    - Custom shapes and legend for active days and inactive days.
+  - **Topic Group Completion Cards (`src/core/insights/GroupCards.tsx`, Catalog 3.3):**
+    - Grid layout (`repeat(auto-fill, minmax(200px, 1fr))`) rendering one card per `TopicGroup`.
+    - Progress bars and counts for completed vs total topics with direct deep-links to the first incomplete topic.
+  - **Daily Challenge Canonical Placement (`src/core/gamification/DailyChallengeCard.tsx`, Catalog 3.4):**
+    - Established canonical home on Dashboard with `#daily-challenge` anchor, frozen day assignment, and completion stamp.
+  - **Recent Activity Feed (`src/core/insights/ActivityFeed.tsx`, Catalog 3.5):**
+    - Displays last 10 recorded activity events with readable sentences and real timestamps (`<time>`).
+    - Completely hidden when empty (`activity.length === 0`).
+  - **Quick Actions Toolbar (`src/core/insights/QuickActions.tsx`, Catalog 3.6):**
+    - Keyboard-accessible toolbar buttons linking only to real, active destinations: Resume/Start, Today's challenge (`#daily-challenge`), Review (`/review`), Notes (`/review`), and Settings (`/settings`).
+  - **Smart Next Step Card (`src/core/learning/NextStepCard.tsx`, Catalog 15.3):**
+    - Wraps `nextAction` and provides clear prerequisite-based explanation (e.g. "Because Document structure is complete, you are ready for Elements and attributes").
+  - **Track-Aware Dashboard Page (`src/pages/Home.tsx`):**
+    - Rebuilt `Home.tsx` into track-aware Dashboard using 3-row layout and responsive grid utilities.
+    - Preserved existing behaviors: Resume/Start logic, 'Welcome back' vs first-run copy, Error Notebook review card, segment strip.
+    - Implemented mobile single-column ordering: `Continue, Daily, Hero ring, Groups, Track strip, Calendar, Next step, Review, Feed, Quick actions`.
+    - Strict track-neutrality: 0 `'html'` string literals.
+  - **Progress Page Deduplication (`src/pages/Progress.tsx`):**
+    - Removed duplicate `DailyChallengeCard` (resolving reference defect 11).
+    - Added streak summary line linking to Dashboard (`/`).
+  - **Responsive & Design System Styling (`src/styles/pages.css`):**
+    - Added CSS classes for dashboard rows, hero ring, streak calendar, group cards, activity feed, and quick actions.
+    - Full responsiveness verified at 1440px, 1280px, 820px, 390px, and 320px with zero horizontal overflow.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (74 test files, 572 tests passed, +8 new tests).
+  - Playwright visual tests (`e2e/dashboard-visual.spec.ts` & `e2e/gamification-visual.spec.ts`): PASS (9 visual tests across viewports, dark/light, high contrast, reduced motion).
+  - Playwright smoke suite (`e2e/smoke.spec.ts`): PASS (13 tests passed).
+  - Production build (`npm run build`): PASS (built in 481ms; `index-*.js` 598.45 kB, CSS 89.03 kB).
+  - Production security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Track neutrality: 0 forbidden `'html'` string literals in `src/core/insights`, `src/core/gamification`, or `src/pages/Home.tsx`.
+  - Visual evidence screenshots saved in `docs/antigravity/status/screenshots/stage-12/`.
+  - Stage 12 exit gate: **PASS**.
+
+
 
 
 

@@ -24,7 +24,7 @@ test.describe('Gamification & Engagement UI Visual Verification (Stage 11)', () 
       await page.setViewportSize({ width: vp.width, height: vp.height })
       await page.goto('/progress')
       await page.waitForSelector('.xp-bar-card')
-      await page.waitForSelector('.daily')
+      await page.waitForSelector('.progress-streak-summary')
       await page.waitForSelector('.badge-gallery-section')
 
       // Assert no accidental horizontal overflow
@@ -82,10 +82,9 @@ test.describe('Gamification & Engagement UI Visual Verification (Stage 11)', () 
       localStorage.setItem('codeorbit:state', JSON.stringify(baseState))
     })
 
-    await page.goto('/progress')
+    await page.goto('/')
     await page.waitForSelector('.daily__stamp')
     await expect(page.locator('.daily__stamp')).toContainText('Completed')
-    await expect(page.locator('.badge-card--earned').first()).toBeVisible()
 
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, 'daily-completed-1440.png'),

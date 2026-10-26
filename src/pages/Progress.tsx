@@ -14,7 +14,6 @@ import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
 import { useApp } from '../state/AppState'
 import { useTrack } from '../core/content/useTrack'
 import { XpBar } from '../core/gamification/XpBar'
-import { DailyChallengeCard } from '../core/gamification/DailyChallengeCard'
 import { BadgeGallery } from '../core/gamification/BadgeGallery'
 import { PersonalBestsSection } from '../core/gamification/PersonalBestsSection'
 
@@ -49,7 +48,17 @@ export default function Progress() {
 
       <XpBar />
 
-      <DailyChallengeCard />
+      {/* Streak summary line & link to dashboard (Stage 12: no duplicate daily card) */}
+      <section className="card card--quiet progress-streak-summary" aria-labelledby="prog-streak-h">
+        <p className="eyebrow">Daily challenge</p>
+        <h2 id="prog-streak-h" className="card__title">Daily challenge & activity</h2>
+        <p className="muted">
+          Today's daily challenge and active learning streak are available on your dashboard.
+        </p>
+        <div className="btn-row">
+          <Link className="btn btn--secondary" to="/">Go to Dashboard</Link>
+        </div>
+      </section>
 
       <section className="card progress-summary" aria-labelledby="sum-h">
         <ProgressRing fraction={tp.partsTotal ? tp.parts / tp.partsTotal : 0} size={72} stroke={5} className="ring--accent" />
