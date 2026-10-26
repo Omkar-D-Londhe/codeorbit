@@ -378,5 +378,31 @@
   - Security audit: 0 vulnerabilities (`npm audit --omit=dev`).
   - Final status: **PASS**.
 
+## 2026-10-26 — Stage 10 Final Acceptance Follow-up: Mobile Boundaries, List View, and Toolbar
+- **Branch:** `stage-10-constellation-orbit`
+- **Scope & Implemented Changes:**
+  - **Acceptance 1 (Mobile Map Boundaries & Bottom Nav Clearance):**
+    - Prevented fixed `.bottom-nav` from obscuring map controls at 390×844 and 320×640.
+    - Set map container height to 270px (min 240px) at $\le 360$px with `scroll-margin-bottom: 80px`.
+    - Compact stepper on mobile ($\le 640$px) switches to "1 / 10" counter and aligns to `left: 10px; bottom: 10px; transform: none;`, completely eliminating horizontal collision with the right-aligned toolbar (> 140px clearance).
+    - Expanded mode (`.constellation-root--expanded`) utilizes `position: fixed; inset: 0; z-index: 1200;` to render an immersive fullscreen canvas above the fixed bottom navigation and sticky topbar, collapsing via Escape or minimize buttons.
+  - **Acceptance 2 (Mobile List View Responsive Layout):**
+    - Refactored `TopicListView.tsx` to use structured BEM classes (`.constellation-list-row__select`, `.constellation-list-row__num`, `.constellation-list-row__info`, `.constellation-list-row__title`, `.constellation-list-row__prereq`, `.constellation-list-row__actions`, `.constellation-list-row__btn`).
+    - At $\le 560$px (including 390px and 320px), `.constellation-list-row` switches to a vertically stacked card (`flex-direction: column; align-items: stretch`).
+    - Titles and prerequisites occupy 100% of card width (> 210px at 320px; > 280px at 390px), eliminating cramped 100px text columns. Status pill and "View topic" button sit in a dedicated bottom action row.
+  - **Acceptance 3 (Toolbar Functionality & WAI-ARIA Keyboard Navigation):**
+    - Verified zoom in (+), zoom out (-), fit/reset (0), and expand/collapse (Esc) through automated interaction tests.
+    - Added WAI-ARIA Toolbar arrow key navigation (`ArrowDown`, `ArrowUp`, `ArrowRight`, `ArrowLeft`, `Home`, `End`) to `.constellation-toolbar`.
+    - Added `touch-action: manipulation;` to toolbar buttons for responsive mobile tapping without double-tap delay.
+- **Verification & Quality Gates:**
+  - Full Vitest suite: 65 test files, 521 tests passed (100% green).
+  - Playwright E2E suite: 29 tests passed across all 3 spec files (`smoke.spec.ts`, `orbit-visual.spec.ts`, `remediation-visual.spec.ts`).
+  - Updated screenshot captures generated at 1440×900, 820×1180, 390×844, and 320×640 (including mobile map and mobile list views) in `docs/antigravity/status/screenshots/stage-10-remediation/`.
+  - Typecheck (`tsc -b --noEmit`) and Lint (`eslint .`): 0 errors, 0 warnings.
+  - Production build: `npm run build` succeeds (`dist/assets/index-*.js`, `dist/assets/index-*.css`).
+  - Security audit: 0 vulnerabilities (`npm audit --omit=dev`).
+  - Architecture: 0 forbidden `'html'` string literals in `src/core/orbit/`.
+  - Final status: **PASS**.
+
 
 

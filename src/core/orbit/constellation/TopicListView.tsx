@@ -85,37 +85,24 @@ export function TopicListView({
                         onClick={() => onSelectTopic(t.id)}
                         aria-current={isSelected ? 'true' : undefined}
                         aria-label={`Select ${displayNum} ${t.title}. ${stateText}`}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          textAlign: 'left',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '14px',
-                          cursor: 'pointer',
-                          color: 'inherit',
-                          font: 'inherit',
-                          flex: 1,
-                        }}
                       >
-                        <span style={{ fontFamily: 'var(--font-mono, monospace)', fontWeight: 700, color: 'var(--text-muted)' }}>
+                        <span className="constellation-list-row__num">
                           {displayNum}
                         </span>
 
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text, #f0eff7)' }}>
+                        <div className="constellation-list-row__info">
+                          <div className="constellation-list-row__title">
                             {t.title}
                           </div>
                           {prereqTitles && (
-                            <div className="small muted">
+                            <div className="constellation-list-row__prereq">
                               Requires: {prereqTitles}
                             </div>
                           )}
                         </div>
                       </button>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="constellation-list-row__actions">
                         <span
                           className={`status-pill ${
                             state === 'completed'
@@ -124,15 +111,14 @@ export function TopicListView({
                               ? 'status-pill--neutral'
                               : 'status-pill--fail'
                           }`}
-                          style={{ fontSize: '11px' }}
                         >
                           <Icon name={stateIcon} size={12} />
-                          <span style={{ marginLeft: '4px' }}>{stateText}</span>
+                          <span>{stateText}</span>
                         </span>
 
                         <Link
                           to={lessonPath(t.id)}
-                          className="btn btn--secondary btn--sm"
+                          className="btn btn--secondary btn--sm constellation-list-row__btn"
                         >
                           View topic
                         </Link>

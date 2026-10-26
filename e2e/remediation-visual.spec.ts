@@ -142,6 +142,117 @@ test.describe('Learning Orbit: Constellation Final Remediation Verification (Sta
     await expect(page.locator('.constellation-panel')).toBeVisible()
   })
 
+  test('Acceptance 1: Mobile map boundaries (390x844 & 320x640) ensure stepper and toolbar are accessible without bottom-nav obscuring', async ({ page }) => {
+    for (const size of [{ w: 390, h: 844 }, { w: 320, h: 640 }]) {
+      await page.setViewportSize({ width: size.w, height: size.h })
+      await page.goto('/learn/html')
+      await page.waitForSelector('.constellation-root')
+
+      const bottomNav = page.locator('.bottom-nav')
+      const stepper = page.locator('.constellation-stepper-wrap')
+      const toolbar = page.locator('.constellation-toolbar')
+
+      // Scroll map into view
+      await page.evaluate(() => {
+        const wrapper = document.querySelector('.constellation-map-wrapper')
+        if (wrapper) {
+          wrapper.scrollIntoView({ block: 'end' })
+        }
+      })
+
+      await expect(stepper).toBeVisible()
+      await expect(toolbar).toBeVisible()
+
+      const navBox = await bottomNav.boundingBox()
+      const stepperBox = await stepper.boundingBox()
+      const toolbarBox = await toolbar.boundingBox()
+
+      expect(navBox).not.toBeNull()
+      expect(stepperBox).not.toBeNull()
+      expect(toolbarBox).not.toBeNull()
+
+      if (navBox && stepperBox && toolbarBox) {
+        // When map is in view, controls are not covered by the fixed bottom nav
+        expect(stepperBox.y + stepperBox.height).toBeLessThanOrEqual(navBox.y + 1)
+        expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(navBox.y + 1)
+
+        // Stepper and toolbar do not collide with each other horizontally
+        expect(stepperBox.x + stepperBox.width).toBeLessThanOrEqual(toolbarBox.x + 4)
+      }
+    }
+  })
+
+  test('Acceptance 2: Mobile List view card layout and scanning at 390px and 320px', async ({ page }) => {
+    for (const size of [{ name: 'mobile-390-list', w: 390, h: 844 }, { name: 'narrow-320-list', w: 320, h: 640 }]) {
+      await page.setViewportSize({ width: size.w, height: size.h })
+      await page.goto('/learn/html')
+      await page.waitForSelector('.constellation-root')
+
+      const listBtn = page.getByRole('button', { name: 'List', exact: true })
+      await listBtn.click()
+
+      const listView = page.locator('.constellation-list-view')
+      await expect(listView).toBeVisible()
+
+      // Rows render cards with title, status pill, and View topic link
+      const rows = page.locator('.constellation-list-row')
+      await expect(rows.first()).toBeVisible()
+
+      const firstTitle = rows.first().locator('.constellation-list-row__title')
+      await expect(firstTitle).toBeVisible()
+      const titleBox = await firstTitle.boundingBox()
+      // Title must have at least 180px available width (not squished to 100px)
+      expect(titleBox?.width).toBeGreaterThan(180)
+
+      const viewBtn = rows.first().locator('.constellation-list-row__btn')
+      await expect(viewBtn).toBeVisible()
+
+      await page.screenshot({
+        path: path.join(SCREENSHOT_DIR, `remediation-${size.name}.png`),
+      })
+    }
+  })
+
+  test('Acceptance 3: Toolbar controls verification through click, keyboard focus, and expand/collapse', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/learn/html')
+    await page.waitForSelector('.constellation-root')
+
+    const mapContent = page.locator('.constellation-map-content')
+    const initialTransform = await mapContent.getAttribute('style')
+
+    // 1. Click Zoom In
+    const zoomInBtn = page.getByRole('button', { name: /Zoom in/i })
+    await zoomInBtn.click()
+    const zoomedInTransform = await mapContent.getAttribute('style')
+    expect(zoomedInTransform).not.toEqual(initialTransform)
+
+    // 2. Click Zoom Out
+    const zoomOutBtn = page.getByRole('button', { name: /Zoom out/i })
+    await zoomOutBtn.click()
+
+    // 3. Click Reset/Fit
+    const fitBtn = page.getByRole('button', { name: /Fit view/i })
+    await fitBtn.click()
+
+    // 4. Keyboard Arrow navigation inside toolbar
+    await zoomInBtn.focus()
+    await expect(zoomInBtn).toBeFocused()
+    await page.keyboard.press('ArrowDown')
+    await expect(zoomOutBtn).toBeFocused()
+    await page.keyboard.press('ArrowDown')
+    await expect(fitBtn).toBeFocused()
+
+    // 5. Expand & collapse via toolbar button
+    const expandBtn = page.getByRole('button', { name: /Expand map view/i })
+    await expandBtn.click()
+    await expect(page.locator('.constellation-root--expanded')).toBeVisible()
+
+    // Minimize via keyboard Escape
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.constellation-root--expanded')).not.toBeVisible()
+  })
+
   test('Issue 6 (Mobile List View): switching to list view on mobile 390px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/learn/html')

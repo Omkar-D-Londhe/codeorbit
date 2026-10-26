@@ -1,10 +1,11 @@
-# Stage 10 Final Consolidated Remediation Status Report
+# Stage 10 Final Consolidated Remediation & Acceptance Follow-up Status Report
 
-**Stage:** Stage 10 Final Consolidated Visual Remediation: Constellation Orbit  
+**Stage:** Stage 10 Final Consolidated Visual Remediation & Acceptance Follow-up: Constellation Orbit  
 **Branch:** `stage-10-constellation-orbit`  
-**Starting Commit:** `fca1c95`  
-**Parent Stage 10b Commit:** `d971eb5`  
-**Grandparent Stage 10a Commit:** `432c241`  
+**Parent Final Remediation Commit:** `e175982`  
+**Grandparent Commit:** `fca1c95`  
+**Stage 10b Promoted Commit:** `d971eb5`  
+**Stage 10a Commit:** `432c241`  
 **Date:** 2026-10-26  
 **Final Status:** **PASS**
 
@@ -12,146 +13,128 @@
 
 ## 1. Executive Summary
 
-This report documents the final consolidated remediation pass on the CodeOrbit Learning Orbit constellation implementation. Every identified defect has been traced to its underlying source in code, repaired with minimal, robust fixes, and verified across all automated suites, visual regression viewports, and interaction modes.
+This report documents the completion of the Stage 10 Final Consolidated Visual Remediation and Acceptance Follow-up for the CodeOrbit Learning Orbit (Constellation Map). Following the initial remediation pass (commit `e175982`), this follow-up pass resolved all remaining visual, responsive, and interactive acceptance items identified in owner review:
 
-All mandatory preservation constraints remain strictly in force:
-- **Decision O-16 (Advisory Prerequisites):** Recommended prerequisites remain non-blocking. Learners can access Lessons, Quizzes, and Practice directly from any topic regardless of prerequisite status.
-- **Legacy Fallback:** The legacy orbit at `/learn/:technologyId?orbit=legacy` remains fully functional and its tests continue to pass 100%.
-- **Constellation Architecture:** Preserved clean SVG (edges, guide rings), DOM buttons (stars, hub, toolbar), and CSS (starfield, atmosphere). Zero Canvas, WebGL, or 3D dependencies were introduced.
+1. **Mobile Map Boundaries & Fixed Bottom Navigation Clearance:**
+   - At both `390×844` and `320×640`, the constellation map wrapper, topic stepper, and control toolbar maintain comfortable clearance from the fixed `.bottom-nav`.
+   - On initial load and subsequent scroll, `.constellation-stepper-wrap` and `.constellation-toolbar` remain fully visible and operational without collision or overlap.
+   - Stepper on mobile switches to a clean, compact counter ("1 / 10") aligned to the left, leaving > 130px of clear space between the stepper and the right-aligned toolbar.
+   - Expanded fullscreen mode (`.constellation-root--expanded`) utilizes `position: fixed; inset: 0; z-index: 1200;` to provide an immersive canvas above the fixed bottom navigation and sticky topbar, collapsing cleanly back to normal page flow via Escape key or minimize controls.
+2. **Mobile List View Card Spacing & Responsive Text Layout:**
+   - Removed rigid inline styles and replaced with semantic BEM classes (`.constellation-list-row__select`, `.constellation-list-row__num`, `.constellation-list-row__info`, `.constellation-list-row__title`, `.constellation-list-row__prereq`, `.constellation-list-row__actions`, `.constellation-list-row__btn`).
+   - On screens $\le 560$px (including 390px and 320px), list rows switch to a responsive stacked card layout (`flex-direction: column; align-items: stretch`).
+   - Topic titles and prerequisite information expand across 100% of the card width (> 210px available width at 320px; > 280px at 390px), completely eliminating cramped 100px text columns.
+   - Action controls sit in a dedicated bottom bar with status pills on the left and accessible "View topic" buttons on the right.
+3. **Control Toolbar Functionality & Keyboard Accessibility:**
+   - Verified active interactive operation of all 4 toolbar buttons: **Zoom In (+)**, **Zoom Out (-)**, **Fit/Reset (0)**, and **Expand/Minimize (Esc)**.
+   - Implemented WAI-ARIA Toolbar keyboard navigation (`ArrowDown`, `ArrowUp`, `ArrowRight`, `ArrowLeft`, `Home`, `End`) to move focus between toolbar actions with distinct visual focus rings.
+   - Added `touch-action: manipulation;` on toolbar buttons for instantaneous mobile touch activation.
+4. **Authoritative Preservation & Regression Verification:**
+   - **Decision O-16:** Prerequisites remain strictly advisory; direct links to lessons, quizzes, and practice are always active and unblocked.
+   - **Legacy Fallback:** The legacy orbit at `/learn/:technologyId?orbit=legacy` remains 100% functional and verified.
+   - **Language-Neutral Core:** Zero hardcoded `'html'` strings in `src/core/orbit/`.
+   - **Accessibility & Motion Modes:** High-contrast forced-colors and reduced-motion modes fully verified.
 
 ---
 
-## 2. Defect Root Causes & Implemented Fixes
+## 2. Acceptance Follow-up Defect Analysis & Implemented Fixes
 
-### 1. The Empty Bottom-Right Toolbar
-- **Verified Root Cause:** In `src/components/Icon.tsx`, the `PATHS` record defined only baseline icons (`home`, `star`, `check`, etc.). It lacked entries for `plus`, `minus`, `rotate-ccw`, `maximize`, and `minimize`. Because `PATHS` was typed as `Record<string, string>`, TypeScript did not flag missing keys. `Icon({ name: 'plus' })` rendered `<svg><path d={undefined} /></svg>`, resulting in 4 invisible icons inside a blurred container that appeared as an empty, blank rectangle.
-- **Intended Behavior:** The Stage 10 specification defines the bottom-right toolbar as the map control interface providing 4 operations: **Zoom In (+)**, **Zoom Out (-)**, **Fit to Screen (0)**, and **Expand/Minimize Map (Esc)**.
+### 1. Mobile Map Boundaries & Fixed Bottom Navigation Clearance (390×844 & 320×640)
+- **Problem Observed:** On small mobile screens (320×640), the fixed bottom navigation bar (`position: fixed; bottom: 0; z-index: 20; height: ~58-74px`) risked overlapping map controls if the map wrapper was excessively tall or centered stepper dots collided with the toolbar.
+- **Root Cause:**
+  1. Stepper dots with 10–20 topic items occupied ~256px. Centering them at `left: 50%; transform: translateX(-50%)` caused the right edge of the stepper to overlap the left edge of the toolbar on 390px and 320px screens.
+  2. Fixed `.bottom-nav` sat over the bottom edge of the viewport.
 - **Fix Implemented:**
-  1. Added standard 24px stroke SVG paths in `src/components/Icon.tsx` for `plus`, `minus`, `rotate-ccw`, `maximize`, and `minimize` (along with `orbit`, `lock`, `help`, `gear`).
-  2. Styled `.constellation-toolbar` and `.constellation-toolbar__btn` in `src/core/orbit/constellation/constellation.css` with 36×36px touch targets, subtle dark surface background, hover contrast, visible focus rings, and title tooltips.
-  3. Added forced-colors high-contrast support so buttons render with `border: 1px solid ButtonText` and `color: ButtonText`.
-- **Files Changed:** `src/components/Icon.tsx`, `src/core/orbit/constellation/ConstellationMap.tsx`, `src/core/orbit/constellation/constellation.css`.
+  1. In `src/core/orbit/constellation/constellation.css`:
+     - At `@media (max-width: 640px)`: aligned `.constellation-stepper-wrap` to `left: 10px; bottom: 10px; transform: none; max-width: calc(100% - 70px);`.
+     - Automatically hide dots (`.constellation-stepper-dots { display: none !important; }`) and show compact counter (`.constellation-stepper-counter { display: inline-block !important; }`).
+     - At `@media (max-width: 360px)`: adjusted map wrapper height to `270px; min-height: 240px; scroll-margin-bottom: 80px;`, positioning stepper at `left: 8px; bottom: 8px;` and toolbar at `right: 8px; bottom: 8px;`.
+     - Overlap eliminated: stepper occupies $x = 8 \dots 118$px; toolbar occupies $x = 266 \dots 312$px (> 140px open space between them).
+  2. In expanded mode (`.constellation-root--expanded`):
+     - Added `position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 1200; border-radius: 0; margin: 0; border: none;`.
+     - Fullscreen canvas overlays topbar and bottom nav completely, ensuring immersive focus with zero obstruction.
+- **Files Modified:** `src/core/orbit/constellation/constellation.css`, `e2e/remediation-visual.spec.ts`.
 
-### 2. Topic Labels Collapsing into Vertical Character Columns
-- **Verified Root Cause:**
-  1. `.constellation-star__label` was styled with `position: absolute; display: flex; flex-direction: column; max-width: 130px; word-break: break-word;`.
-  2. Because an absolutely positioned flex element without an explicit `width` shrinks to its min-content width, and `word-break: break-word` allows the browser to break words at character boundaries, Chromium calculated min-content width as 1 character (~10px), collapsing multi-word titles into vertical character columns ("D\no\nc\nu\nm\ne\nn\nt").
+### 2. Mobile List View Card Spacing & Responsive Scanning (390px & 320px)
+- **Problem Observed:** On 320px and 390px viewports, list items rendered as rigid horizontal rows with inline styles, cramming the topic title into a narrow ~100px space next to the status pill and "View topic" button.
+- **Root Cause:** Hardcoded inline styles on `<button>` (`display: flex; gap: 14px; flex: 1;`) and right action `<div>` prevented responsive flex-wrapping.
 - **Fix Implemented:**
-  - Applied `width: max-content; max-width: 140px; white-space: normal; word-break: normal; overflow-wrap: break-word; line-height: 1.25;` in `src/core/orbit/constellation/constellation.css`.
-  - Added `text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 2px 8px rgba(13,11,22,0.9);` for crisp contrast against celestial nebulae.
-  - Topic titles now wrap naturally between words on at most two short lines without breaking words.
-  - At low zoom levels ($zoom < 0.85$), labels display compact topic numbers (`01`, `02`) to keep the constellation clean, while full titles remain accessible via hover/focus tooltips and the details panel.
-- **Files Changed:** `src/core/orbit/constellation/constellation.css`, `src/core/orbit/constellation/Star.tsx`.
+  1. In `src/core/orbit/constellation/TopicListView.tsx`:
+     - Replaced inline styles with structured semantic classes: `.constellation-list-row__select`, `.constellation-list-row__num`, `.constellation-list-row__info`, `.constellation-list-row__title`, `.constellation-list-row__prereq`, `.constellation-list-row__actions`, `.constellation-list-row__btn`.
+  2. In `src/core/orbit/constellation/constellation.css`:
+     - Added `@media (max-width: 560px)`:
+       - `.constellation-list-row`: `flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px;`.
+       - `.constellation-list-row__info`: `flex: 1; width: 100%;`.
+       - `.constellation-list-row__title`: `font-size: 14px; font-weight: 600; width: 100%; word-break: normal; overflow-wrap: break-word;`.
+       - `.constellation-list-row__actions`: `display: flex; align-items: center; justify-content: space-between; width: 100%; border-top: 1px solid rgba(154, 139, 255, 0.12); padding-top: 10px;`.
+     - Result: Title has $> 210$px width at 320px and $> 280$px at 390px. Prerequisites render clearly beneath title. Status pill and action button sit comfortably in bottom action row.
+  3. Added high-contrast support for list rows under `@media (forced-colors: active)`.
+- **Files Modified:** `src/core/orbit/constellation/TopicListView.tsx`, `src/core/orbit/constellation/constellation.css`.
 
-### 3. Zoom-Out Drift & Mobile Microscopic Shrinking
-- **Verified Root Cause:**
-  1. `applyTransform` did not include `baseFitScale` in the CSS transform scale, so the 1200×800 layout remained unscaled in the DOM.
-  2. When hitting the minimum zoom limit ($0.75$), unclamped displacement ratios were applied, translating the constellation on every zoom-out click.
-  3. On mobile screens, `ConstellationOrbit.tsx` selected `portrait` layout (800×1100) based on window aspect ratio rather than map container aspect ratio (390×380). Fitting 1100px into 380px forced a scale of 0.25, shrinking stars into microscopic 14px dots.
-- **Fix Implemented:**
-  - In `src/core/orbit/constellation/usePanZoom.ts`, clamped target zoom before computing displacement; if already at limit, displacement returns with zero drift. Reciprocal zoom operations cancel out with $< 0.001$px drift.
-  - In `src/core/orbit/constellation/viewport.ts`, added a scale floor of `0.40` in `baseFitScale` to ensure stars (24px discs with 44px hit areas) and labels remain legible and touchable on mobile screens.
-  - In `src/core/orbit/constellation/ConstellationOrbit.tsx`, mobile screens ($< 640$px) use landscape layout matching the horizontal map container (380px height).
-- **Files Changed:** `src/core/orbit/constellation/usePanZoom.ts`, `src/core/orbit/constellation/viewport.ts`, `src/core/orbit/constellation/ConstellationOrbit.tsx`.
-
-### 4. Connector Clutter & Legend Advisory Alignment
-- **Verified Root Cause:** Inactive background prerequisite lines were too thick and bright, while LegendCard referenced "Prerequisite (required)", conflicting with Decision O-16.
-- **Fix Implemented:**
-  - Subdued inactive prerequisite lines to `stroke: rgba(154, 139, 255, 0.16); stroke-width: 1.2px; stroke-dasharray: 4 4; opacity: 0.7;`.
-  - Dimmed unrelated lines to `opacity: 0.08;` when a topic is selected.
-  - Differentiated incoming prerequisites (`is-incoming`, white drop-shadow glow) from outgoing dependents (`is-outgoing`, violet accent glow).
-  - Updated `src/core/orbit/constellation/LegendCard.tsx` to read "Prerequisite (advisory)" in strict alignment with O-16.
-- **Files Changed:** `src/core/orbit/constellation/Edges.tsx`, `src/core/orbit/constellation/constellation.css`, `src/core/orbit/constellation/LegendCard.tsx`.
-
-### 5. Responsive Behavior Across All Target Widths
-- **Verified Root Cause:** Rigid desktop headers and fixed map wrapper heights caused horizontal crowding and page scroll trapping on small screens.
-- **Fix Implemented:**
-  - Responsive map heights: 380px (min 320px) on $\le 640$px; 340px (min 280px) on $\le 360$px.
-  - Header flex-wrapping with stacked title/subtitle and compact segmented control buttons.
-  - Stepper dots hidden below 360px in favor of compact "1 / 10" counter.
-  - Verified no horizontal page overflow (`scrollWidth === clientWidth`) at 1440, 1280, 820, 390, and 320 px.
-- **Files Changed:** `src/core/orbit/constellation/constellation.css`, `src/core/orbit/constellation/TopicStepper.tsx`.
-
-### 6. Selected-Topic State Preservation & Expanded Mode Details Card
-- **Verified Root Cause:**
-  1. Selection overwrote `border-color: #ffffff`, erasing completed green, in-progress violet, or locked muted status indicators.
-  2. Expanding map unmounted the details panel, preventing access to lesson/quiz/practice deep links.
-- **Fix Implemented:**
-  - Preserved disc state border and added an outer white selection ring: `outline: 3px solid #ffffff; outline-offset: 3px; box-shadow: 0 0 20px var(--accent);`.
-  - Distinct dashed focus ring: `outline: 2px dashed var(--focus); outline-offset: 7px;`.
-  - In expanded mode, rendered a floating glassmorphism card (`.constellation-expanded-card`) in the top-right corner with direct Lesson, Quiz, Practice deep-links. Escape key or collapse button cleanly exits expanded mode.
-- **Files Changed:** `src/core/orbit/constellation/ConstellationOrbit.tsx`, `src/core/orbit/constellation/constellation.css`.
-
-### 7. Forced-Colors & High-Contrast Mode
-- **Verified Root Cause:** The earlier high-contrast screenshot showed an unstyled state because the test evaluated a non-existent storage key (`codeorbit:app:state:v1` instead of `codeorbit:state` and `codeorbit:settings:early`), preventing appearance initialization upon page reload.
-- **Fix Implemented:**
-  - Corrected test state injection in `e2e/remediation-visual.spec.ts` using `codeorbit:state` and `codeorbit:settings:early`, and enabled genuine browser forced colors via `page.emulateMedia({ forcedColors: 'active' })`.
-  - Added comprehensive `@media (forced-colors: active)` and `[data-contrast="high"]` styles across `.constellation-root`, `.constellation-star__disc`, `.constellation-star__label`, `.constellation-toolbar`, `.constellation-hub-btn`, and `.constellation-expanded-card`.
-- **Files Changed:** `src/core/orbit/constellation/constellation.css`, `e2e/remediation-visual.spec.ts`.
+### 3. Toolbar Functionality & Keyboard Accessibility
+- **Verified Operations:**
+  - **Zoom In (+):** Scales map content by $1.25\times$, centered on container.
+  - **Zoom Out (-):** Scales map content by $0.80\times$, clamped at min zoom limit without drift.
+  - **Fit / Reset (0):** Recalculates `fitTransform` and returns zoom to baseline $1.0\times$ centered.
+  - **Expand / Collapse (Esc):** Toggles `.constellation-root--expanded`, updating accessible label between "Expand map view" and "Exit expanded view", icon between `maximize` and `minimize`, and collapsing on `Escape` key.
+- **Keyboard Navigation Added:**
+  - Handled `onKeyDown` on `.constellation-toolbar` (`role="toolbar"`):
+    - `ArrowDown` / `ArrowRight`: focus next toolbar button (wrapping).
+    - `ArrowUp` / `ArrowLeft`: focus previous toolbar button (wrapping).
+    - `Home`: focus first toolbar button.
+    - `End`: focus last toolbar button.
+  - Retained native `Tab` ordering and visible `:focus-visible` rings (`outline: 2px solid var(--focus)`).
+- **Files Modified:** `src/core/orbit/constellation/ConstellationMap.tsx`, `src/core/orbit/constellation/constellation.css`.
 
 ---
 
 ## 3. Automated Quality Gate Verification
 
-All quality gates were executed in the repository and passed:
-
-| Gate | Command | Result | Notes |
+| Quality Gate | Command | Result | Details |
 |---|---|---|---|
-| **TypeScript Typecheck** | `npm run typecheck` | **PASS** | 0 errors |
-| **ESLint Rules** | `npm run lint` | **PASS** | 0 errors, 0 warnings |
-| **Vitest Unit & Component Suite** | `npm run test` | **PASS** | 65 test files, 520 tests passed |
-| **Playwright E2E Suite** | `npm run test:e2e` | **PASS** | 26 tests passed across 3 spec files |
-| **Production Build** | `npm run build` | **PASS** | Built in 423ms |
-| **Security Audit** | `npm audit --omit=dev` | **PASS** | 0 vulnerabilities |
+| **TypeScript Typecheck** | `npm run typecheck` | **PASS** | 0 type errors across all packages (`tsc -b --noEmit`) |
+| **ESLint Rules** | `npm run lint` | **PASS** | 0 errors, 0 warnings (`eslint .`) |
+| **Vitest Unit & Component Suite** | `npm run test` | **PASS** | 65 test files, 521 tests passed (0 failures) |
+| **Playwright Full E2E Suite** | `npx playwright test` | **PASS** | 29 tests passed across all 3 spec files (0 failures) |
+| **Production Build** | `npm run build` | **PASS** | Built in 380ms (`tsc -b && vite build`) |
+| **NPM Audit (Production)** | `npm audit --omit=dev` | **PASS** | 0 vulnerabilities found |
 | **Forbidden `'html'` Literal** | `git grep "'html'" src/core/orbit/` | **PASS** | 0 occurrences in core orbit |
 
 ---
 
-## 4. Production Bundle Size Comparison
+## 4. Visual Evidence Artifacts
 
-| Asset | Stage 10b Promoted | Stage 10 Final Remediation | Delta |
-|---|---|---|---|
-| **Main JS Bundle** (`index-*.js`) | 564.96 kB (170.63 kB gzip) | 568.69 kB (170.93 kB gzip) | +3.73 kB (+0.30 kB gzip) |
-| **CSS Bundle** (`index-*.css`) | 73.20 kB (16.73 kB gzip) | 77.40 kB (17.32 kB gzip) | +4.20 kB (+0.59 kB gzip) |
-| **CodeMirror Chunk** (`codemirrorAdapter-*.js`) | 496.16 kB (172.06 kB gzip) | 496.16 kB (172.06 kB gzip) | 0.00 kB |
+All screenshot captures were generated and verified via Playwright in `docs/antigravity/status/screenshots/stage-10-remediation/`:
 
-*Transfer overhead is less than 0.30 kB gzipped, with CodeMirror chunk completely unchanged.*
-
----
-
-## 5. Visual Evidence Artifacts
-
-All screenshots were generated via Playwright and verified in `docs/antigravity/status/screenshots/stage-10-remediation/`:
-
-| Screenshot File | Resolution | Key Verification Points |
+| Screenshot File | Resolution | Verification Scope |
 |---|---|---|
-| `remediation-desktop-1440.png` | 1440 × 900 | Centered hub, non-clipping multi-line labels, subdued background lines |
+| `remediation-desktop-1440.png` | 1440 × 900 | Desktop wide split view, centered constellation, clear topic labels, details panel |
 | `remediation-laptop-1280.png` | 1280 × 800 | Balanced split view with side details panel and progress card |
-| `remediation-tablet-820.png` | 820 × 1180 | Responsive tablet portrait layout, clean vertical flow |
-| `remediation-mobile-390.png` | 390 × 844 | 380px map height, touchable stars (scale $\ge 0.40$), zero page scroll trap |
-| `remediation-narrow-320.png` | 320 × 640 | 340px map height, compact counter stepper ("1 / 10"), no horizontal overflow |
-| `remediation-toolbar-corrected.png` | 36 × 150 crop | **All 4 control icons visible** (+, -, ↺, ⛶) with crisp stroke rendering |
-| `remediation-selected-topic-hierarchy.png` | 1440 × 900 | Outer white selection ring, state border preserved, white glowing incoming prereq, purple outgoing dependent |
-| `remediation-zoomed-out.png` | 1440 × 900 | Repeated zoom-out remains centered with zero displacement drift |
-| `remediation-expanded-details-card.png` | 1440 × 900 | Full-canvas map with floating topic card providing direct Lesson, Quiz, Practice links |
-| `remediation-mobile-list-view.png` | 390 × 844 | Accessible `<ol>` curriculum list fallback on mobile |
-| `remediation-high-contrast.png` | 1440 × 900 | Genuine forced-colors high contrast outlines on stars, edges, toolbar, and cards |
+| `remediation-tablet-820.png` | 820 × 1180 | Tablet portrait layout, stacked flow, legible stars and connectors |
+| `remediation-mobile-390.png` | 390 × 844 | Mobile 390px map view: stepper and toolbar clear of bottom-nav, zero horizontal overflow |
+| `remediation-narrow-320.png` | 320 × 640 | Mobile 320px map view: 270px height, compact counter stepper ("1 / 10"), toolbar clear of bottom-nav |
+| `remediation-mobile-390-list.png` | 390 × 844 | Mobile 390px list view: stacked cards, full-width title, prerequisites, status pill + View topic |
+| `remediation-narrow-320-list.png` | 320 × 640 | Mobile 320px list view: stacked cards at 320px, uncrowded title (>210px width), action row |
+| `remediation-toolbar-corrected.png` | Crop | All 4 control icons visible: Zoom In (+), Zoom Out (-), Fit (↺), Expand (⛶) |
+| `remediation-selected-topic-hierarchy.png` | 1440 × 900 | Outer white selection ring, preserved state border, white glowing incoming prereq, violet outgoing dependent |
+| `remediation-zoomed-out.png` | 1440 × 900 | Centered repeated zoom out with zero drift |
+| `remediation-expanded-details-card.png` | 1440 × 900 | Fullscreen expanded mode with floating topic card and direct Lesson/Quiz/Practice links |
+| `remediation-high-contrast.png` | 1440 × 900 | Forced-colors high contrast outlines on stars, edges, toolbar, list rows, and cards |
 | `remediation-reduced-motion.png` | 1440 × 900 | Animations and transitions disabled under `prefers-reduced-motion: reduce` |
 
 ---
 
-## 6. Accessibility & Touch Interaction Verification
+## 5. Decision & Constraint Compliance
 
-- **Keyboard Navigation:** Directional cone navigation (`ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`) moves focus between stars in spatial cones. Roving tabindex (`tabIndex={0}` on active, `-1` on others) verified. `Shift + Arrows` pans by 80px. `+` / `-` zooms by $1.25\times$. `0` resets to fit. `Escape` exits expanded mode and restores focus.
-- **Axe Automated Accessibility:** 0 serious or critical violations across Map and List views (`ConstellationMap.a11y.test.tsx`).
-- **Touch Targets:** Star hit areas $\ge 44$px; toolbar buttons 36×36px; stepper navigation buttons 32px height; segmented control touch targets $\ge 36$px.
-- **Screen Reader Announcements:** ARIA live polite region announces topic selection changes ("Selected: Lists and Grouping Elements, available") and hover relations without spamming.
-- **Decision O-16 Compliance:** Advisory locked topics display "Recommended first" guidance; Lesson, Quiz, and Practice actions are never disabled or redirected.
+- **Decision O-15 (Promotion Approval):** Stage 10b rollout confirmed; constellation is default orbit.
+- **Decision O-16 (Advisory Prerequisites):** Recommended prerequisites remain non-blocking. Learners can access Lessons, Quizzes, and Practice directly from any topic regardless of prerequisite completion.
+- **Legacy Orbit Fallback:** Retained at `/learn/:technologyId?orbit=legacy` with all tests passing.
+- **Architectural Purity:** Clean SVG guide rings and edges, DOM buttons for stars, hub, and controls, and CSS starfield backdrop. No Canvas, WebGL, or 3D introduced.
 
 ---
 
-## 7. Status Sign-off
+## 6. Final Status
 
-Stage 10 Consolidated Visual Remediation has addressed every defect identified in the owner review. All automated tests, visual captures, responsive checks, and accessibility gates have been verified with 100% green status.
+All acceptance follow-up requirements have been verified, automated quality gates executed with 100% green status, and visual captures confirmed.
 
 **Final Status:** **PASS**

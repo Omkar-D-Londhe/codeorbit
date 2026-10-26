@@ -231,7 +231,35 @@ export function ConstellationMap({
       </div>
 
       {/* Map control toolbar: Zoom in, Zoom out, Fit, Expand */}
-      <div className="constellation-toolbar" role="toolbar" aria-label="Map controls">
+      <div
+        className="constellation-toolbar"
+        role="toolbar"
+        aria-label="Map controls"
+        onKeyDown={(e) => {
+          // WAI-ARIA Toolbar arrow navigation
+          if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+            e.preventDefault()
+            const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button'))
+            const idx = btns.indexOf(document.activeElement as HTMLButtonElement)
+            const next = btns[(idx + 1) % btns.length]
+            next?.focus()
+          } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+            e.preventDefault()
+            const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button'))
+            const idx = btns.indexOf(document.activeElement as HTMLButtonElement)
+            const prev = btns[(idx - 1 + btns.length) % btns.length]
+            prev?.focus()
+          } else if (e.key === 'Home') {
+            e.preventDefault()
+            const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button'))
+            btns[0]?.focus()
+          } else if (e.key === 'End') {
+            e.preventDefault()
+            const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button'))
+            btns[btns.length - 1]?.focus()
+          }
+        }}
+      >
         <button
           type="button"
           className="btn btn--ghost btn--sm constellation-toolbar__btn"
