@@ -310,6 +310,7 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
 
     if (typeof rawSet.soundEnabled === 'boolean') set.soundEnabled = rawSet.soundEnabled
     if (typeof rawSet.streakReminders === 'boolean') set.streakReminders = rawSet.streakReminders
+    if (typeof rawSet.gamificationEnabled === 'boolean') set.gamificationEnabled = rawSet.gamificationEnabled
     if (nonNegInt(rawSet.dailyGoal)) set.dailyGoal = rawSet.dailyGoal
 
     s.settings = set

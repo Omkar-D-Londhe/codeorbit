@@ -481,3 +481,63 @@ html.is-focus .main { padding: var(--s-4); }
 .bookmark-list { display: grid; gap: 6px; }
 .bookmark-list li { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 700px) { .progress-row { grid-template-columns: 1fr auto; } .progress-row .status-chip { grid-column: 1 / -1; justify-self: start; } .progress-summary { flex-direction: column; align-items: flex-start; } }
+
+/* ---------- Gamification & Engagement (Stage 11) ---------- */
+
+/* Daily Challenge Card */
+.daily { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
+.daily__state { display: flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--text-muted); font-weight: 500; }
+.daily__state.is-done { color: var(--success); }
+.daily__stamp { display: inline-block; padding: 2px 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--success-wash); color: var(--success); border: 1px solid rgb(195 244 119 / 0.5); margin-left: 8px; }
+.daily__actions { margin-top: var(--s-2); }
+
+/* XP & Level Bar */
+.xp-bar-card { margin-top: var(--s-4); display: grid; gap: var(--s-3); }
+.xp-bar__top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); }
+.xp-bar__badge-col { display: flex; align-items: center; gap: var(--s-4); }
+.xp-bar__badge { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-wash); border: 2px solid var(--accent); color: var(--accent-soft); font-weight: 700; font-size: 13px; }
+.xp-bar__title { margin: 0; font-size: 1.2rem; }
+.xp-bar__track { width: 100%; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; position: relative; }
+.xp-bar__fill { height: 100%; background: linear-gradient(90deg, var(--accent), #c3f477); border-radius: 5px; transition: width 0.4s ease; }
+
+/* XP Award Indicator (5.7) */
+.xp-award { font-family: var(--font-mono); font-weight: 700; color: #c3f477; font-size: 14px; text-shadow: 0 0 8px rgba(195, 244, 119, 0.4); }
+.xp-award--animated { display: inline-block; animation: xpFloatFade 0.6s ease-out forwards; }
+.xp-award--static { display: inline-block; }
+
+@keyframes xpFloatFade {
+  0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+  30% { opacity: 1; transform: translateY(-4px) scale(1.05); }
+  100% { opacity: 0; transform: translateY(-16px) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-award--animated { animation: none; opacity: 1; transform: none; }
+}
+
+/* Badge Gallery */
+.badge-gallery-section { margin-top: var(--s-8); display: grid; gap: var(--s-4); }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-4); }
+.badge-card { display: grid; gap: var(--s-2); padding: var(--s-4); border-radius: var(--r-md); transition: transform 0.15s ease, border-color 0.15s ease; }
+.badge-card--earned { background: var(--surface-raised); border: 1.5px solid #c3f477; box-shadow: 0 2px 8px rgba(195, 244, 119, 0.12); }
+.badge-card--unearned { background: var(--surface); border: 1px solid var(--border); opacity: 0.75; }
+.badge-card__top { display: flex; justify-content: space-between; align-items: center; }
+.badge-card__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+.badge-card__icon--earned { background: rgb(195 244 119 / 0.15); color: #c3f477; border-color: #c3f477; }
+.badge-status-pill { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: var(--r-sm); }
+.badge-status-pill.is-earned { background: rgb(195 244 119 / 0.2); color: #c3f477; }
+.badge-status-pill.is-unearned { background: var(--border); color: var(--text-muted); }
+.badge-card__title { margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text); }
+.badge-card__rule { font-size: var(--fs-small); color: var(--text-muted); margin: 0; line-height: 1.45; }
+.badge-card__footer { margin-top: auto; padding-top: var(--s-2); border-top: 1px solid var(--border-subtle, var(--border)); display: flex; justify-content: space-between; }
+
+/* Personal Bests Section */
+.personal-bests-section { margin-top: var(--s-4); display: grid; gap: var(--s-3); }
+.personal-bests__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s-4); margin-top: var(--s-2); }
+.personal-best-item { display: grid; gap: 4px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); }
+.personal-best__val { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--accent-soft); font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  .badge-grid { grid-template-columns: 1fr; }
+  .personal-bests__grid { grid-template-columns: 1fr; }
+}

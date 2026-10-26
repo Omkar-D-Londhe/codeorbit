@@ -3,85 +3,130 @@
 Save as `docs/antigravity/status/STAGE_11_STATUS.md`.
 
 ## 1. Header
-- Stage: 11 (Sub-stage 11a: Core Gamification Logic, Schema v5, XP & Achievements)
-- Branch: `stage-11a-gamification-engagement` · Commit(s): Pending stage commit
-- Date/time: 2026-10-26 15:25 IST · Agent/tool: Antigravity (Google DeepMind pair programming assistant)
-- Started from: Commit `6e7179d` on branch `stage-10-constellation-orbit`
+- Stage: 11 (Gamification: XP, levels, achievements, streaks, daily challenge, personal bests — Stage 11b Rollout)
+- Branch: `stage-11b-gamification-engagement` · Commit(s): Pending stage commit
+- Date/time: 2026-10-26 15:55 IST · Agent/tool: Antigravity (Google DeepMind pair programming assistant)
+- Started from: Commit `7858e98` on branch `stage-11a-gamification-engagement`
 - Soft Decision Gates:
   - **O-09 (XP award table):** Approved default per specification (`lessonComplete: 10, quizPass: 15, quizPerfect: 10, challengePass: 25, independentSolve: 15, topicMastered: 50, errorUnderstood: 5, dailyChallenge: 20`).
   - **O-10 (Daily challenge scope):** Approved default per specification (global pool across available tracks; "current track only" filter off by default).
-- Predecessor Stage: Stage 10 (Constellation Orbit) verified 100% green and committed.
+- Predecessor Stage: Stage 11a verified 100% green and committed.
 
-## 2. Baseline before changes (Stage 10 exit state)
+## 2. Baseline before changes (Stage 11a exit state)
 | Command | Result (summary line) |
 |---|---|
 | `npm run typecheck` | Clean (0 errors) |
 | `npm run lint` | Clean (0 errors, 0 warnings) |
-| `npm run test` | 66 test files passed, 525 tests passed |
-| `npm run build` | Built successfully in 416ms |
+| `npm run test` | 69 test files passed, 549 tests passed |
+| `npm run build` | Built successfully in 498ms (`index-*.js` 572.39 kB / 171.98 kB gzip, CSS 80.28 kB / 17.79 kB gzip) |
 
-## 3. Scope Implemented for Stage 11a
-- **Schema v5 Data Model & Types (`src/state/types.ts`):**
-  - Added `BadgeRecord` interface: `{ firstSeenAt: number | null; backfilled: boolean }`.
-  - Added `badges: Record<string, BadgeRecord>` and `personalBests: Record<string, number>` to `CodeOrbitState`.
-- **Schema Migration v4 → v5 (`src/core/storage/migrations.ts` & `src/lib/storage.ts`):**
-  - Implemented `migrateV4toV5(old)`: pure, idempotent migration safely preserving existing state, initializing `badges: {}` and `personalBests: {}`.
-  - Bumped `SCHEMA_VERSION = 5` and added `migrateV4toV5` to the ordered migrations chain.
-  - Updated `sanitizeState()` to validate and repair `badges` and `personalBests` field-by-field.
-- **Pure XP & Level Derivation (`src/core/gamification/xp.ts`, Catalog 8.1, L-20):**
-  - `XP_TABLE`: fixed awards per milestone (`lessonComplete: 10, quizPass: 15, quizPerfect: 10, challengePass: 25, independentSolve: 15, topicMastered: 50, errorUnderstood: 5, dailyChallenge: 20`).
-  - Cumulative level curve: `xpForLevel(n) = 100 * n * (n + 1) / 2`.
-  - Pure calculation: `computeXp(state)` derives total XP and level purely from saved state; never writes to storage; immune to score inflation and farming (replays, hints, revisits grant 0 XP); un-completing an activity lowers XP consistently.
-- **Data-Driven Achievements Architecture (`src/core/gamification/achievements.ts`, Catalog 8.2, REF-05):**
-  - `AchievementDef`, `AchievementProgress`, `AchievementEvaluation`, and `EngagementContext` contracts.
-  - Platform achievements: `first-challenge`, `independent-solver`, `revision-completed`, `first-mastery`, `three-day-streak`, `seven-day-streak`, and `quiz-ace`.
-  - `evaluateAchievements(state, ctx)` evaluates all registered platform and track achievements without side-effects.
-  - `syncBadges(state, now)` tracks honest dates: live achievements earn `{ firstSeenAt: now, backfilled: false }`; pre-existing progress earns `{ firstSeenAt: null, backfilled: true }` (silent backfill, preventing toast storms).
-- **Track-Scoped HTML Achievements (`src/tracks/html/achievements.ts`):**
-  - Ported 5 HTML track achievements without `!` assertions: `html-foundations`, `semantic-structure`, `accessible-images`, `form-builder`, and `html-complete`.
-  - Registered under `htmlTrack.achievements` in `src/tracks/html/track.ts`.
-- **Local Personal Bests (`src/core/gamification/personalBests.ts`, Catalog 8.5):**
-  - `derivePersonalBests(state)`: derives longest streak (`streakBest`), best quiz scores per topic sorted by percentage, and fastest challenge pass durations from check history and `personalBests`.
-  - Strictly local to this device; zero peer comparisons.
-- **State Reducer Enhancements (`src/state/reducer.ts`):**
-  - Added action handlers for `AWARD_BADGE`, `RECORD_PERSONAL_BEST`, and `ASSIGN_DAILY`.
-  - Updated `RECORD_CHECK` to mark `dailyDone` when all requirements pass and `challengeId === state.dailyAssigned[today]`.
+## 3. Scope Implemented for Stage 11b
+- **Frozen Daily Challenge Assignment (`src/core/gamification/daily.ts`):**
+  - Implemented `dailyChallengeFor(key, pool)` using hash-seeded pseudorandom selection deterministic across dates and platforms.
+  - Frozen assignment invariant: once assigned and persisted in `state.dailyAssigned[dayKey]`, the challenge does not mutate even if the pool expands mid-day.
+  - `resolveDailyChallenge(state, dayKey, pool)`: dispatches `ASSIGN_DAILY` cleanly upon first view or reads existing frozen assignment.
+- **Daily Challenge UI Card (`src/core/gamification/DailyChallengeCard.tsx`, Catalog 8.6):**
+  - Renders eyebrow "Daily challenge", difficulty badge, challenge title, passing criteria, and status indicator ("Passed today" vs "Not passed today").
+  - Displays authentic completion stamp (`.daily__stamp`) when completed.
+  - Deep-links directly to `/practice/:topicId#ch-:id`.
+  - Honest device footnote: *"Picked from this device's date."* (Catalog 8.6, L-05).
+  - Preserved visibility under Rule P-04: Daily challenge remains accessible even when gamification display is toggled off in settings.
+- **Accessible XP & Level Progress Bar (`src/core/gamification/XpBar.tsx`, Catalog 8.1):**
+  - Semantic progressbar (`role="progressbar"`, `aria-valuenow`, `aria-valuemax`, `aria-label`).
+  - Honest status label: `Level N · X XP · Y to next level`.
+  - Prominent level badge with orbital glow styling.
+- **XP Floating Award Indicator (`src/core/gamification/XpAward.tsx`, Catalog 5.7):**
+  - Subtle floating badge `+N XP` lasting $\le 600$ms upon passing practice challenges.
+  - Reduced motion compliance: renders static inline badge without keyframe transforms when `prefers-reduced-motion` or `settings.motion === 'reduced'`.
+  - Integrated into `src/pages/Practice.tsx` triggered on passing uncompleted challenges.
+- **Achievement Badge Gallery (`src/core/gamification/BadgeGallery.tsx`, Catalog 8.2):**
+  - Responsive card grid (`repeat(auto-fill, minmax(260px, 1fr))`) rendering all 12 platform and track badges.
+  - Visual distinctions for earned vs unearned states (`.badge-card--earned`).
+  - Displays badge title, star icon, earned indicator pill, exact rule text ($\ge 20$ chars, Catalog 8.2), and fractional progress ratio (`N / M`).
+  - Honest timestamps: renders formatted localized date for live unlocks, and *"Earned (date not recorded)"* for pre-existing backfilled badges (preventing false timestamps).
+- **Personal Bests Section (`src/core/gamification/PersonalBestsSection.tsx`, Catalog 8.5):**
+  - Honest device subtitle: *"Your best on this device"*.
+  - Metric cards: Longest streak (days), Top quiz score (percentage and topic title), and Fastest challenge solve (seconds/minutes and challenge title).
+- **Milestone Detection & Toast Listener (`src/core/gamification/milestones.ts`, `MilestoneToastListener.tsx`):**
+  - Pure transition listener `detectMilestoneEvents(prevState, nextState)` detecting:
+    - "First Blood" on user's first completed challenge.
+    - Newly unlocked achievements (skips backfilled achievements).
+    - Level up rank advances (`Rank Advanced: Reached Level N!`).
+  - Mounted globally in `App.tsx` within `ToastProvider` for live polite announcements (`aria-live="polite"`).
+  - Silent on initial load and migration backfills (zero toast storm).
+  - Enhanced `src/components/Toast.tsx` with 15-second key deduplication preventing duplicate toasts.
+- **Motivation & Gamification Settings Switch (`src/pages/Settings.tsx`, Rule P-04):**
+  - Added "Show XP and achievements" switch in new "Motivation & Gamification" settings card.
+  - Backed by `settings.gamificationEnabled` (defaults to `true`).
+  - When disabled: Progress page hides XP Bar, Badges Gallery, and Personal Bests while preserving all underlying progress and keeping the Daily Challenge card visible.
+  - State sanitization in `src/lib/storage.ts` preserves `gamificationEnabled` across reloads.
+- **Responsive & Design System Styling (`src/styles/pages.css`):**
+  - CSS tokens and styles for `.daily`, `.daily__stamp`, `.xp-bar-card`, `.badge-grid`, `.badge-card--earned`, `.personal-bests-section`.
+  - Full responsive breakpoint adaptations (1440px, 1280px, 820px, 390px, 320px).
+  - High-contrast mode borders and contrast ratios ($\ge 12:1$).
+  - `@media (prefers-reduced-motion: reduce)` rules disabling decorative animations.
 
 ## 4. Verification and Quality Gates
 | Gate | Command | Result |
 |---|---|---|
 | **TypeScript** | `npm run typecheck` (`tsc -b --noEmit`) | **PASS** (0 errors) |
 | **ESLint** | `npm run lint` (`eslint .`) | **PASS** (0 warnings, 0 errors) |
-| **Unit & Integration Tests** | `npm run test` (Vitest) | **PASS** (69 test files, 549 tests passed, +24 new tests) |
-| **Production Build** | `npm run build` | **PASS** (built in 498ms; `index-*.js` 572.39 kB / 171.98 kB gzip, CSS 80.28 kB / 17.79 kB gzip) |
+| **Unit & Integration Tests** | `npm run test` (Vitest) | **PASS** (72 test files, 564 tests passed, +15 new tests in 11b) |
+| **Playwright Visual E2E** | `npx playwright test e2e/gamification-visual.spec.ts` | **PASS** (5 tests passed across all 5 viewports) |
+| **Production Build** | `npm run build` | **PASS** (built in 374ms; `index-*.js` 586.05 kB / 176.11 kB gzip, CSS 84.01 kB / 18.40 kB gzip) |
 | **Security Audit** | `npm audit --omit=dev` | **PASS** (0 vulnerabilities) |
-| **Track Neutrality** | `git grep -n "'html'" src/core/gamification src/core/orbit` | **PASS** (0 occurrences) |
+| **Track Neutrality** | `git grep -n "'html'" src/core/gamification` | **PASS** (0 occurrences) |
 
-## 5. Tests Added in Stage 11a
-- `src/test/gamification/achievements.test.ts` (13 tests): starts unearned, anti-farming on navigation/notes, First Challenge pass check, topic badges exact rules, HTML Foundations progress, Independent Solver hint/solution exclusion, First Mastery quiz perfection, Revision Completed understood entry, Three-Day / Seven-Day streaks, Quiz Ace, rule length > 20 chars & unique IDs, HTML Complete, honest dates & silent backfill.
-- `src/test/gamification/xp.test.ts` (6 tests): default 0 XP / Level 0, monotonic level curve, level threshold mapping, XP_TABLE category scoring, anti-farming on replay/re-check, consistent reduction on un-completing.
-- `src/test/gamification/personalBests.test.ts` (4 tests): empty state handling, longest streak derivation, quiz best sorting, fastest pass extraction.
-- `src/test/migrations.test.ts` (extended with 2 new v5 migration tests): v4 to v5 migration adding badges/personalBests, preserving sectionBookmarks, and preserving existing badges/personalBests.
+## 5. Tests Added in Stage 11b
+- `src/test/gamification/daily.test.ts` (7 tests):
+  - Deterministic challenge pick for a given date key.
+  - Cycles across consecutive days.
+  - Handles negative / pre-1970 UTC day keys gracefully.
+  - Handles empty challenge pool safely without throwing.
+  - Frozen assignment invariant: assigned challenge remains unchanged if pool expands mid-day.
+  - Passing today's assigned challenge marks today in `dailyDone`.
+  - Passing a non-daily challenge does not mark today in `dailyDone`.
+- `src/test/gamification/milestones.test.ts` (4 tests):
+  - Emits First Blood event on first completed challenge and does not re-emit.
+  - Emits Rank Progression event when level increases.
+  - Remains completely silent on initial load and for backfilled badges (no toast storm).
+  - Emits zero milestone events when gamification is toggled off in settings (Rule P-04).
+- `src/test/gamification/engagement.integration.test.tsx` (4 tests):
+  - Renders XP Bar, Daily Challenge, Personal Bests, and Badge Gallery on `/progress`.
+  - Respects Rule P-04: gamification toggle in Settings hides gamification UI while keeping daily challenge visible.
+  - Applies static styling to XpAward when motion preference is reduced.
+  - Enforces toast key deduplication within the 15-second window.
 
-## 6. Bundle Size and Dependency Changes
-- **New Runtime Dependencies:** 0 (Zero new runtime dependencies).
-- **New Dev Dependencies:** 0.
-- **Bundle Size:**
-  - Main JS chunk: `dist/assets/index-CimIXkRH.js`: 572.39 kB (gzip: 171.98 kB).
-  - CodeMirror chunk: `dist/assets/codemirrorAdapter-CjjTKl3B.js`: 496.16 kB (gzip: 172.06 kB).
-  - CSS: `dist/assets/index-cmvLolbK.css`: 80.28 kB (gzip: 17.79 kB).
+## 6. Visual Evidence Screenshots
+Generated in `docs/antigravity/status/screenshots/stage-11/`:
+1. `progress-desktop-1440.png`: Desktop (1440×900) showing XP Bar, Daily challenge card, Personal bests, and Badge gallery.
+2. `progress-laptop-1280.png`: Laptop (1280×800) responsive layout.
+3. `progress-tablet-820.png`: Tablet (820×1180) responsive layout.
+4. `progress-mobile-390.png`: Mobile (390×844) responsive layout.
+5. `progress-narrow-320.png`: Narrow mobile (320×640) compact layout.
+6. `daily-completed-1440.png`: Daily Challenge in completed state with `.daily__stamp` ("Completed").
+7. `settings-gamification-toggle.png`: Settings page showing the "Motivation & Gamification" card with "Show XP and achievements" toggle.
+8. `progress-high-contrast.png`: Progress page in high contrast mode (`data-contrast="high"`).
+9. `progress-reduced-motion.png`: Progress page in reduced motion mode (`data-motion="reduced"`).
 
-## 7. Deferred to Stage 11b
-- Frozen daily challenge UI (`DailyChallengeCard.tsx`).
-- Milestone events and rank progression toasts (`src/components/Toast.tsx` polite announcements).
-- XP award float animation (`XpAward.tsx`).
-- Achievement Badge Gallery UI (`BadgeGallery.tsx`) and XP Bar header in `src/pages/Progress.tsx`.
-- "Show XP and achievements" toggle switch in `src/pages/Settings.tsx` (Rule P-04).
-- Visual screenshot verification across 4 viewports (Desktop, Tablet, Mobile, Narrow Mobile).
+## 7. Soft Decision Gates Documentation
+- **O-09 (XP award table):** Settled on documented defaults:
+  - Lesson complete: 10 XP
+  - Quiz pass: 15 XP
+  - Quiz perfect: 10 XP
+  - Challenge pass: 25 XP
+  - Independent solve: 15 XP
+  - Topic mastered: 50 XP
+  - Error understood: 5 XP
+  - Daily challenge: 20 XP
+- **O-10 (Daily challenge scope):** Settled on documented defaults:
+  - Global pool across all registered curriculum tracks.
+  - Filter by current track is disabled by default, allowing cross-track daily discovery.
 
-## 8. Exit Gate Check (Stage 11a)
-- Derivation + migration tests green: **PASS** (32 gamification & migration tests passed).
-- Full Vitest suite: **PASS** (549 tests passing, 0 failing).
-- Typecheck & Lint: **PASS** (0 errors, 0 warnings).
-- Clean separation: core logic is 100% track-neutral; HTML track achievements isolated in `src/tracks/html/`.
-- Stage 11a exit gate: **PASS**.
+## 8. Exit Gate Check (Stage 11 Complete)
+- All Stage 11 requirements (11a logic + 11b engagement UI) implemented: **PASS**.
+- Automated test count: 564 passed (> 549 required threshold): **PASS**.
+- All quality gates green (typecheck, lint, test, build, audit, track neutrality): **PASS**.
+- 5 viewport screenshots and special modes captured: **PASS**.
+- No flame icons, guilt copy, or loss aversion (Rule L-19): **PASS**.
+- Stage 11 exit gate: **PASS**.

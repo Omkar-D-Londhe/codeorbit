@@ -13,6 +13,10 @@ import { lessonPath } from '../lib/routes'
 import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
 import { useApp } from '../state/AppState'
 import { useTrack } from '../core/content/useTrack'
+import { XpBar } from '../core/gamification/XpBar'
+import { DailyChallengeCard } from '../core/gamification/DailyChallengeCard'
+import { BadgeGallery } from '../core/gamification/BadgeGallery'
+import { PersonalBestsSection } from '../core/gamification/PersonalBestsSection'
 
 export default function Progress() {
   useDocumentTitle('My Progress')
@@ -43,6 +47,10 @@ export default function Progress() {
     <div className="page">
       <PageHeader title="My progress" lede="Everything here comes from what you have actually done in this browser." />
 
+      <XpBar />
+
+      <DailyChallengeCard />
+
       <section className="card progress-summary" aria-labelledby="sum-h">
         <ProgressRing fraction={tp.partsTotal ? tp.parts / tp.partsTotal : 0} size={72} stroke={5} className="ring--accent" />
         <div>
@@ -54,6 +62,8 @@ export default function Progress() {
           {!started && <p className="muted">No progress yet. Complete a lesson, quiz or challenge and it will appear here.</p>}
         </div>
       </section>
+
+      <PersonalBestsSection />
 
       {trackGroups.map((g) => {
         const ts = trackTopics.filter((t) => t.groupId === g.id)
@@ -82,6 +92,8 @@ export default function Progress() {
           </section>
         )
       })}
+
+      <BadgeGallery />
 
       <details className="card card--quiet rules">
         <summary>How progress is counted</summary>

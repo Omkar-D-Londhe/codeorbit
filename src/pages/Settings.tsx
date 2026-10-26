@@ -259,6 +259,26 @@ export default function Settings() {
           </div>
         </Card>
 
+        {/* Motivation & Gamification (Stage 11: P-04) */}
+        <Card title="Motivation & Gamification" eyebrow="Learning Experience">
+          <div style={{ display: 'grid', gap: 'var(--s-4)', marginTop: 'var(--s-3)' }}>
+            <Toggle
+              label="Show XP and achievements"
+              description="Displays XP level progression, achievement badges, and personal best records. When disabled, gamification UI is hidden while your progress data remains safely preserved. Daily challenges remain accessible."
+              checked={settings.gamificationEnabled !== false}
+              onChange={(e) => {
+                dispatch({ type: 'SET_SETTINGS', patch: { gamificationEnabled: e.target.checked } })
+                toast.show(
+                  e.target.checked
+                    ? 'XP and achievements enabled.'
+                    : 'Gamification interface hidden. Your progress data is preserved.',
+                  'info'
+                )
+              }}
+            />
+          </div>
+        </Card>
+
         {/* Atmosphere & Celestial Layers (Stage 04: 1.1, 1.2, 1.3, 1.6) */}
         <Card title="Celestial Atmosphere" eyebrow="Atmosphere & Effects">
           <div style={{ display: 'grid', gap: 'var(--s-4)', marginTop: 'var(--s-3)' }}>

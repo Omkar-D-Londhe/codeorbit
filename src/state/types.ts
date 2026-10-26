@@ -107,6 +107,7 @@ export interface Settings {
   soundEnabled?: boolean
   streakReminders?: boolean
   dailyGoal?: number
+  gamificationEnabled?: boolean
   atmosphere?: AtmosphereSettings
   editor?: EditorSettings
 }
@@ -118,6 +119,7 @@ export const DEFAULT_SETTINGS: Settings = {
   accent: 'violet',
   contrast: 'normal',
   motion: 'system',
+  gamificationEnabled: true,
   atmosphere: { ...DEFAULT_ATMOSPHERE_SETTINGS },
   editor: { ...DEFAULT_EDITOR_SETTINGS }
 }

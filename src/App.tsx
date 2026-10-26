@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { Shell } from './components/Shell'
 import { ToastProvider } from './components/Toast'
 import { AppStateProvider } from './state/AppState'
+import { MilestoneToastListener } from './core/gamification/MilestoneToastListener'
 import Explore from './pages/Explore'
 import Home from './pages/Home'
 import Lesson from './pages/Lesson'
@@ -25,6 +26,7 @@ export default function App() {
       <ClockProvider>
         <AppStateProvider>
           <ToastProvider>
+            <MilestoneToastListener />
             <Routes>
               <Route element={<Shell />}>
                 <Route index element={<Home />} />

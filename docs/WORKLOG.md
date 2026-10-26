@@ -469,6 +469,52 @@
   - Track neutrality: 0 forbidden `'html'` string literals in `src/core/gamification` or `src/core/orbit`.
   - Sub-stage exit gate: **PASS**.
 
+## 2026-10-26 — Stage 11b: Engagement UI, Daily Challenge, Milestone Toasts, Visual Evidence
+- **Branch:** `stage-11b-gamification-engagement`
+- **Scope & Implemented Changes:**
+  - **Frozen Daily Challenge (`src/core/gamification/daily.ts`, `DailyChallengeCard.tsx`):**
+    - Built deterministic seeded selector `dailyChallengeFor(dayKey, pool)`.
+    - Enforced frozen assignment invariant in `resolveDailyChallenge(state, dayKey, pool)`: assigned challenge in `state.dailyAssigned[dayKey]` remains immutable even if pool changes mid-day.
+    - Built `DailyChallengeCard` (Catalog 8.6) with eyebrow, title, difficulty, requirements, pending / completed states, `.daily__stamp` ("Completed"), direct practice lab link, and device date footnote.
+    - Preserved visibility under Rule P-04 (accessible as a core learning feature even when gamification display is toggled off).
+  - **Accessible XP Progress Bar (`src/core/gamification/XpBar.tsx`, Catalog 8.1):**
+    - Semantic `role="progressbar"` with `aria-valuenow`, `aria-valuemax`, level pill, and status text `Level N · X XP · Y to next level`.
+  - **XP Floating Award Indicator (`src/core/gamification/XpAward.tsx`, Catalog 5.7):**
+    - Floating `+N XP` notification lasting $\le 600$ms upon passing practice challenges.
+    - Respects reduced motion preferences by rendering static non-animated pill without CSS keyframes.
+    - Integrated with `src/pages/Practice.tsx`.
+  - **Achievement Badge Gallery (`src/core/gamification/BadgeGallery.tsx`, Catalog 8.2):**
+    - Grid layout displaying all 12 platform and track badges with star icon, earned indicator pill, exact rule text ($\ge 20$ chars), and progress ratios (`N / M`).
+    - Honest timestamps: renders formatted date for live unlocks, and "Earned (date not recorded)" for pre-existing backfilled badges.
+  - **Personal Bests Section (`src/core/gamification/PersonalBestsSection.tsx`, Catalog 8.5):**
+    - Honest subtitle "Your best on this device".
+    - Cards for longest streak, top quiz score (with topic title), and fastest challenge solve.
+  - **Milestone Detection & Toast Listener (`src/core/gamification/milestones.ts`, `MilestoneToastListener.tsx`):**
+    - Pure transition listener `detectMilestoneEvents(prevState, nextState)` detecting "First Blood", newly unlocked achievements, and level up rank advances.
+    - Mounted in `App.tsx` within `ToastProvider` for live polite announcements (`aria-live="polite"`).
+    - Silent on initial load and migration backfills (zero toast storm).
+    - Added 15-second key deduplication to `src/components/Toast.tsx`.
+  - **Motivation & Gamification Settings Switch (`src/pages/Settings.tsx`, Rule P-04):**
+    - Added "Show XP and achievements" toggle in new "Motivation & Gamification" settings card.
+    - Backed by `settings.gamificationEnabled` (defaults to `true`).
+    - State sanitization in `src/lib/storage.ts` preserves `gamificationEnabled`.
+  - **Integration & Responsive Styling (`src/pages/Progress.tsx`, `src/styles/pages.css`):**
+    - Assembled XP Bar, Daily Challenge, Personal Bests, and Badge Gallery on `/progress`.
+    - Added CSS tokens and responsive rules across 1440px, 1280px, 820px, 390px, and 320px breakpoints.
+    - High-contrast mode borders and reduced motion media query overrides.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (72 test files, 564 tests passed, +15 new tests in 11b).
+  - Playwright visual tests (`npx playwright test e2e/gamification-visual.spec.ts`): PASS (5 tests passed across 5 viewports + completed stamp + high contrast + reduced motion).
+  - Production build (`npm run build`): PASS (built in 374ms; `index-*.js` 586.05 kB, CSS 84.01 kB).
+  - Production security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Track neutrality: 0 forbidden `'html'` string literals in `src/core/gamification`.
+  - Soft gates documented: O-09 (XP table default) and O-10 (global daily challenge pool default).
+  - Visual evidence screenshots saved in `docs/antigravity/status/screenshots/stage-11/`.
+  - Stage 11 exit gate: **PASS**.
+
+
 
 
 

@@ -14,6 +14,7 @@ import { lessonPath, trackPath } from '../lib/routes'
 import { formatDateTime } from '../lib/status'
 import { checkChallenge, type CheckResult } from '../lib/validators'
 import { useApp } from '../state/AppState'
+import { XpAward } from '../core/gamification/XpAward'
 import { useClock } from '../core/time/Clock'
 import { Splitter } from '../core/ui/Splitter'
 import { AutoSaveIndicator } from '../core/editor/AutoSaveIndicator'
@@ -73,6 +74,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
   const [showDiff, setShowDiff] = useState(false)
   const [lintIssues, setLintIssues] = useState<A11yLintIssue[] | null>(null)
   const [diagnostics, setDiagnostics] = useState<EditorDiagnostic[]>([])
+  const [awardedXp, setAwardedXp] = useState<number | null>(null)
 
   const fullscreenOpenerRef = useRef<HTMLButtonElement>(null)
   const editorHandleRef = useRef<EditorHandle | null>(null)
@@ -176,7 +178,13 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
       failedIds: r.results.filter((x) => x.status === 'fail').map((x) => x.id),
       now: now(),
     })
-    if (r.allPassed) toast.show(`All ${r.total} requirements met. Challenge complete.`)
+    if (r.allPassed) {
+      toast.show(`All ${r.total} requirements met. Challenge complete.`)
+      if (!rec?.completed) {
+        const isIndependent = !rec?.solutionRevealed && (rec?.hintsRevealed ?? 0) === 0
+        setAwardedXp(isIndependent ? 40 : 25)
+      }
+    }
 
     const issues = lintHtml(htmlCode)
     setLintIssues(issues)
@@ -291,6 +299,7 @@ function PracticeInner({ challengeId }: { challengeId: string }) {
     <div className="toolbar" role="toolbar" aria-label="Practice actions">
       <button type="button" className="btn btn--secondary" onClick={run}><Icon name="play" size={18} />Run</button>
       <button type="button" className="btn btn--primary" onClick={check}><Icon name="check" size={18} />Check solution</button>
+      {awardedXp !== null && <XpAward amount={awardedXp} onComplete={() => setAwardedXp(null)} />}
       <button type="button" className="btn btn--ghost" onClick={hint} disabled={hintsShown >= challenge.hints.length}><Icon name="bulb" size={18} />Hint</button>
       <button type="button" className="btn btn--ghost" onClick={() => (draftEdited ? setConfirm('reset') : toast.show('The editor already has the starter code.', 'info'))}><Icon name="reset" size={18} />Reset</button>
       <button
