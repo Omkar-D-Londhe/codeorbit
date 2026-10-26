@@ -83,3 +83,37 @@ export function migrateV3toV4(old: Json): Json {
     sectionBookmarks: Array.isArray(old.sectionBookmarks) ? old.sectionBookmarks : [],
   }
 }
+
+/**
+ * Migrates a version-4 state object to version-5 (Stage 11).
+ * Initializes badges and personalBests records.
+ */
+export function migrateV4toV5(old: Json): Json {
+  const rawBadges = isObj(old.badges) ? old.badges : {}
+  const badges: Record<string, { firstSeenAt: number | null; backfilled: boolean }> = {}
+
+  for (const [id, b] of Object.entries(rawBadges)) {
+    if (isObj(b)) {
+      badges[id] = {
+        firstSeenAt: typeof b.firstSeenAt === 'number' ? b.firstSeenAt : null,
+        backfilled: typeof b.backfilled === 'boolean' ? b.backfilled : true,
+      }
+    }
+  }
+
+  const rawBests = isObj(old.personalBests) ? old.personalBests : {}
+  const personalBests: Record<string, number> = {}
+
+  for (const [key, val] of Object.entries(rawBests)) {
+    if (typeof val === 'number' && Number.isFinite(val)) {
+      personalBests[key] = val
+    }
+  }
+
+  return {
+    ...old,
+    schemaVersion: 5,
+    badges,
+    personalBests,
+  }
+}

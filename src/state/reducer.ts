@@ -24,6 +24,9 @@ export type Action =
   | { type: 'DELETE_ERROR'; id: string }
   | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
   | { type: 'IMPORT_STATE'; state: CodeOrbitState }
+  | { type: 'AWARD_BADGE'; id: string; now?: number; backfilled?: boolean }
+  | { type: 'RECORD_PERSONAL_BEST'; key: string; value: number }
+  | { type: 'ASSIGN_DAILY'; dayKey: string; challengeId: string }
 
 const emptyChallenge = (): ChallengeRecord => ({
   attempts: 0,
@@ -172,6 +175,17 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         refId: action.challengeId,
         meta: { passed: action.passed, total: action.total }
       })
+
+      if (allPassed && action.now !== undefined) {
+        const today = dayKey(action.now)
+        if (state.dailyAssigned?.[today] === action.challengeId && !nextState.dailyDone.includes(today)) {
+          nextState = {
+            ...nextState,
+            dailyDone: [...nextState.dailyDone, today]
+          }
+        }
+      }
+
       return nextState
     }
     case 'REVEAL_HINT': {
@@ -230,6 +244,38 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
     }
     case 'IMPORT_STATE': {
       return { ...action.state }
+    }
+    case 'AWARD_BADGE': {
+      if (state.badges[action.id]) return state
+      return {
+        ...state,
+        badges: {
+          ...state.badges,
+          [action.id]: {
+            firstSeenAt: action.backfilled ? null : (action.now ?? Date.now()),
+            backfilled: action.backfilled ?? false,
+          }
+        }
+      }
+    }
+    case 'RECORD_PERSONAL_BEST': {
+      return {
+        ...state,
+        personalBests: {
+          ...state.personalBests,
+          [action.key]: action.value,
+        }
+      }
+    }
+    case 'ASSIGN_DAILY': {
+      if (state.dailyAssigned?.[action.dayKey]) return state
+      return {
+        ...state,
+        dailyAssigned: {
+          ...state.dailyAssigned,
+          [action.dayKey]: action.challengeId,
+        }
+      }
     }
   }
 }

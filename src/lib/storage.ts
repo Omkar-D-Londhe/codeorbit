@@ -4,12 +4,12 @@ import { getQuiz } from '../data/quizzes'
 import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -47,7 +47,9 @@ export const createDefaultState = (): CodeOrbitState => {
     activityDays: [],
     dailyDone: [],
     dailyAssigned: {},
-    streakBest: 0
+    streakBest: 0,
+    badges: {},
+    personalBests: {}
   }
 }
 
@@ -69,6 +71,7 @@ export const migrations: Array<(old: Json) => Json> = [
   migrateV1toV2,
   migrateV2toV3,
   migrateV3toV4,
+  migrateV4toV5,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -336,6 +339,29 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
     s.activity = validEvents.slice(-MAX_ACTIVITY_EVENTS)
     if (s.activity.length !== raw.activity.length) drop()
   } else if (raw.activity !== undefined) drop()
+
+  // Sanitize badges
+  if (isObj(raw.badges)) {
+    s.badges = {}
+    for (const [id, b] of Object.entries(raw.badges)) {
+      if (isObj(b) && (b.firstSeenAt === null || isNum(b.firstSeenAt)) && typeof b.backfilled === 'boolean') {
+        s.badges[id] = {
+          firstSeenAt: b.firstSeenAt as number | null,
+          backfilled: b.backfilled,
+        }
+      } else drop()
+    }
+  } else if (raw.badges !== undefined) drop()
+
+  // Sanitize personalBests
+  if (isObj(raw.personalBests)) {
+    s.personalBests = {}
+    for (const [key, val] of Object.entries(raw.personalBests)) {
+      if (isNum(val)) {
+        s.personalBests[key] = val
+      } else drop()
+    }
+  } else if (raw.personalBests !== undefined) drop()
 
   return { state: s, repaired }
 }

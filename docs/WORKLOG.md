@@ -433,6 +433,43 @@
   - Captured updated screenshot `remediation-mobile-expanded-card.png` in `docs/antigravity/status/screenshots/stage-10-remediation/`.
   - Final status: **PASS**.
 
+## 2026-10-26 — Stage 11a: Core Gamification Logic, Schema v5, XP & Achievements
+- **Branch:** `stage-11a-gamification-engagement`
+- **Scope & Implemented Changes:**
+  - **Schema v5 Data Model & Migration (`src/state/types.ts`, `src/core/storage/migrations.ts`, `src/lib/storage.ts`):**
+    - Added `BadgeRecord` interface: `{ firstSeenAt: number | null; backfilled: boolean }`.
+    - Added `badges: Record<string, BadgeRecord>` and `personalBests: Record<string, number>` to `CodeOrbitState`.
+    - Implemented `migrateV4toV5(old)`: pure, idempotent migration safely preserving existing state, initializing `badges: {}` and `personalBests: {}`.
+    - Bumped `SCHEMA_VERSION = 5` and added `migrateV4toV5` to the ordered migrations chain.
+    - Updated `sanitizeState()` to validate and repair `badges` and `personalBests` field-by-field.
+  - **Pure XP & Level Derivation (`src/core/gamification/xp.ts`, Catalog 8.1, L-20):**
+    - Documented `XP_TABLE`: fixed awards per milestone (`lessonComplete: 10, quizPass: 15, quizPerfect: 10, challengePass: 25, independentSolve: 15, topicMastered: 50, errorUnderstood: 5, dailyChallenge: 20`).
+    - Cumulative level curve: `xpForLevel(n) = 100 * n * (n + 1) / 2`.
+    - Pure calculation: `computeXp(state)` derives total XP and level purely from saved state; never writes to storage; immune to score inflation and farming (replays, hints, revisits grant 0 XP); un-completing an activity lowers XP consistently.
+  - **Data-Driven Achievements Architecture (`src/core/gamification/achievements.ts`, Catalog 8.2, REF-05):**
+    - `AchievementDef`, `AchievementProgress`, `AchievementEvaluation`, and `EngagementContext` contracts.
+    - Platform achievements: `first-challenge`, `independent-solver`, `revision-completed`, `first-mastery`, `three-day-streak`, `seven-day-streak`, and `quiz-ace`.
+    - `evaluateAchievements(state, ctx)` evaluates all registered platform and track achievements without side-effects.
+    - `syncBadges(state, now)` tracks honest dates: live achievements earn `{ firstSeenAt: now, backfilled: false }`; pre-existing progress earns `{ firstSeenAt: null, backfilled: true }` (silent backfill, preventing toast storms).
+  - **Track-Scoped HTML Achievements (`src/tracks/html/achievements.ts`):**
+    - Ported 5 HTML track achievements without `!` assertions: `html-foundations`, `semantic-structure`, `accessible-images`, `form-builder`, and `html-complete`.
+    - Registered under `htmlTrack.achievements` in `src/tracks/html/track.ts`.
+  - **Local Personal Bests (`src/core/gamification/personalBests.ts`, Catalog 8.5):**
+    - `derivePersonalBests(state)`: derives longest streak (`streakBest`), best quiz scores per topic sorted by percentage, and fastest challenge pass durations from check history and `personalBests`.
+    - Strictly local to this device; zero peer comparisons.
+  - **State Reducer Enhancements (`src/state/reducer.ts`):**
+    - Added action handlers for `AWARD_BADGE`, `RECORD_PERSONAL_BEST`, and `ASSIGN_DAILY`.
+    - Updated `RECORD_CHECK` to mark `dailyDone` when all requirements pass and `challengeId === state.dailyAssigned[today]`.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (69 test files, 549 tests passed, +24 new tests).
+  - Production build (`npm run build`): PASS (built in 498ms; `index-*.js` 572.39 kB, CSS 80.28 kB).
+  - Security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Track neutrality: 0 forbidden `'html'` string literals in `src/core/gamification` or `src/core/orbit`.
+  - Sub-stage exit gate: **PASS**.
+
+
 
 
 

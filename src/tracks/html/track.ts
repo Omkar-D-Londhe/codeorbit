@@ -3,6 +3,7 @@ import { HTML_TECH_ID, groups, topics } from '../../data/curriculum'
 import { lessons } from '../../data/lessons'
 import { quizzes } from '../../data/quizzes'
 import { challenges } from '../../data/challenges'
+import { htmlAchievements } from './achievements'
 
 export const htmlTrack: TrackModule = {
   id: HTML_TECH_ID,
@@ -31,4 +32,5 @@ export const htmlTrack: TrackModule = {
   lessons: Object.fromEntries(lessons.map((l) => [l.topicId, l])),
   quizzes: Object.fromEntries(quizzes.map((q) => [q.topicId, q])),
   challenges,
+  achievements: htmlAchievements,
 }

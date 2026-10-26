@@ -132,6 +132,13 @@ export interface ActivityEvent {
   meta?: Record<string, string | number | boolean>
 }
 
+export interface BadgeRecord {
+  /** Timestamp when first observed earned in live session, or null if backfilled from pre-existing progress. */
+  firstSeenAt: number | null
+  /** True if the badge was earned prior to schema v5 tracking or backfilled on migration. */
+  backfilled: boolean
+}
+
 export interface CodeOrbitState {
   schemaVersion: number
   lastVisited?: LastVisited
@@ -150,6 +157,8 @@ export interface CodeOrbitState {
   dailyDone: string[]
   dailyAssigned?: Record<string, string>
   streakBest: number
+  badges: Record<string, BadgeRecord>
+  personalBests: Record<string, number>
 }
 
 /** Helper to generate composite section bookmark ID (8.2) */
