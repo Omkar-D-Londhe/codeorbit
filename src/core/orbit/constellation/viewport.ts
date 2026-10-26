@@ -1,18 +1,26 @@
 import type { ConstellationLayout, ViewTransform, LayoutNode } from './types'
 
+export function baseFitScale(
+  layout: ConstellationLayout,
+  container: { w: number; h: number },
+  padding = 50
+): number {
+  if (container.w <= 0 || container.h <= 0) return 1
+  const availW = Math.max(100, container.w - padding * 2)
+  const availH = Math.max(100, container.h - padding * 2)
+  return Math.min(availW / layout.width, availH / layout.height)
+}
+
 export function fitTransform(
   layout: ConstellationLayout,
   container: { w: number; h: number },
-  padding = 40
+  padding = 50
 ): ViewTransform {
   if (container.w <= 0 || container.h <= 0) {
     return { x: 0, y: 0, zoom: 1 }
   }
 
-  const availW = Math.max(100, container.w - padding * 2)
-  const availH = Math.max(100, container.h - padding * 2)
-  const scale = Math.min(availW / layout.width, availH / layout.height)
-
+  const scale = baseFitScale(layout, container, padding)
   const scaledW = layout.width * scale
   const scaledH = layout.height * scale
 
@@ -25,7 +33,8 @@ export function fitTransform(
 export function clampTransform(
   t: ViewTransform,
   layout: ConstellationLayout,
-  container: { w: number; h: number }
+  container: { w: number; h: number },
+  padding = 50
 ): ViewTransform {
   const zoom = Math.max(0.75, Math.min(3.0, t.zoom))
 
@@ -34,10 +43,7 @@ export function clampTransform(
   }
 
   // Calculate base fit scale
-  const padding = 40
-  const availW = Math.max(100, container.w - padding * 2)
-  const availH = Math.max(100, container.h - padding * 2)
-  const fitScale = Math.min(availW / layout.width, availH / layout.height)
+  const fitScale = baseFitScale(layout, container, padding)
   const effectiveScale = fitScale * zoom
 
   const fieldW = layout.width * effectiveScale

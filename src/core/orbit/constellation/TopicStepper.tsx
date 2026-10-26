@@ -48,45 +48,50 @@ export function TopicStepper({
       </button>
 
       {n <= 14 ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} role="tablist">
-          {topics.map((t, i) => {
-            const isSelected = i === selectedIndex
-            const state = nodeStates[t.id] ?? 'available'
-            const title = `${i + 1}. ${t.title} (${state})`
+        <>
+          <div className="constellation-stepper-dots" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} role="tablist">
+            {topics.map((t, i) => {
+              const isSelected = i === selectedIndex
+              const state = nodeStates[t.id] ?? 'available'
+              const title = `${i + 1}. ${t.title} (${state})`
 
-            let dotColor = 'var(--border-hover, #5a547a)'
-            if (state === 'completed') dotColor = 'var(--success, #48c78e)'
-            else if (state === 'in-progress') dotColor = 'var(--accent, #9a8bff)'
-            else if (state === 'locked') dotColor = 'var(--border, #2d2a42)'
+              let dotColor = 'var(--border-hover, #5a547a)'
+              if (state === 'completed') dotColor = 'var(--success, #48c78e)'
+              else if (state === 'in-progress') dotColor = 'var(--accent, #9a8bff)'
+              else if (state === 'locked') dotColor = 'var(--border, #2d2a42)'
 
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                aria-current={isSelected ? 'true' : undefined}
-                aria-label={title}
-                title={title}
-                tabIndex={isSelected ? 0 : -1}
-                onClick={() => onSelectIndex(i)}
-                style={{
-                  width: isSelected ? '18px' : '10px',
-                  height: '10px',
-                  borderRadius: '5px',
-                  background: isSelected ? 'var(--accent, #9a8bff)' : dotColor,
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  outlineOffset: '2px',
-                }}
-              />
-            )
-          })}
-        </div>
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  aria-current={isSelected ? 'true' : undefined}
+                  aria-label={title}
+                  title={title}
+                  tabIndex={isSelected ? 0 : -1}
+                  onClick={() => onSelectIndex(i)}
+                  style={{
+                    width: isSelected ? '18px' : '10px',
+                    height: '10px',
+                    borderRadius: '5px',
+                    background: isSelected ? 'var(--accent, #9a8bff)' : dotColor,
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    outlineOffset: '2px',
+                  }}
+                />
+              )
+            })}
+          </div>
+          <span className="constellation-stepper-counter" style={{ fontSize: '12px', fontWeight: 600, padding: '0 6px', display: 'none' }}>
+            {selectedIndex + 1} / {n}
+          </span>
+        </>
       ) : (
-        <span style={{ fontSize: '12px', fontWeight: 600, padding: '0 6px' }}>
+        <span className="constellation-stepper-counter" style={{ fontSize: '12px', fontWeight: 600, padding: '0 6px' }}>
           Topic {selectedIndex + 1} of {n}
         </span>
       )}

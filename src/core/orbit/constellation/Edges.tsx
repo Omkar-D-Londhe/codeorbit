@@ -74,16 +74,22 @@ export function Edges({
         />
       ))}
 
-      {/* Prerequisite edges (dashed) with active emphasis (Catalog 2.3) */}
+      {/* Prerequisite edges (dashed) with active emphasis (Catalog 2.3 & Stage 10 Remediation) */}
       {edges.map((edge) => {
-        const isConnected =
-          activeTopicId && (edge.fromId === activeTopicId || edge.toId === activeTopicId)
-        const isDimmed = activeTopicId && !isConnected
+        const isIncoming = Boolean(activeTopicId && edge.toId === activeTopicId)
+        const isOutgoing = Boolean(activeTopicId && edge.fromId === activeTopicId)
+        const isConnected = isIncoming || isOutgoing
+        const isDimmed = Boolean(activeTopicId && !isConnected)
+
+        let edgeClass = 'constellation-edge-prereq'
+        if (isIncoming) edgeClass += ' is-active is-incoming'
+        else if (isOutgoing) edgeClass += ' is-active is-outgoing'
+        else if (isDimmed) edgeClass += ' is-dimmed'
 
         return (
           <path
             key={`edge-${edge.fromId}-${edge.toId}`}
-            className={`constellation-edge-prereq ${isConnected ? 'is-active' : ''} ${isDimmed ? 'is-dimmed' : ''}`}
+            className={edgeClass}
             d={edge.d}
           />
         )

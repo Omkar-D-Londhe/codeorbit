@@ -282,9 +282,9 @@ export function ConstellationOrbit({
           />
         )}
 
-        {/* Details & Progress panel */}
-        {!isExpanded && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Details & Progress panel: side-by-side in normal mode, floating drawer in expanded mode (Issue 8) */}
+        {!isExpanded ? (
+          <div className="constellation-side-column" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <TopicDetailsPanel
               topic={selectedTopic}
               index={selectedIndex >= 0 ? selectedIndex : 0}
@@ -302,6 +302,59 @@ export function ConstellationOrbit({
 
             <ProgressCard counts={counts} />
           </div>
+        ) : (
+          selectedTopic && (
+            <aside
+              className="constellation-expanded-card"
+              aria-label={`Details for ${selectedTopic.title}`}
+            >
+              <div className="constellation-expanded-card__header">
+                <div>
+                  <span className="constellation-expanded-card__badge">
+                    Topic {selectedIndex + 1} of {topics.length}
+                  </span>
+                  <h4 className="constellation-expanded-card__title">{selectedTopic.title}</h4>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setIsExpanded(false)}
+                  aria-label="Exit expanded view"
+                  title="Collapse view (Esc)"
+                >
+                  <Icon name="minimize" size={14} />
+                </button>
+              </div>
+
+              <p className="constellation-expanded-card__desc">
+                {selectedTopic.description}
+              </p>
+
+              <div className="constellation-expanded-card__actions">
+                <a
+                  href={`/learn/${technologyId}/lesson/${selectedTopic.id}`}
+                  className="btn btn--primary btn--sm"
+                >
+                  <Icon name="book" size={14} />
+                  <span>Lesson</span>
+                </a>
+                <a
+                  href={`/learn/${technologyId}/quiz/${selectedTopic.id}`}
+                  className="btn btn--ghost btn--sm"
+                >
+                  <Icon name="help" size={14} />
+                  <span>Quiz</span>
+                </a>
+                <a
+                  href={`/learn/${technologyId}/practice/${selectedTopic.id}`}
+                  className="btn btn--ghost btn--sm"
+                >
+                  <Icon name="code" size={14} />
+                  <span>Practice</span>
+                </a>
+              </div>
+            </aside>
+          )
         )}
       </div>
     </div>

@@ -115,20 +115,38 @@
 
 .constellation-edge-prereq {
   fill: none;
-  stroke: var(--orbit-edge-prereq, rgba(167, 154, 255, 0.45));
-  stroke-dasharray: 6 4;
-  stroke-width: 1.5px;
+  stroke: var(--orbit-edge-prereq, rgba(154, 139, 255, 0.16));
+  stroke-dasharray: 4 4;
+  stroke-width: 1.2px;
+  opacity: 0.7;
   transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
 }
 
 .constellation-edge-prereq.is-active {
   stroke: var(--orbit-edge-active, #ffffff);
-  stroke-width: 2.5px;
-  filter: drop-shadow(0 0 4px var(--accent, #9a8bff));
+  stroke-width: 2.2px;
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--accent, #9a8bff));
+}
+
+.constellation-edge-prereq.is-incoming {
+  stroke: #ffffff;
+  stroke-width: 2.4px;
+  stroke-dasharray: 6 3;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
+}
+
+.constellation-edge-prereq.is-outgoing {
+  stroke: var(--accent, #9a8bff);
+  stroke-width: 2.0px;
+  stroke-dasharray: 3 3;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 5px var(--accent, #9a8bff));
 }
 
 .constellation-edge-prereq.is-dimmed {
-  opacity: 0.25;
+  opacity: 0.08;
 }
 
 /* Hub */
@@ -214,13 +232,14 @@
 }
 
 .constellation-star:focus-visible .constellation-star__disc {
-  outline: 2px solid var(--focus, #b4a8ff);
-  outline-offset: 3px;
+  outline: 2px dashed var(--focus, #b4a8ff);
+  outline-offset: 7px;
 }
 
 .constellation-star.is-selected .constellation-star__disc {
-  border-color: #ffffff;
-  box-shadow: 0 0 24px var(--accent, #9a8bff), inset 0 0 12px var(--accent-soft, rgba(154, 139, 255, 0.3));
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 20px var(--accent, #9a8bff), inset 0 0 12px var(--accent-soft, rgba(154, 139, 255, 0.3));
 }
 
 /* Star state colors */
@@ -283,12 +302,15 @@
 .constellation-star__label {
   position: absolute;
   pointer-events: none;
-  white-space: nowrap;
   font-size: var(--fs-small, 13px);
   color: var(--text, #f0eff7);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-width: 130px;
+  white-space: normal;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .constellation-star__label--right {
@@ -419,7 +441,7 @@
   box-shadow: 0 0 0 1px var(--accent, #9a8bff);
 }
 
-/* Responsive breakpoint rules (10 §9) */
+/* Responsive breakpoint rules (10 §9 & Remediation) */
 @media (max-width: 1099px) {
   .constellation-body {
     grid-template-columns: 1fr;
@@ -429,6 +451,90 @@
   .constellation-panel {
     border-left: none;
     border-top: 1px solid var(--border, #3a3556);
+  }
+}
+
+@media (max-width: 640px) {
+  .constellation-root {
+    min-height: auto;
+  }
+
+  .constellation-body {
+    min-height: auto;
+  }
+
+  .constellation-map-wrapper {
+    height: 380px;
+    min-height: 320px;
+  }
+
+  .constellation-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .constellation-header__left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .constellation-header__title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .constellation-header__title h2 {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+
+  .constellation-header__right {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .constellation-toolbar {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .constellation-stepper-wrap {
+    bottom: 10px;
+    max-width: calc(100% - 100px);
+  }
+}
+
+@media (max-width: 360px) {
+  .constellation-map-wrapper {
+    height: 340px;
+    min-height: 280px;
+  }
+
+  .constellation-header {
+    padding: 8px 10px;
+  }
+
+  .constellation-header__title h2 {
+    font-size: 1rem;
+  }
+
+  .constellation-header__right .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .constellation-stepper-dots {
+    display: none !important;
+  }
+
+  .constellation-stepper-counter {
+    display: inline-block !important;
+  }
+
+  .constellation-stepper-wrap {
+    bottom: 8px;
   }
 }
 
@@ -580,6 +686,71 @@
   }
 }
 
+/* Expanded mode floating details card (Remediation Issue 8) */
+.constellation-expanded-card {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  max-width: 320px;
+  width: calc(100% - 32px);
+  background: var(--surface-raised, rgba(30, 27, 46, 0.94));
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hover, #5a547a);
+  border-radius: var(--r-lg, 12px);
+  padding: 14px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.constellation-expanded-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.constellation-expanded-card__badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent, #9a8bff);
+}
+
+.constellation-expanded-card__title {
+  margin: 2px 0 0;
+  font-size: var(--fs-body, 14px);
+  font-weight: 700;
+  color: var(--text, #f0eff7);
+}
+
+.constellation-expanded-card__desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted, #9c97b8);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.constellation-expanded-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.constellation-expanded-card__actions .btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  min-height: 30px;
+}
+
 /* Reduced motion and High contrast */
 @media (prefers-reduced-motion: reduce) {
   .constellation-star__disc,
@@ -602,8 +773,27 @@
   }
   .constellation-star.is-selected .constellation-star__disc {
     outline: 3px solid Highlight;
+    outline-offset: 3px;
+  }
+  .constellation-star:focus-visible .constellation-star__disc {
+    outline: 2px dashed Highlight;
+    outline-offset: 7px;
   }
   .constellation-edge-prereq {
     stroke: CanvasText;
+  }
+  .constellation-edge-prereq.is-incoming {
+    stroke: Highlight;
+    stroke-width: 3px;
+    stroke-dasharray: none;
+  }
+  .constellation-edge-prereq.is-outgoing {
+    stroke: ButtonText;
+    stroke-width: 2px;
+    stroke-dasharray: 3 3;
+  }
+  .constellation-expanded-card {
+    background: Canvas;
+    border: 2px solid CanvasText;
   }
 }

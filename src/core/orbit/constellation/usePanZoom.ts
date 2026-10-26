@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ConstellationLayout, ViewTransform } from './types'
-import { clampTransform, fitTransform } from './viewport'
+import { clampTransform, fitTransform, baseFitScale } from './viewport'
 
 export interface UsePanZoomOptions {
   layout: ConstellationLayout
@@ -30,13 +30,16 @@ export function usePanZoom({
   // Direct DOM transform application to avoid React re-renders on pan/zoom
   const applyTransform = useCallback((t: ViewTransform) => {
     transformRef.current = t
-    if (contentRef.current) {
-      contentRef.current.style.transform = `translate3d(${t.x.toFixed(1)}px, ${t.y.toFixed(1)}px, 0) scale(${t.zoom.toFixed(3)})`
+    if (contentRef.current && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      const fitScale = baseFitScale(layout, { w: rect.width, h: rect.height })
+      const effectiveScale = fitScale * t.zoom
+      contentRef.current.style.transform = `translate3d(${t.x.toFixed(1)}px, ${t.y.toFixed(1)}px, 0) scale(${effectiveScale.toFixed(4)})`
     }
     if (onTransformChange) {
       onTransformChange(t)
     }
-  }, [contentRef, onTransformChange])
+  }, [containerRef, contentRef, layout, onTransformChange])
 
   const scheduleApply = useCallback((t: ViewTransform) => {
     transformRef.current = t
@@ -59,7 +62,11 @@ export function usePanZoom({
     if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const current = transformRef.current
-    const targetZoom = current.zoom * factor
+    const targetZoom = Math.max(0.75, Math.min(3.0, current.zoom * factor))
+
+    // If already at zoom boundary, do not translate/displace
+    if (Math.abs(targetZoom - current.zoom) < 1e-4) return
+
     // Zoom centered on container
     const cx = rect.width / 2
     const cy = rect.height / 2
@@ -96,10 +103,23 @@ export function usePanZoom({
     const updateFit = () => {
       const rect = el.getBoundingClientRect()
       if (rect.width > 0 && rect.height > 0) {
-        const fit = fitTransform(layout, { w: rect.width, h: rect.height })
-        transformRef.current = fit
-        applyTransform(fit)
-        setTransformState(fit)
+        // If at baseline zoom (1), re-center and fit smoothly
+        if (Math.abs(transformRef.current.zoom - 1) < 0.05) {
+          const fit = fitTransform(layout, { w: rect.width, h: rect.height })
+          transformRef.current = fit
+          applyTransform(fit)
+          setTransformState(fit)
+        } else {
+          // Re-clamp current position within new dimensions
+          const clamped = clampTransform(
+            transformRef.current,
+            layout,
+            { w: rect.width, h: rect.height }
+          )
+          transformRef.current = clamped
+          applyTransform(clamped)
+          setTransformState(clamped)
+        }
       }
     }
 
@@ -164,7 +184,7 @@ export function usePanZoom({
         const pts = Array.from(activePointersRef.current.values())
         const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)
         const scale = currentDist / (initialPinchDistRef.current || 1)
-        const targetZoom = initialPinchZoomRef.current * scale
+        const targetZoom = Math.max(0.75, Math.min(3.0, initialPinchZoomRef.current * scale))
 
         const rect = el.getBoundingClientRect()
         const midX = (pts[0].x + pts[1].x) / 2 - rect.left
@@ -245,11 +265,13 @@ export function usePanZoom({
       const mouseY = e.clientY - rect.top
 
       const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15
-      const targetZoom = transformRef.current.zoom * zoomFactor
-      const ratio = targetZoom / transformRef.current.zoom
+      const current = transformRef.current
+      const targetZoom = Math.max(0.75, Math.min(3.0, current.zoom * zoomFactor))
+      if (Math.abs(targetZoom - current.zoom) < 1e-4) return
 
-      const newX = mouseX - (mouseX - transformRef.current.x) * ratio
-      const newY = mouseY - (mouseY - transformRef.current.y) * ratio
+      const ratio = targetZoom / current.zoom
+      const newX = mouseX - (mouseX - current.x) * ratio
+      const newY = mouseY - (mouseY - current.y) * ratio
 
       const clamped = clampTransform(
         { x: newX, y: newY, zoom: targetZoom },

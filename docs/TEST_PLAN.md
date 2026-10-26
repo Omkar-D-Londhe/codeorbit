@@ -2,8 +2,10 @@
 
 Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `npm test` · `npm run build`.
 
-## Automated (Vitest, jsdom) — 57 files (488 tests)
+## Automated (Vitest, jsdom) — 65 files (520 tests)
 | File | Covers |
+|---|---|
+| `remediation.test.ts` | Stage 10 Consolidated Remediation: zero drift on zoom in/out, centering hub at (w/2, h/2), no drift at min zoom limit (0.75), pointer anchor preservation, edge incoming/outgoing classification, mobile container bounds |
 |---|---|
 | `curriculum.test.ts` | stable unique IDs/order; prerequisite edges valid, acyclic, not a chain; every topic has lesson/quiz/challenge; quiz shape; previews have no topics |
 | `orbit.geometry.test.ts` | upper arch (apex mid, ends lower, monotone), symmetric, deterministic, in-bounds at 9 widths, even arc spacing, mode selection (desktop `arch`, phones `carousel`), mode monotone in width, no label collisions in `arch`, edge paths |

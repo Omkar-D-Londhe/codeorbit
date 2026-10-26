@@ -358,3 +358,26 @@
   - Production build: `npm run build` succeeds (main JS bundle 564.96 kB, CSS 73.20 kB).
   - Security audit: 0 vulnerabilities (`npm audit --omit=dev`).
 
+## 2026-10-26 — Stage 10 Consolidated Remediation: Constellation Orbit UI and Interaction Fixes
+- **Branch:** `stage-10-constellation-orbit`
+- **Root Cause Investigation and Remediation:**
+  - **Issue 1 (Zoom-Out Drift):** Fixed mathematically by calculating effective scale as `baseFitScale * zoom` and guarding zoom ratio against boundary clamping in `usePanZoom.ts`. Capping targetZoom between 0.75 and 3.0 before computing translation changes prevents drift toward top-left when clicking zoom out at limit.
+  - **Issue 2 (Centering & Fit-to-View):** Base fit scale exported from `viewport.ts` and integrated in `usePanZoom.ts` DOM transform. Initial view and fit-to-view accurately center the central hub at `(container.w / 2, container.h / 2)`. ResizeObserver smooth re-fit preserves stability without displacement.
+  - **Issue 3 (Topic Label Clipping):** Applied `max-width: 130px; white-space: normal; line-height: 1.25; word-break: break-word;` in `constellation.css` and 50px viewport padding. Labels wrap cleanly onto at most two short lines, preventing overflow outside container boundaries.
+  - **Issue 4 (Prerequisite Connector Clutter):** Subdued inactive prerequisite lines to `stroke: rgba(154, 139, 255, 0.16); stroke-width: 1.2px; stroke-dasharray: 4 4; opacity: 0.7`. Unrelated edges dim to `opacity: 0.08` when another topic is selected.
+  - **Issue 5 (Mobile Usability at 390px & 320px):** Set responsive map height to `380px` (min 320px) on $\le 640$px screens and `340px` (min 280px) on $\le 360$px screens, preventing viewport trap and scroll trapping.
+  - **Issue 6 (Map/List Controls Wrapping):** Added header flex-wrapping, scaled heading font sizes, compact action button heights, and responsive stepper fallback (hiding dots in favor of compact counter on screens $\le 360$px).
+  - **Issue 7 (Selection & Relationship Hierarchy):** Replaced `border-color` overwrite with `outline: 3px solid #ffffff; outline-offset: 3px; box-shadow: 0 0 20px var(--accent)` so node status colors (completed green, in-progress violet, locked muted) remain distinct. Differentiated incoming prerequisite edges (`is-incoming`, white glow) from outgoing dependent edges (`is-outgoing`, purple glow). Focus ring offset at 7px dashed distinct from selection.
+  - **Issue 8 (Expanded Mode Details Panel Interaction):** Maximized map canvas in expanded view while retaining topic context via a compact floating card (`.constellation-expanded-card`) with direct Lesson, Quiz, Practice links preserving Decision O-16. Esc key collapses view.
+  - **Issue 9 (Accessibility, Motion, Contrast):** Verified roving tabindex, spatial cone navigation, Shift+Arrows pan, + / - / 0 zoom shortcuts, high-contrast forced-colors mode, and prefers-reduced-motion media query.
+- **Verification & Quality Gates:**
+  - Added `src/test/constellation/remediation.test.ts` (7 tests covering zero drift, center hub alignment, pointer anchor preservation, edge incoming/outgoing classification, mobile container bounds).
+  - Vitest suite: 65 test files, 520 tests passing (100% green).
+  - Playwright E2E: 24 tests passing across `smoke.spec.ts`, `orbit-visual.spec.ts`, and new `remediation-visual.spec.ts`.
+  - Captured 10 remediation screenshots in `docs/antigravity/status/screenshots/stage-10-remediation/`.
+  - Typecheck (`tsc -b --noEmit`) and Lint (`eslint .`): 0 errors, 0 warnings.
+  - Clean architecture: 0 forbidden `'html'` string literals in `src/core/orbit/`.
+  - Production build: `index-*.js` 566.97 kB (170.63 kB gzip), CSS 76.08 kB.
+  - Security audit: 0 vulnerabilities.
+
+
