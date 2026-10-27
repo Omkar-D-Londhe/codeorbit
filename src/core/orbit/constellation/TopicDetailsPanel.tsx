@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Topic, NodeState } from './types'
 import type { TopicProgress } from '../../../lib/progress'
@@ -6,6 +7,10 @@ import { challengesForTopic } from '../../../data/challenges'
 import { Icon } from '../../../components/Icon'
 import { LegendCard } from './LegendCard'
 import { getRelatedTopics } from '../../content/related'
+import { useAppOptional } from '../../../state/AppState'
+import { NoteEditor } from '../../notes/NoteEditor'
+import { renderMarkdown } from '../../notes/markdown'
+import { DEFAULT_BOOKMARK_FOLDER_ID } from '../../../state/types'
 
 export interface TopicDetailsPanelProps {
   topic?: Topic | null
@@ -38,6 +43,11 @@ export function TopicDetailsPanel({
   nextActionPath,
   onSelectTopic,
 }: TopicDetailsPanelProps) {
+  const app = useAppOptional()
+  const state = app?.state
+  const dispatch = app?.dispatch ?? (() => {})
+  const [showNotesEditor, setShowNotesEditor] = useState(false)
+
   // Hub / Track overview state
   if (!topic) {
     return (
@@ -98,6 +108,13 @@ export function TopicDetailsPanel({
     stateLabel = 'Locked (Advisory)'
     stateIcon = 'lock'
   }
+
+  const isBookmarked = (state?.bookmarks || []).includes(topic.id)
+  const folders = state?.bookmarkFolders || [
+    { id: DEFAULT_BOOKMARK_FOLDER_ID, name: 'Unsorted', itemIds: state?.bookmarks || [] },
+  ]
+  const currentFolder = folders.find((f) => f.itemIds.includes(topic.id))
+  const noteRec = state?.notes[topic.id]
 
   return (
     <aside className="constellation-panel" aria-label="Selected topic details">
@@ -196,6 +213,41 @@ export function TopicDetailsPanel({
               <Icon name="code" size={16} />
               <span>Practice</span>
             </span>
+          )}
+        </div>
+
+        {/* Bookmark & Folder Picker */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+          <button
+            type="button"
+            className={`btn btn--ghost btn--sm ${isBookmarked ? 'is-active' : ''}`}
+            aria-pressed={isBookmarked}
+            onClick={() => dispatch({ type: 'TOGGLE_BOOKMARK', topicId: topic.id })}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            <Icon name="bookmark" size={14} />
+            <span style={{ marginLeft: '4px' }}>{isBookmarked ? 'Bookmarked' : 'Bookmark topic'}</span>
+          </button>
+          {isBookmarked && folders.length > 1 && (
+            <select
+              value={currentFolder?.id || DEFAULT_BOOKMARK_FOLDER_ID}
+              onChange={(e) =>
+                dispatch({
+                  type: 'MOVE_BOOKMARK_ITEM',
+                  itemId: topic.id,
+                  targetFolderId: e.target.value,
+                })
+              }
+              className="select select--sm"
+              style={{ fontSize: '11px', maxWidth: '140px' }}
+              aria-label="Bookmark folder"
+            >
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
           )}
         </div>
 
@@ -340,6 +392,55 @@ export function TopicDetailsPanel({
             </div>
           )
         })()}
+
+        {/* Notes Preview & Editor */}
+        <div
+          className="constellation-notes"
+          style={{
+            marginTop: '14px',
+            paddingTop: '12px',
+            borderTop: '1px solid var(--border, rgba(255,255,255,0.08))',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span className="muted" style={{ fontWeight: 600, fontSize: '12px' }}>
+              Notes {noteRec?.tags?.length ? `(${noteRec.tags.length} tags)` : ''}:
+            </span>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              style={{ fontSize: '11px', padding: '2px 8px' }}
+              onClick={() => setShowNotesEditor(!showNotesEditor)}
+            >
+              <Icon name="pencil" size={12} />
+              <span style={{ marginLeft: '4px' }}>
+                {showNotesEditor ? 'Done' : noteRec?.text ? 'Edit note' : '+ Add note'}
+              </span>
+            </button>
+          </div>
+
+          {showNotesEditor ? (
+            <NoteEditor topicId={topic.id} title={topic.title} compact onClose={() => setShowNotesEditor(false)} />
+          ) : noteRec?.text ? (
+            <div
+              className="card"
+              style={{
+                padding: '10px 12px',
+                fontSize: '12px',
+                lineHeight: 1.5,
+                background: 'rgba(0,0,0,0.25)',
+                maxHeight: '120px',
+                overflowY: 'auto',
+              }}
+            >
+              {renderMarkdown(noteRec.text)}
+            </div>
+          ) : (
+            <p className="muted small" style={{ margin: 0, fontStyle: 'italic', fontSize: '11px' }}>
+              No notes written yet. Click "+ Add note" to write Markdown notes.
+            </p>
+          )}
+        </div>
       </div>
 
       <LegendCard />

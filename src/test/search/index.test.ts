@@ -83,6 +83,8 @@ describe('search index', () => {
       notes: {
         'topic-1': {
           text: 'My custom note on page skeleton',
+          format: 'markdown' as const,
+          tags: [],
           updatedAt: Date.now(),
         },
       },
@@ -115,5 +117,33 @@ describe('search index', () => {
 
     const results = searchIndex(index, '', 2)
     expect(results.length).toBeLessThanOrEqual(2)
+  })
+
+  it('indexes note tags and section bookmarks allowing retrieval by tag or content', () => {
+    const state = {
+      ...createDefaultState(),
+      notes: {
+        'topic-1': {
+          text: 'Deep dive into landmarks and semantics',
+          format: 'markdown' as const,
+          tags: ['a11y-focus', 'semantics'],
+          updatedAt: Date.now(),
+        },
+      },
+      sectionBookmarks: ['topic-1#landmarks'],
+    }
+
+    const index = buildIndex([dummyTrack], state, dummyCommands)
+    const noteDoc = index.find((d) => d.id === 'note-topic-1')
+    expect(noteDoc?.tags).toContain('a11y-focus')
+    expect(noteDoc?.body).toContain('semantics')
+
+    // Search by note tag
+    const searchByTag = searchIndex(index, 'a11y-focus')
+    expect(searchByTag.some((r) => r.doc.id === 'note-topic-1')).toBe(true)
+
+    // Section bookmark indexed
+    const secDoc = index.find((d) => d.id === 'bookmark-section-topic-1#landmarks')
+    expect(secDoc).toBeDefined()
   })
 })

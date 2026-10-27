@@ -63,10 +63,26 @@ export function buildCommands({
     {
       id: 'cmd-nav-review',
       title: 'Error Notebook & Review',
-      keywords: ['review', 'errors', 'notebook', 'notes', 'flashcards'],
+      keywords: ['review', 'errors', 'notebook', 'flashcards'],
       group: 'Navigate',
       enabled: () => true,
       run: () => navigate('/review'),
+    },
+    {
+      id: 'cmd-nav-notes',
+      title: 'Go to Study Notes',
+      keywords: ['notes', 'study notes', 'journal', 'markdown', 'tags'],
+      group: 'Navigate',
+      enabled: () => true,
+      run: () => navigate('/notes'),
+    },
+    {
+      id: 'cmd-nav-bookmarks',
+      title: 'Go to Bookmarks & Folders',
+      keywords: ['bookmarks', 'folders', 'saved', 'shortcuts'],
+      group: 'Navigate',
+      enabled: () => true,
+      run: () => navigate('/bookmarks'),
     },
     {
       id: 'cmd-nav-settings',

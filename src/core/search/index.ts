@@ -1,5 +1,6 @@
 import type { TrackModule } from '../content/types'
 import type { CodeOrbitState } from '../../state/types'
+import { parseSectionBookmarkId } from '../../state/types'
 import { lessons } from '../../data/lessons'
 import { challenges } from '../../data/challenges'
 import { getTopic } from '../../data/curriculum'
@@ -113,12 +114,13 @@ export function buildIndex(
   Object.entries(state.notes || {}).forEach(([topicId, note]) => {
     if (note && note.text) {
       const topic = getTopic(topicId)
+      const noteTags = note.tags || []
       docs.push({
         id: `note-${topicId}`,
         kind: 'note',
         title: `Note: ${topic?.title || topicId}`,
-        body: note.text,
-        tags: ['note', 'user-data', topicId],
+        body: `${note.text} ${noteTags.join(' ')}`,
+        tags: ['note', 'user-data', topicId, ...noteTags],
         path: lessonPath(topicId),
       })
     }
@@ -135,6 +137,22 @@ export function buildIndex(
       tags: ['bookmark', 'user-data', topicId],
       path: lessonPath(topicId),
     })
+  })
+
+  // 7. Section Bookmarks (if any exist)
+  ;(state.sectionBookmarks || []).forEach((secId) => {
+    const parsed = parseSectionBookmarkId(secId)
+    if (parsed) {
+      const topic = getTopic(parsed.topicId)
+      docs.push({
+        id: `bookmark-section-${secId}`,
+        kind: 'bookmark',
+        title: `Bookmarked Section: ${topic?.title || parsed.topicId} › ${parsed.sectionId}`,
+        body: `Section bookmark in ${topic?.title || parsed.topicId}`,
+        tags: ['bookmark', 'section-bookmark', 'user-data', parsed.topicId, parsed.sectionId],
+        path: `${lessonPath(parsed.topicId)}#section-${parsed.sectionId}`,
+      })
+    }
   })
 
   return docs

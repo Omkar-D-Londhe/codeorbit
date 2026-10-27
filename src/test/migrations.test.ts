@@ -4,10 +4,10 @@ import originalV1 from './fixtures/state.v1.original.json'
 import referenceV1 from './fixtures/state.v1.reference.json'
 import malformedV1 from './fixtures/state.v1.malformed.json'
 
-describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
-  it('SCHEMA_VERSION is 5 and migration index 0 is untouched', () => {
-    expect(SCHEMA_VERSION).toBe(5)
-    expect(migrations.length).toBe(5)
+describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6)', () => {
+  it('SCHEMA_VERSION is 6 and migration index 0 is untouched', () => {
+    expect(SCHEMA_VERSION).toBe(6)
+    expect(migrations.length).toBe(6)
 
     // Test migration 0 directly with v0 shape
     const v0Obj = { schemaVersion: 0, progress: { 'html-structure': { lessonComplete: true } } }
@@ -16,10 +16,10 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     expect(v1Result.topics).toEqual({ 'html-structure': { lessonComplete: true } })
   })
 
-  it('migrates original v1 state into complete v5 state without data loss', () => {
+  it('migrates original v1 state into complete v6 state without data loss', () => {
     const migrated = migrate(originalV1 as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     expect(migrated!.settings).toBeDefined()
     expect(migrated!.activityDays).toEqual([])
     expect(migrated!.dailyDone).toEqual([])
@@ -31,12 +31,14 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
 
     // Verify existing v1 fields are completely preserved
     expect(migrated!.topics).toEqual(originalV1.topics)
-    expect(migrated!.notes).toEqual(originalV1.notes)
+    const notes = migrated!.notes as Record<string, Record<string, unknown>>
+    expect(notes['html-structure'].text).toEqual(originalV1.notes['html-structure'].text)
+    expect(notes['html-structure'].format).toBe('markdown')
     expect(migrated!.bookmarks).toEqual(originalV1.bookmarks)
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
-    expect(state.schemaVersion).toBe(5)
+    expect(state.schemaVersion).toBe(6)
     expect(state.sectionBookmarks).toEqual([])
     expect(state.badges).toEqual({})
     expect(state.personalBests).toEqual({})
@@ -45,7 +47,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
   it('migrates reference-style v1 state, preserving activityDays and dailyDone', () => {
     const migrated = migrate(referenceV1 as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     expect(migrated!.activityDays).toEqual(['2026-10-22', '2026-10-23', '2026-10-24'])
     expect(migrated!.dailyDone).toEqual(['2026-10-24'])
     expect(migrated!.streakBest).toBe(3)
@@ -76,7 +78,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     }
     const migrated = migrate(v2State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     const ch = (migrated!.challenges as Record<string, Record<string, unknown>>)['ch-html-structure']
     expect(ch.history).toEqual([])
     expect(migrated!.sectionBookmarks).toEqual([])
@@ -84,7 +86,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     expect(migrated!.personalBests).toEqual({})
   })
 
-  it('migrates v3 state to v5, adding empty sectionBookmarks, badges, and personalBests', () => {
+  it('migrates v3 state to v6, adding empty sectionBookmarks, badges, and personalBests', () => {
     const v3State = {
       schemaVersion: 3,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -93,14 +95,14 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     }
     const migrated = migrate(v3State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     expect(migrated!.sectionBookmarks).toEqual([])
     expect(migrated!.bookmarks).toEqual(['html-structure'])
     expect(migrated!.badges).toEqual({})
     expect(migrated!.personalBests).toEqual({})
   })
 
-  it('migrates v4 state to v5, adding badges and personalBests while preserving sectionBookmarks', () => {
+  it('migrates v4 state to v6, adding badges and personalBests while preserving sectionBookmarks', () => {
     const v4State = {
       schemaVersion: 4,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -110,13 +112,13 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     }
     const migrated = migrate(v4State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     expect(migrated!.sectionBookmarks).toEqual(['html-structure#the-skeleton'])
     expect(migrated!.badges).toEqual({})
     expect(migrated!.personalBests).toEqual({})
   })
 
-  it('preserves existing badges and personalBests when present during v4 to v5 migration', () => {
+  it('preserves existing badges and personalBests when present during v4 to v6 migration', () => {
     const v4StateWithBadges = {
       schemaVersion: 4,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -134,7 +136,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5)', () => {
     }
     const migrated = migrate(v4StateWithBadges)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(5)
+    expect(migrated!.schemaVersion).toBe(6)
     expect(migrated!.badges).toEqual({
       'first-challenge': { firstSeenAt: 1700000000000, backfilled: false },
       'html-foundations': { firstSeenAt: null, backfilled: true },

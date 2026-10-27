@@ -16,9 +16,14 @@ export type Action =
   | { type: 'RECORD_CHECK'; challengeId: string; passed: number; total: number; failedIds: string[]; now?: number }
   | { type: 'REVEAL_HINT'; challengeId: string; max: number }
   | { type: 'REVEAL_SOLUTION'; challengeId: string }
-  | { type: 'SET_NOTE'; topicId: string; text: string; now: number }
+  | { type: 'SET_NOTE'; topicId: string; text: string; now: number; tags?: string[]; format?: 'markdown' }
+  | { type: 'SET_NOTE_TAGS'; topicId: string; tags: string[]; now: number }
   | { type: 'TOGGLE_BOOKMARK'; topicId: string }
   | { type: 'TOGGLE_SECTION_BOOKMARK'; topicId: string; sectionId: string }
+  | { type: 'CREATE_BOOKMARK_FOLDER'; name: string; id?: string }
+  | { type: 'RENAME_BOOKMARK_FOLDER'; folderId: string; name: string }
+  | { type: 'DELETE_BOOKMARK_FOLDER'; folderId: string }
+  | { type: 'MOVE_BOOKMARK_ITEM'; itemId: string; targetFolderId: string }
   | { type: 'ADD_ERROR'; entry: ErrorEntry }
   | { type: 'SET_ERROR_STATUS'; id: string; status: ErrorStatus }
   | { type: 'DELETE_ERROR'; id: string }
@@ -204,19 +209,121 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         void _n
         return { ...state, notes: rest }
       }
-      return { ...state, notes: { ...state.notes, [action.topicId]: { text: action.text, updatedAt: action.now } } }
-    }
-    case 'TOGGLE_BOOKMARK':
+      const existing = state.notes[action.topicId]
+      const text = action.text.slice(0, 20000)
+      const tags = action.tags ?? existing?.tags ?? []
+      const format = 'markdown'
       return {
         ...state,
-        bookmarks: state.bookmarks.includes(action.topicId) ? state.bookmarks.filter((b) => b !== action.topicId) : [...state.bookmarks, action.topicId],
+        notes: {
+          ...state.notes,
+          [action.topicId]: { text, format, tags, updatedAt: action.now },
+        },
       }
+    }
+    case 'SET_NOTE_TAGS': {
+      const existing = state.notes[action.topicId]
+      if (!existing) return state
+      const tags = action.tags
+        .map((t) => t.toLowerCase().trim())
+        .filter((t) => /^[a-z0-9-]{1,24}$/.test(t))
+        .slice(0, 8)
+      return {
+        ...state,
+        notes: {
+          ...state.notes,
+          [action.topicId]: { ...existing, tags, updatedAt: action.now },
+        },
+      }
+    }
+    case 'CREATE_BOOKMARK_FOLDER': {
+      const name = action.name.trim().slice(0, 50)
+      if (!name) return state
+      const id = action.id || name.toLowerCase().replace(/[^a-z0-9-]/g, '-') || `folder-${Date.now()}`
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      if (folders.some((f) => f.id === id)) return state
+      return {
+        ...state,
+        bookmarkFolders: [...folders, { id, name, itemIds: [] }],
+      }
+    }
+    case 'RENAME_BOOKMARK_FOLDER': {
+      const name = action.name.trim().slice(0, 50)
+      if (!name || action.folderId === 'unsorted') return state
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      return {
+        ...state,
+        bookmarkFolders: folders.map((f) => (f.id === action.folderId ? { ...f, name } : f)),
+      }
+    }
+    case 'DELETE_BOOKMARK_FOLDER': {
+      if (action.folderId === 'unsorted') return state
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      const toDelete = folders.find((f) => f.id === action.folderId)
+      if (!toDelete) return state
+      return {
+        ...state,
+        bookmarkFolders: folders
+          .filter((f) => f.id !== action.folderId)
+          .map((f) =>
+            f.id === 'unsorted'
+              ? { ...f, itemIds: Array.from(new Set([...f.itemIds, ...toDelete.itemIds])) }
+              : f
+          ),
+      }
+    }
+    case 'MOVE_BOOKMARK_ITEM': {
+      const { itemId, targetFolderId } = action
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      if (!folders.some((f) => f.id === targetFolderId)) return state
+      return {
+        ...state,
+        bookmarkFolders: folders.map((f) => {
+          if (f.id === targetFolderId) {
+            return { ...f, itemIds: Array.from(new Set([...f.itemIds, itemId])) }
+          }
+          return { ...f, itemIds: f.itemIds.filter((id) => id !== itemId) }
+        }),
+      }
+    }
+    case 'TOGGLE_BOOKMARK': {
+      const isBookmarked = state.bookmarks.includes(action.topicId)
+      const nextBookmarks = isBookmarked
+        ? state.bookmarks.filter((b) => b !== action.topicId)
+        : [...state.bookmarks, action.topicId]
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      const nextFolders = isBookmarked
+        ? folders.map((f) => ({ ...f, itemIds: f.itemIds.filter((id) => id !== action.topicId) }))
+        : folders.map((f) =>
+            f.id === 'unsorted'
+              ? { ...f, itemIds: Array.from(new Set([...f.itemIds, action.topicId])) }
+              : f
+          )
+      return {
+        ...state,
+        bookmarks: nextBookmarks,
+        bookmarkFolders: nextFolders,
+      }
+    }
     case 'TOGGLE_SECTION_BOOKMARK': {
       const key = `${action.topicId}#${action.sectionId}`
       const existing = state.sectionBookmarks ?? []
+      const isBookmarked = existing.includes(key)
+      const nextSectionBookmarks = isBookmarked
+        ? existing.filter((b) => b !== key)
+        : [...existing, key]
+      const folders = state.bookmarkFolders ?? [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }]
+      const nextFolders = isBookmarked
+        ? folders.map((f) => ({ ...f, itemIds: f.itemIds.filter((id) => id !== key) }))
+        : folders.map((f) =>
+            f.id === 'unsorted'
+              ? { ...f, itemIds: Array.from(new Set([...f.itemIds, key])) }
+              : f
+          )
       return {
         ...state,
-        sectionBookmarks: existing.includes(key) ? existing.filter((b) => b !== key) : [...existing, key],
+        sectionBookmarks: nextSectionBookmarks,
+        bookmarkFolders: nextFolders,
       }
     }
     case 'ADD_ERROR': {

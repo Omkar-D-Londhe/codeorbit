@@ -1,15 +1,15 @@
 import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
-import type { CodeOrbitState, ErrorEntry, ChallengeRecord, NoteRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
+import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -31,6 +31,7 @@ export const createDefaultState = (): CodeOrbitState => {
     notes: {},
     bookmarks: [],
     sectionBookmarks: [],
+    bookmarkFolders: [{ id: 'unsorted', name: 'Unsorted', itemIds: [] }],
     errorNotebook: [],
     settings: {
       ...DEFAULT_SETTINGS,
@@ -72,6 +73,7 @@ export const migrations: Array<(old: Json) => Json> = [
   migrateV2toV3,
   migrateV3toV4,
   migrateV4toV5,
+  migrateV5toV6,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -169,8 +171,17 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
 
   if (isObj(raw.notes)) {
     for (const [id, v] of Object.entries(raw.notes)) {
-      if (getTopic(id) && isObj(v) && typeof v.text === 'string' && isNum(v.updatedAt)) s.notes[id] = { text: v.text, updatedAt: v.updatedAt } as NoteRecord
-      else drop()
+      if (getTopic(id) && isObj(v) && typeof v.text === 'string' && isNum(v.updatedAt)) {
+        const text = v.text.slice(0, 20000)
+        const format = 'markdown'
+        const rawTags = Array.isArray(v.tags) ? v.tags : []
+        const tags = rawTags
+          .filter((t): t is string => typeof t === 'string')
+          .map((t) => t.toLowerCase().trim())
+          .filter((t) => /^[a-z0-9-]{1,24}$/.test(t))
+          .slice(0, 8)
+        s.notes[id] = { text, format, tags, updatedAt: v.updatedAt }
+      } else drop()
     }
   }
 
@@ -191,6 +202,32 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       )
     )
     if (s.sectionBookmarks.length !== raw.sectionBookmarks.length) drop()
+  }
+
+  if (Array.isArray(raw.bookmarkFolders)) {
+    const folders: Array<{ id: string; name: string; itemIds: string[] }> = []
+    for (const f of raw.bookmarkFolders) {
+      if (isObj(f) && typeof f.id === 'string' && typeof f.name === 'string') {
+        const itemIds = Array.isArray(f.itemIds)
+          ? f.itemIds.filter((it): it is string => typeof it === 'string')
+          : []
+        folders.push({
+          id: f.id,
+          name: f.name.slice(0, 50),
+          itemIds,
+        })
+      }
+    }
+    if (!folders.some((f) => f.id === 'unsorted')) {
+      folders.unshift({ id: 'unsorted', name: 'Unsorted', itemIds: [] })
+    }
+    s.bookmarkFolders = folders
+  } else {
+    s.bookmarkFolders = [{
+      id: 'unsorted',
+      name: 'Unsorted',
+      itemIds: Array.from(new Set([...s.bookmarks, ...(s.sectionBookmarks || [])])),
+    }]
   }
 
   if (Array.isArray(raw.errorNotebook)) {

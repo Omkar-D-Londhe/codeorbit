@@ -602,6 +602,53 @@
   - Legacy orbit files (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`) untouched.
   - Stage 13 exit gate: **PASS**.
 
+## 2026-10-27 — Stage 14: Notes, bookmarks, Error Notebook flashcards and export
+- **Branch:** `stage-14-notes-bookmarks-review` · **Baseline Commit:** `7a7e089` (Stage 13 completion).
+- **Core Enhancements Implemented:**
+  - **Safe Markdown Notes Renderer (`src/core/notes/markdown.tsx`, Catalog 10.1):**
+    - Tiny pure React-node renderer supporting `#`-`###`, `**bold**`, `*italic*`, `` `code` ``, fenced code blocks, unordered lists, and validated safe links (`http:`, `https:`, relative `/`, `./`, `../`, `#`).
+    - Outputs React elements directly: **ZERO `dangerouslySetInnerHTML` or raw HTML strings reach the DOM**.
+    - Fully hardened against adversarial XSS test corpus: `<script>`, `<img onerror>`, `<svg onload>`, `javascript:` URLs, `data:text/html` URLs, and unescaped HTML are rendered strictly as inert text nodes.
+  - **Note Editor & Tagging System (`src/core/notes/NoteEditor.tsx`, Catalog 10.2):**
+    - Split two-pane (edit + live preview) on wide viewports (≥900px), responsive segmented toggle on narrow viewports.
+    - Tag validation engine: enforces `[a-z0-9-]`, lowercase, trimmed, length ≤ 24 chars, max 8 tags per note, and deduplication.
+    - Real-time character counter and hard 20,000 character limit enforcement with visible warning.
+    - Status feedback: indicates saving, saved in this browser, and storage errors.
+    - Integrated into `src/pages/Lesson.tsx` study panel and `src/core/orbit/constellation/TopicDetailsPanel.tsx`.
+  - **All Notes Page (`src/core/notes/NotesPage.tsx`, `/notes`):**
+    - Free-text search across topic title, note text, and tags.
+    - Interactive tag filter chips with counts and 'All' toggle.
+    - Sort options (newest first, oldest first, alphabetical).
+    - Inline note editing, delete confirmation dialog, and honest empty states.
+  - **Bookmark Folders & Management (`src/core/notes/BookmarksPage.tsx`, `/bookmarks`, Catalog 10.4):**
+    - Schema v6 `bookmarkFolders: Array<{ id: string; name: string; itemIds: string[] }>` with permanent default `'unsorted'` folder.
+    - Custom folder creation, renaming, and safe deletion (items inside deleted folders automatically relocate to `'unsorted'`).
+    - Full support for both topic bookmarks and composite section bookmarks (`topic#section`).
+    - Move item dropdown menu permitting drag-free relocation of bookmarks between folders.
+    - Integrated bookmark folder picker in `TopicDetailsPanel.tsx`.
+  - **Error Notebook Flashcards (`src/core/learning/Flashcards.tsx`, Catalog 10.3, 10.5):**
+    - Mode switcher on `Review.tsx` (`List` vs `Flashcards`).
+    - Large card display with flip interaction (Space bar or click) showing question/prompt on front and detailed solution, code snippet, and lesson links on back.
+    - Full keyboard navigation: `Space` flips, `1` marks Review again (`open`), `2` marks Understood (`understood`), and arrow keys navigate.
+    - Status toggling immediately updates Error Notebook counts and shell nav badge count dynamically.
+    - Progress counter (`Card X of Y`) and screen-reader live announcements.
+  - **Data Export Utilities (`src/core/storage/exportNotes.ts`, Catalog 10.6):**
+    - Markdown export (`codeorbit-notes-{date}.md`) formatting notes with headings, dates, tags, and content.
+    - JSON backup export (`codeorbit-backup-{date}.json`) including notes, bookmarks, folders, and section bookmarks.
+    - Export buttons wired into Notes, Bookmarks, and Review pages with disabled states when empty.
+  - **Search & Navigation Integration (`src/core/search/index.ts`, `commands.ts`, `App.tsx`):**
+    - Indexed note text, note tags, and section bookmarks into command palette in-memory search index.
+    - Added routes `/notes` and `/bookmarks` and palette navigation commands.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (89 test files, 643 tests passed, +7 new test files, +39 new tests vs Stage 13).
+  - Smoke & A11y regression suite (`src/test/regression.smoke.test.tsx`): PASS (all 19 tests pass, zero serious/critical axe violations across 10 core pages).
+  - Production build (`npm run build`): PASS (built in 1.42s; `index-*.js` 669.92 kB, CSS 94.31 kB).
+  - Security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Stage 14 exit gate: **PASS**.
+
+
 
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { challengesForTopic } from '../data/challenges'
 import { getGroup, getTopic, topicIndex, topics } from '../data/curriculum'
@@ -11,7 +11,6 @@ import { useToast } from '../components/Toast'
 import { useDocumentTitle, useMediaQuery } from '../lib/hooks'
 import { topicProgress } from '../lib/progress'
 import { practicePath, quizPath, trackPath } from '../lib/routes'
-import { formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
 import { getRelatedTopics } from '../core/content/related'
 import { sectionBookmarkId } from '../state/types'
@@ -24,30 +23,8 @@ import { LiveDemo } from '../core/learning/LiveDemo'
 import { Takeaways } from '../core/learning/Takeaways'
 import { A11yBox } from '../core/learning/A11yBox'
 import { FocusMode } from '../core/learning/FocusMode'
+import { NoteEditor } from '../core/notes/NoteEditor'
 import NotFound from './NotFound'
-
-function NotesEditor({ topicId, title }: { topicId: string; title: string }) {
-  const { state, dispatch, saveStatus } = useApp()
-  const rec = state.notes[topicId]
-  const [text, setText] = useState(rec?.text ?? '')
-  const id = useId()
-
-  const onChange = (v: string) => {
-    setText(v)
-    dispatch({ type: 'SET_NOTE', topicId, text: v, now: Date.now() })
-  }
-  let status = ''
-  if (saveStatus.kind === 'error') status = 'Not saved: this browser’s storage is unavailable.'
-  else if (rec) status = saveStatus.kind === 'saved' && saveStatus.at >= rec.updatedAt ? `Saved in this browser · ${formatDateTime(rec.updatedAt)}` : 'Saving…'
-
-  return (
-    <div className="notes">
-      <label htmlFor={id} className="field-label">Your notes for “{title}”</label>
-      <textarea id={id} className="textarea" rows={6} value={text} onChange={(e) => onChange(e.target.value)} placeholder="Write what you want to remember." />
-      <p className="muted small" role="status" aria-live="polite">{status}</p>
-    </div>
-  )
-}
 
 export default function Lesson() {
   const { topicId = '' } = useParams()
@@ -183,7 +160,7 @@ function LessonInner({ topicId }: { topicId: string }) {
       )}
       <section className="study__block">
         <h2 className="study__h">Notes</h2>
-        <NotesEditor topicId={topicId} title={topic.title} />
+        <NoteEditor topicId={topicId} title={topic.title} />
       </section>
       {(() => {
         const related = getRelatedTopics(topic, topics, 4)

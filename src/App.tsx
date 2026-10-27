@@ -13,6 +13,8 @@ import Practice from './pages/Practice'
 import Progress from './pages/Progress'
 import QuizPage from './pages/Quiz'
 import Review from './pages/Review'
+import NotesPage from './core/notes/NotesPage'
+import BookmarksPage from './core/notes/BookmarksPage'
 import Track from './pages/Track'
 import Settings from './pages/Settings'
 import { ClockProvider } from './core/time/Clock'
@@ -37,6 +39,8 @@ export default function App() {
                 <Route path="practice/:challengeId" element={<Practice />} />
                 <Route path="progress" element={<Progress />} />
                 <Route path="review" element={<Review />} />
+                <Route path="notes" element={<NotesPage />} />
+                <Route path="bookmarks" element={<BookmarksPage />} />
                 <Route path="settings" element={<Settings />} />
                 {import.meta.env.DEV && UiGallery && (
                   <Route

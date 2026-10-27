@@ -332,4 +332,14 @@ describe('G4 Accessibility: zero serious/critical violations on 8 core pages', (
     const { container } = renderAt('/review')
     await expectNoA11yViolations(container, axeOptions)
   })
+
+  it('passes axe checks on Notes page', async () => {
+    const { container } = renderAt('/notes')
+    await expectNoA11yViolations(container, axeOptions)
+  })
+
+  it('passes axe checks on Bookmarks page', async () => {
+    const { container } = renderAt('/bookmarks')
+    await expectNoA11yViolations(container, axeOptions)
+  })
 })

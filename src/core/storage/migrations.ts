@@ -117,3 +117,80 @@ export function migrateV4toV5(old: Json): Json {
     personalBests,
   }
 }
+
+/**
+ * Migrates a version-5 state object to version-6 (Stage 14: Notes, bookmarks, review).
+ * - Converts each NoteRecord to { text, format: 'markdown', tags: string[], updatedAt }
+ * - Initializes/sanitizes bookmarkFolders with a default 'Unsorted' folder holding existing bookmarks
+ */
+export function migrateV5toV6(old: Json): Json {
+  const rawNotes = isObj(old.notes) ? old.notes : {}
+  const notes: Record<string, { text: string; format: 'markdown'; tags: string[]; updatedAt: number }> = {}
+
+  for (const [id, note] of Object.entries(rawNotes)) {
+    if (isObj(note)) {
+      if (typeof note.text !== 'string') {
+        notes[id] = note as unknown as { text: string; format: 'markdown'; tags: string[]; updatedAt: number }
+        continue
+      }
+      const text = note.text.slice(0, 20000)
+      const format = 'markdown'
+      const rawTags = Array.isArray(note.tags) ? note.tags : []
+      const tags = rawTags
+        .filter((t): t is string => typeof t === 'string')
+        .map((t) => t.toLowerCase().trim())
+        .filter((t) => /^[a-z0-9-]{1,24}$/.test(t))
+        .slice(0, 8)
+      const updatedAt = typeof note.updatedAt === 'number' && Number.isFinite(note.updatedAt) ? note.updatedAt : Date.now()
+
+      notes[id] = { text, format, tags, updatedAt }
+    }
+  }
+
+  const existingBookmarks = Array.isArray(old.bookmarks)
+    ? old.bookmarks.filter((b): b is string => typeof b === 'string')
+    : []
+  const existingSectionBookmarks = Array.isArray(old.sectionBookmarks)
+    ? old.sectionBookmarks.filter((b): b is string => typeof b === 'string')
+    : []
+
+  const bookmarkFolders: Array<{ id: string; name: string; itemIds: string[] }> = []
+
+  if (Array.isArray(old.bookmarkFolders)) {
+    for (const f of old.bookmarkFolders) {
+      if (isObj(f) && typeof f.id === 'string' && typeof f.name === 'string') {
+        const itemIds = Array.isArray(f.itemIds)
+          ? f.itemIds.filter((it): it is string => typeof it === 'string')
+          : []
+        bookmarkFolders.push({
+          id: f.id,
+          name: f.name.slice(0, 50),
+          itemIds,
+        })
+      }
+    }
+  }
+
+  const allInitialItems = Array.from(new Set([...existingBookmarks, ...existingSectionBookmarks]))
+  const unsortedIdx = bookmarkFolders.findIndex((f) => f.id === 'unsorted')
+
+  if (unsortedIdx === -1) {
+    bookmarkFolders.unshift({
+      id: 'unsorted',
+      name: 'Unsorted',
+      itemIds: allInitialItems,
+    })
+  } else if (bookmarkFolders[unsortedIdx].itemIds.length === 0 && allInitialItems.length > 0) {
+    const assignedElsewhere = new Set(
+      bookmarkFolders.filter((f) => f.id !== 'unsorted').flatMap((f) => f.itemIds)
+    )
+    bookmarkFolders[unsortedIdx].itemIds = allInitialItems.filter((it) => !assignedElsewhere.has(it))
+  }
+
+  return {
+    ...old,
+    schemaVersion: 6,
+    notes,
+    bookmarkFolders,
+  }
+}

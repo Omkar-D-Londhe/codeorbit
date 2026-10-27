@@ -42,8 +42,19 @@ export interface ChallengeRecord {
 
 export interface NoteRecord {
   text: string
+  format: 'markdown'
+  tags: string[]
   updatedAt: number
 }
+
+export interface BookmarkFolder {
+  id: string
+  name: string
+  itemIds: string[]
+}
+
+export const DEFAULT_BOOKMARK_FOLDER_ID = 'unsorted'
+export const DEFAULT_BOOKMARK_FOLDER_NAME = 'Unsorted'
 
 export type ErrorStatus = 'open' | 'understood'
 
@@ -152,6 +163,7 @@ export interface CodeOrbitState {
   notes: Record<string, NoteRecord>
   bookmarks: string[]
   sectionBookmarks?: string[]
+  bookmarkFolders: BookmarkFolder[]
   errorNotebook: ErrorEntry[]
   settings: Settings
   activity: ActivityEvent[]
@@ -165,4 +177,15 @@ export interface CodeOrbitState {
 
 /** Helper to generate composite section bookmark ID (8.2) */
 export const sectionBookmarkId = (topicId: string, sectionId: string): string => `${topicId}#${sectionId}`
+
+/** Helper to parse composite section bookmark ID */
+export const parseSectionBookmarkId = (id: string): { topicId: string; sectionId: string } | null => {
+  const hashIdx = id.indexOf('#')
+  if (hashIdx === -1) return null
+  return {
+    topicId: id.slice(0, hashIdx),
+    sectionId: id.slice(hashIdx + 1),
+  }
+}
+
 
