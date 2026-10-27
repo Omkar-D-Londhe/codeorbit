@@ -673,12 +673,28 @@
   - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
   - Sub-stage 15a exit gate: **PASS**.
 
-
-
-
-
-
-
-
-
+## 2026-10-27 — Stage 15b: Deterministic force-directed mastery map
+- **Branch:** `stage-15b-mastery-map-analytics`
+- **Pure Force Layout Engine (`src/core/orbit/forceLayout.ts`, Enhancement 11.1):**
+  - Implemented deterministic seeded simulation (32-bit Mulberry32 PRNG with seed `0x436f6465`, zero `Math.random()`, no wall-clock timestamps).
+  - Fixed 200 iterations by default. Performance benchmark confirmed: completes 200 iterations for 60 nodes in < 20 ms.
+  - Uniform node dimensions: 176 × 56 pixels (`FORCE_NODE_W = 176`, `FORCE_NODE_H = 56`), matching layered layout.
+  - Only declared prerequisite edges are drawn; missing prerequisite IDs safely ignored and cycles handled without hanging.
+  - Rigid boundary clamping ensures no node exceeds container bounds.
+  - Pinning API: supports pinning individual node positions `Record<string, { x: number; y: number }>`.
+- **Mastery Page Integration (`src/pages/Mastery.tsx`):**
+  - Added opt-in `Force` tab (`Layers | Force | Heatmap | List`), preserving `Layers` as default view.
+  - Interactive drag-to-pin with 4px drag threshold distinguishing click from drag.
+  - Keyboard pinning: pressing `P` or `p` toggles pinning for the focused topic node.
+  - Added `Pause` / `Resume` simulation toggle and `Reset` button (clears all pinned nodes back to default equilibrium).
+  - Full roving-tabindex spatial keyboard navigation (`ArrowRight`, `ArrowLeft`, `ArrowDown`, `ArrowUp`, `Home`, `End`).
+  - Reduced-motion support: renders static 200th-iteration layout immediately with zero animation loops when `useMotionAllowed()` is false.
+  - Container-level horizontal scroll containment (`.mastery__graph-scroll`) and structured-list fallback for containers < 720px.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Vitest test suite (`npx vitest run`): PASS (92 test files, 681 tests passed, +1 test file, +20 new tests vs Stage 15a).
+  - Production build (`npm run build`): PASS (built in 1.55s).
+  - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Sub-stage 15b exit gate: **PASS**.
 

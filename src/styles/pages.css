@@ -1155,3 +1155,50 @@ html.is-focus .main { padding: var(--s-4); }
   }
 }
 
+/* Force View Controls & Node styling (Stage 15b, Enhancement 11.1) */
+.mastery__force-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mastery-node--draggable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.mastery-node--dragging {
+  cursor: grabbing !important;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.mastery-node--pinned {
+  border-color: var(--accent-soft) !important;
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+.mastery-node__pin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  margin-top: 1px;
+}
+
+.mastery__graph--force {
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mastery-node,
+  .mastery__edge {
+    transition: none !important;
+  }
+}
+

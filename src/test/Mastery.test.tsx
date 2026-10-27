@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -196,6 +196,180 @@ describe('Mastery map page (REF-02, Stage 15a)', () => {
     expect(cmd?.title).toBe('Go to Mastery Map')
     cmd?.run()
     expect(target).toBe('/learn/html/mastery')
+  })
+})
+
+describe('Force-directed mastery graph view (Stage 15b, Enhancement 11.1)', () => {
+  it('renders Force view tab and shows 12 nodes with only declared prerequisite edges', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+
+    const forceTab = screen.getByRole('tab', { name: /force/i })
+    expect(forceTab).toBeInTheDocument()
+    await user.click(forceTab)
+
+    expect(forceTab).toHaveAttribute('aria-selected', 'true')
+    const graph = document.querySelector('.mastery__graph--force')
+    expect(graph).toBeInTheDocument()
+
+    const nodes = document.querySelectorAll('.mastery__graph--force .mastery-node')
+    expect(nodes).toHaveLength(12)
+
+    const edges = document.querySelectorAll('.mastery__graph--force .mastery__edge')
+    expect(edges).toHaveLength(prerequisiteEdges.length)
+  })
+
+  it('selecting a node in Force view updates detail panel and highlights only its active edges', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const node = document.querySelector('.mastery__graph--force [data-topic-id="semantic-layout"]')!
+    await user.click(node)
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Semantic page layout' })
+    ).toBeInTheDocument()
+    expect(
+      document.querySelectorAll('.mastery__graph--force .mastery__edge--active')
+    ).toHaveLength(3)
+  })
+
+  it('dragging a node beyond 4px threshold pins it at release position', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const node = document.querySelector(
+      '.mastery__graph--force [data-topic-id="html-structure"]'
+    ) as HTMLElement
+    expect(node).not.toHaveClass('mastery-node--pinned')
+
+    // Drag by 50px (> 4px threshold)
+    fireEvent.pointerDown(node, { clientX: 100, clientY: 100, button: 0 })
+    fireEvent.pointerMove(node, { clientX: 150, clientY: 150 })
+    fireEvent.pointerUp(node, { clientX: 150, clientY: 150 })
+
+    expect(node).toHaveClass('mastery-node--pinned')
+    expect(screen.getByText(/1 pinned/i)).toBeInTheDocument()
+  })
+
+  it('clicking a node without moving selects it and does NOT pin it', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const node = document.querySelector(
+      '.mastery__graph--force [data-topic-id="forms"]'
+    ) as HTMLElement
+    expect(node).not.toHaveClass('mastery-node--pinned')
+
+    // Click without moving (< 4px)
+    fireEvent.pointerDown(node, { clientX: 100, clientY: 100, button: 0 })
+    fireEvent.pointerUp(node, { clientX: 101, clientY: 101 })
+
+    expect(node).not.toHaveClass('mastery-node--pinned')
+    expect(node).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('pressing keyboard key P toggles pinning and unpinning of the focused node', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const node = document.querySelector(
+      '.mastery__graph--force [data-topic-id="html-structure"]'
+    ) as HTMLElement
+    node.focus()
+    expect(node).not.toHaveClass('mastery-node--pinned')
+
+    // Press P to pin
+    await user.keyboard('p')
+    expect(node).toHaveClass('mastery-node--pinned')
+    expect(screen.getByText(/1 pinned/i)).toBeInTheDocument()
+
+    // Press P again to unpin
+    await user.keyboard('p')
+    expect(node).not.toHaveClass('mastery-node--pinned')
+  })
+
+  it('Reset button clears all pinned nodes back to default equilibrium', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const node = document.querySelector(
+      '.mastery__graph--force [data-topic-id="html-structure"]'
+    ) as HTMLElement
+    node.focus()
+    await user.keyboard('p')
+    expect(node).toHaveClass('mastery-node--pinned')
+
+    // Click reset
+    const resetBtn = screen.getByRole('button', { name: /reset pinned positions/i })
+    await user.click(resetBtn)
+
+    expect(node).not.toHaveClass('mastery-node--pinned')
+    expect(screen.queryByText(/1 pinned/i)).not.toBeInTheDocument()
+  })
+
+  it('Pause / Resume button toggles simulation state', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const pauseBtn = screen.getByRole('button', { name: /pause simulation/i })
+    expect(pauseBtn).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(pauseBtn)
+    expect(screen.getByRole('button', { name: /resume simulation/i })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+
+    await user.click(screen.getByRole('button', { name: /resume simulation/i }))
+    expect(screen.getByRole('button', { name: /pause simulation/i })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+  })
+
+  it('supports roving tabindex and keyboard navigation in Force view', async () => {
+    const user = userEvent.setup()
+    renderAt('/learn/html/mastery')
+    await user.click(screen.getByRole('tab', { name: /force/i }))
+
+    const firstNode = document.querySelector(
+      '.mastery__graph--force [data-topic-id="html-structure"]'
+    ) as HTMLElement
+    expect(firstNode).toHaveAttribute('tabIndex', '0')
+    firstNode.focus()
+
+    // Navigate with arrow keys
+    await user.keyboard('{ArrowRight}')
+    const activeEl = document.activeElement as HTMLElement
+    expect(activeEl).not.toBe(firstNode)
+    expect(activeEl.getAttribute('tabIndex')).toBe('0')
+
+    // Home / End
+    await user.keyboard('{Home}')
+    const homeEl = document.activeElement as HTMLElement
+    expect(homeEl.getAttribute('data-topic-id')).toBe('html-structure')
+
+    await user.keyboard('{End}')
+    const endEl = document.activeElement as HTMLElement
+    expect(endEl.getAttribute('data-topic-id')).toBe('putting-together')
+  })
+
+  it('Force view falls back to structured list when screen width is < 720px', () => {
+    setWidth(390)
+    renderAt('/learn/html/mastery')
+
+    expect(document.querySelector('.mastery__graph--force')).toBeNull()
+    expect(document.querySelector('.mastery__graph')).toBeNull()
+    expect(
+      screen.getByRole('list', { name: /grouped by prerequisite level/i })
+    ).toBeInTheDocument()
   })
 })
 

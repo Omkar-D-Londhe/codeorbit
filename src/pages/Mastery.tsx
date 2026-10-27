@@ -7,6 +7,13 @@ import { Icon } from '../components/Icon'
 import { PageHeader } from '../components/PageHeader'
 import { useDocumentTitle, useElementWidth } from '../lib/hooks'
 import { computeMasteryLayout, topicDepths, type MasteryLayout } from '../core/orbit/masteryLayout'
+import {
+  computeForceLayout,
+  type ForceLayout,
+  FORCE_NODE_W,
+  FORCE_NODE_H,
+} from '../core/orbit/forceLayout'
+import { useMotionAllowed } from '../core/atmosphere/useMotionAllowed'
 import { topicProgress, type TopicProgress } from '../lib/progress'
 import { lessonPath, practicePath, quizPath, trackPath } from '../lib/routes'
 import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
@@ -35,8 +42,20 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
 
   const wrap = useRef<HTMLDivElement>(null)
   const width = useElementWidth(wrap)
+  const motionAllowed = useMotionAllowed()
+
   const [selectedId, setSelectedId] = useState(trackTopics[0]?.id || '')
-  const [viewMode, setViewMode] = useState<'layers' | 'heatmap' | 'list'>('layers')
+  const [viewMode, setViewMode] = useState<'layers' | 'force' | 'heatmap' | 'list'>('layers')
+  const [pinnedPositions, setPinnedPositions] = useState<Record<string, { x: number; y: number }>>({})
+  const [isPaused, setIsPaused] = useState(false)
+  const [dragState, setDragState] = useState<{
+    topicId: string
+    startX: number
+    startY: number
+    nodeStartX: number
+    nodeStartY: number
+    hasMoved: boolean
+  } | null>(null)
 
   // Keep selectedId valid if topics change
   useEffect(() => {
@@ -49,13 +68,34 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
     () => computeMasteryLayout(trackTopics, Math.max(width, GRAPH_MIN_WIDTH)),
     [trackTopics, width]
   )
+
+  const forceLayout: ForceLayout = useMemo(
+    () =>
+      computeForceLayout(trackTopics, Math.max(width, GRAPH_MIN_WIDTH), {
+        pinnedPositions,
+        iterations: 200,
+      }),
+    [trackTopics, width, pinnedPositions]
+  )
+
   const depths = useMemo(() => topicDepths(trackTopics), [trackTopics])
 
   const showGraph = width >= GRAPH_MIN_WIDTH
   const progressOf = useCallback(
     (id: string): TopicProgress => {
       const t = getTopic(id)
-      return t ? topicProgress(state, t) : ({ status: 'not-started', parts: 0, partsTotal: 3, lessonDone: false, quizPassed: false, quizPerfect: false, practiceDone: false, usedSolution: false } as TopicProgress)
+      return t
+        ? topicProgress(state, t)
+        : ({
+            status: 'not-started',
+            parts: 0,
+            partsTotal: 3,
+            lessonDone: false,
+            quizPassed: false,
+            quizPerfect: false,
+            practiceDone: false,
+            usedSolution: false,
+          } as TopicProgress)
     },
     [state]
   )
@@ -75,8 +115,8 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
     )
   }, [layout.columns, trackTopics, depths])
 
-  // Roving Tabindex Keyboard Navigation handler for the graph view
-  const handleKeyDown = useCallback(
+  // Roving Tabindex Keyboard Navigation handler for the layered graph view
+  const handleLayeredKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>, currentId: string) => {
       const currentNode = layout.nodes.find((n) => n.id === currentId)
       if (!currentNode) return
@@ -102,7 +142,6 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
         if (currentNode.depth < layout.columns - 1) {
           const nextDepthNodes = layout.nodes.filter((n) => n.depth === currentNode.depth + 1)
           if (nextDepthNodes.length > 0) {
-            // Find closest row or clamp
             const closest = nextDepthNodes.reduce((prev, curr) =>
               Math.abs(curr.row - currentNode.row) < Math.abs(prev.row - currentNode.row) ? curr : prev
             )
@@ -138,6 +177,160 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
     },
     [layout]
   )
+
+  // Keyboard navigation & Pinning for the Force-directed graph view
+  const handleForceKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, currentId: string) => {
+      const targetTag = (e.target as HTMLElement).tagName.toLowerCase()
+      if (targetTag === 'input' || targetTag === 'textarea' || (e.target as HTMLElement).isContentEditable) {
+        return
+      }
+
+      // Keyboard pinning toggle: P
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault()
+        const currentNode = forceLayout.nodes.find((n) => n.id === currentId)
+        if (!currentNode) return
+
+        setPinnedPositions((prev) => {
+          const next = { ...prev }
+          if (next[currentId]) {
+            delete next[currentId]
+          } else {
+            next[currentId] = { x: currentNode.x, y: currentNode.y }
+          }
+          return next
+        })
+        return
+      }
+
+      const currentNode = forceLayout.nodes.find((n) => n.id === currentId)
+      if (!currentNode) return
+
+      let targetId: string | null = null
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        const candidates = forceLayout.nodes.filter((n) => n.id !== currentId && n.x > currentNode.x + 8)
+        if (candidates.length > 0) {
+          targetId = candidates.reduce((prev, curr) => {
+            const dCurr = Math.hypot(curr.x - currentNode.x, (curr.y - currentNode.y) * 1.5)
+            const dPrev = Math.hypot(prev.x - currentNode.x, (prev.y - currentNode.y) * 1.5)
+            return dCurr < dPrev ? curr : prev
+          }).id
+        } else {
+          const currIdx = trackTopics.findIndex((t) => t.id === currentId)
+          targetId = trackTopics[(currIdx + 1) % trackTopics.length].id
+        }
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const candidates = forceLayout.nodes.filter((n) => n.id !== currentId && n.x < currentNode.x - 8)
+        if (candidates.length > 0) {
+          targetId = candidates.reduce((prev, curr) => {
+            const dCurr = Math.hypot(currentNode.x - curr.x, (curr.y - currentNode.y) * 1.5)
+            const dPrev = Math.hypot(currentNode.x - prev.x, (prev.y - currentNode.y) * 1.5)
+            return dCurr < dPrev ? curr : prev
+          }).id
+        } else {
+          const currIdx = trackTopics.findIndex((t) => t.id === currentId)
+          targetId = trackTopics[(currIdx - 1 + trackTopics.length) % trackTopics.length].id
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        const candidates = forceLayout.nodes.filter((n) => n.id !== currentId && n.y > currentNode.y + 8)
+        if (candidates.length > 0) {
+          targetId = candidates.reduce((prev, curr) => {
+            const dCurr = Math.hypot((curr.x - currentNode.x) * 1.5, curr.y - currentNode.y)
+            const dPrev = Math.hypot((prev.x - currentNode.x) * 1.5, prev.y - currentNode.y)
+            return dCurr < dPrev ? curr : prev
+          }).id
+        } else {
+          const currIdx = trackTopics.findIndex((t) => t.id === currentId)
+          targetId = trackTopics[(currIdx + 1) % trackTopics.length].id
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        const candidates = forceLayout.nodes.filter((n) => n.id !== currentId && n.y < currentNode.y - 8)
+        if (candidates.length > 0) {
+          targetId = candidates.reduce((prev, curr) => {
+            const dCurr = Math.hypot((curr.x - currentNode.x) * 1.5, currentNode.y - curr.y)
+            const dPrev = Math.hypot((prev.x - currentNode.x) * 1.5, currentNode.y - prev.y)
+            return dCurr < dPrev ? curr : prev
+          }).id
+        } else {
+          const currIdx = trackTopics.findIndex((t) => t.id === currentId)
+          targetId = trackTopics[(currIdx - 1 + trackTopics.length) % trackTopics.length].id
+        }
+      } else if (e.key === 'Home') {
+        e.preventDefault()
+        if (trackTopics.length > 0) targetId = trackTopics[0].id
+      } else if (e.key === 'End') {
+        e.preventDefault()
+        if (trackTopics.length > 0) targetId = trackTopics[trackTopics.length - 1].id
+      }
+
+      if (targetId) {
+        setSelectedId(targetId)
+        const targetEl = document.querySelector(`[data-topic-id="${targetId}"]`) as HTMLElement
+        if (targetEl) targetEl.focus()
+      }
+    },
+    [forceLayout.nodes, trackTopics]
+  )
+
+  // Drag to pin pointer handlers
+  const handleNodePointerDown = (e: React.PointerEvent<HTMLButtonElement>, topicId: string, nodeX: number, nodeY: number) => {
+    if (e.button !== 0) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Ignore if capture unsupported
+    }
+    setDragState({
+      topicId,
+      startX: e.clientX,
+      startY: e.clientY,
+      nodeStartX: nodeX,
+      nodeStartY: nodeY,
+      hasMoved: false,
+    })
+  }
+
+  const handleNodePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragState) return
+    const dx = e.clientX - dragState.startX
+    const dy = e.clientY - dragState.startY
+    if (!dragState.hasMoved && Math.hypot(dx, dy) < 4) {
+      return
+    }
+
+    const containerW = Math.max(width, GRAPH_MIN_WIDTH)
+    const containerH = forceLayout.height
+    const newX = Math.max(16, Math.min(containerW - 16 - FORCE_NODE_W, dragState.nodeStartX + dx))
+    const newY = Math.max(16, Math.min(containerH - 16 - FORCE_NODE_H, dragState.nodeStartY + dy))
+
+    if (!dragState.hasMoved) {
+      setDragState((prev) => (prev ? { ...prev, hasMoved: true } : null))
+    }
+
+    setPinnedPositions((prev) => ({
+      ...prev,
+      [dragState.topicId]: { x: Math.round(newX * 10) / 10, y: Math.round(newY * 10) / 10 },
+    }))
+  }
+
+  const handleNodePointerUp = (e: React.PointerEvent<HTMLButtonElement>, topicId: string) => {
+    if (!dragState) return
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // Ignore
+    }
+    if (!dragState.hasMoved) {
+      setSelectedId(topicId)
+    }
+    setDragState(null)
+  }
 
   const list = (
     <ol className="mastery-list" aria-label="Topics grouped by prerequisite level">
@@ -264,6 +457,15 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
               <button
                 type="button"
                 role="tab"
+                aria-selected={activeMode === 'force'}
+                className={`btn btn--ghost btn--sm ${activeMode === 'force' ? 'is-active' : ''}`}
+                onClick={() => setViewMode('force')}
+              >
+                <Icon name="sparkles" size={14} /> Force
+              </button>
+              <button
+                type="button"
+                role="tab"
                 aria-selected={activeMode === 'heatmap'}
                 className={`btn btn--ghost btn--sm ${activeMode === 'heatmap' ? 'is-active' : ''}`}
                 onClick={() => setViewMode('heatmap')}
@@ -281,9 +483,40 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
               </button>
             </div>
 
-            <span className="small muted">
-              {trackTopics.length} topics across {layout.columns} levels
-            </span>
+            {activeMode === 'force' ? (
+              <div className="mastery__force-toolbar">
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setIsPaused((p) => !p)}
+                  aria-pressed={isPaused}
+                  aria-label={isPaused ? 'Resume simulation' : 'Pause simulation'}
+                  title={!motionAllowed ? 'Simulation static under reduced motion' : isPaused ? 'Resume simulation' : 'Pause simulation'}
+                >
+                  <Icon name={isPaused ? 'arrow-right' : 'lock'} size={14} />
+                  {isPaused ? 'Resume' : 'Pause'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setPinnedPositions({})}
+                  aria-label="Reset pinned positions"
+                  title="Clear all pinned positions and restore default equilibrium"
+                >
+                  <Icon name="rotate-ccw" size={14} />
+                  Reset
+                </button>
+                <span className="small muted">
+                  {Object.keys(pinnedPositions).length > 0
+                    ? `${Object.keys(pinnedPositions).length} pinned · Drag node to pin, 'P' to toggle`
+                    : "Drag node to pin, 'P' to toggle"}
+                </span>
+              </div>
+            ) : (
+              <span className="small muted">
+                {trackTopics.length} topics across {layout.columns} levels
+              </span>
+            )}
           </div>
         )}
 
@@ -294,6 +527,90 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
                 Viewing structured list for compact screens (diagram requires ≥ 720px width).
               </div>
               {list}
+            </div>
+          ) : activeMode === 'force' ? (
+            <div className="mastery__graph-scroll">
+              <div
+                className="mastery__graph mastery__graph--force"
+                style={{ width: forceLayout.width, height: forceLayout.height }}
+              >
+                <svg
+                  className="mastery__svg"
+                  width={forceLayout.width}
+                  height={forceLayout.height}
+                  viewBox={`0 0 ${forceLayout.width} ${forceLayout.height}`}
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <g>
+                    {forceLayout.edges.map((e) => (
+                      <path
+                        key={`${e.from}>${e.to}`}
+                        d={e.d}
+                        className={`mastery__edge${
+                          e.from === selectedId || e.to === selectedId ? ' mastery__edge--active' : ''
+                        }`}
+                      />
+                    ))}
+                  </g>
+                </svg>
+
+                <ul className="mastery__nodes">
+                  {forceLayout.nodes.map((n) => {
+                    const t = getTopic(n.id)!
+                    const p = progressOf(n.id)
+                    const isSelected = n.id === selectedId
+                    const isDragging = dragState?.topicId === n.id && dragState.hasMoved
+
+                    return (
+                      <li
+                        key={n.id}
+                        style={{
+                          left: n.x,
+                          top: n.y,
+                          width: forceLayout.nodeW,
+                          height: forceLayout.nodeH,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className={`mastery-node mastery-node--${p.status} mastery-node--draggable ${
+                            n.pinned ? 'mastery-node--pinned' : ''
+                          } ${isDragging ? 'mastery-node--dragging' : ''}`}
+                          data-topic-id={n.id}
+                          tabIndex={isSelected ? 0 : -1}
+                          aria-current={isSelected ? 'true' : undefined}
+                          aria-label={`${t.title}. ${STATUS_LABEL[p.status]}.${
+                            n.pinned ? ' Pinned. Press P to unpin.' : ' Press P to pin.'
+                          }${isSelected ? ' Selected.' : ''}`}
+                          onClick={() => {
+                            if (!dragState?.hasMoved) {
+                              setSelectedId(n.id)
+                            }
+                          }}
+                          onPointerDown={(e) => handleNodePointerDown(e, n.id, n.x, n.y)}
+                          onPointerMove={handleNodePointerMove}
+                          onPointerUp={(e) => handleNodePointerUp(e, n.id)}
+                          onKeyDown={(e) => handleForceKeyDown(e, n.id)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className="mastery-node__title">{t.shortTitle}</span>
+                            {n.pinned && (
+                              <span className="mastery-node__pin-badge" title="Pinned">
+                                <Icon name="lock" size={10} /> PIN
+                              </span>
+                            )}
+                          </div>
+                          <span className="mastery-node__status">
+                            <Icon name={STATUS_ICON[p.status]} size={14} />
+                            {STATUS_LABEL[p.status]}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             </div>
           ) : activeMode === 'heatmap' ? (
             heatmap
@@ -352,7 +669,7 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
                           aria-current={isSelected ? 'true' : undefined}
                           aria-label={`${t.title}. Level ${n.depth + 1}. ${STATUS_LABEL[p.status]}.${isSelected ? ' Selected.' : ''}`}
                           onClick={() => setSelectedId(n.id)}
-                          onKeyDown={(e) => handleKeyDown(e, n.id)}
+                          onKeyDown={(e) => handleLayeredKeyDown(e, n.id)}
                         >
                           <span className="mastery-node__title">{t.shortTitle}</span>
                           <span className="mastery-node__status">
@@ -369,7 +686,7 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
           )}
         </div>
 
-        {showGraph && activeMode === 'layers' && (
+        {showGraph && (activeMode === 'layers' || activeMode === 'force') && (
           <details className="mastery-alt">
             <summary>Show as a list</summary>
             {list}
