@@ -45,6 +45,14 @@ export function buildCommands({
       run: () => navigate('/learn/html'),
     },
     {
+      id: 'cmd-nav-mastery',
+      title: 'Go to Mastery Map',
+      keywords: ['mastery', 'prerequisites', 'skills', 'dependencies', 'map', 'heatmap', 'levels'],
+      group: 'Navigate',
+      enabled: () => true,
+      run: () => navigate('/learn/html/mastery'),
+    },
+    {
       id: 'cmd-nav-explore',
       title: 'Explore Technologies',
       keywords: ['explore', 'tracks', 'technologies', 'browse'],

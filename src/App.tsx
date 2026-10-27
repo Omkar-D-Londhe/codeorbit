@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Shell } from './components/Shell'
 import { ToastProvider } from './components/Toast'
@@ -8,6 +8,7 @@ import { MilestoneToastListener } from './core/gamification/MilestoneToastListen
 import Explore from './pages/Explore'
 import Home from './pages/Home'
 import Lesson from './pages/Lesson'
+import Mastery from './pages/Mastery'
 import NotFound from './pages/NotFound'
 import Practice from './pages/Practice'
 import Progress from './pages/Progress'
@@ -34,6 +35,8 @@ export default function App() {
                 <Route index element={<Home />} />
                 <Route path="explore" element={<Explore />} />
                 <Route path="learn/:technologyId" element={<Track />} />
+                <Route path="learn/:technologyId/mastery" element={<Mastery />} />
+                <Route path="mastery" element={<Navigate to="/learn/html/mastery" replace />} />
                 <Route path="lesson/:topicId" element={<Lesson />} />
                 <Route path="quiz/:topicId" element={<QuizPage />} />
                 <Route path="practice/:challengeId" element={<Practice />} />

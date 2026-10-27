@@ -648,6 +648,32 @@
   - Security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
   - Stage 14 exit gate: **PASS**.
 
+## 2026-10-27 — Stage 15a: Layered mastery map, heatmap, list fallback and keyboard navigation
+- **Branch:** `stage-15a-mastery-map-analytics`
+- **Core Layout Engine (`src/core/orbit/masteryLayout.ts`):**
+  - Pure deterministic algorithm calculating topic depths strictly from real prerequisite IDs.
+  - Implemented missing/invalid prerequisite ID tolerance (`missingIdTolerance`) and cycle detection (throws descriptive Error).
+  - Places nodes in depth-based columns with non-overlapping bounding boxes and calculates cubic bezier connection paths (`M x1 y1 C mx y1, mx y2, x2 y2`).
+- **Mastery Page (`src/pages/Mastery.tsx`, `/learn/:technologyId/mastery`):**
+  - Track-scoped view supporting `Layers` (default), `Heatmap`, and `List` views.
+  - Automatic structured list fallback for narrow screens (< 720px) preventing broken visual rendering.
+  - Inner scroll container `.mastery__graph-scroll` with `overflow-x: auto` preventing horizontal page overflow while outer card has `overflow: hidden` (reference defect 12).
+  - Full roving-tabindex keyboard navigation model: `ArrowDown`/`ArrowUp` within depth column, `ArrowRight`/`ArrowLeft` across depth columns, `Home`/`End` to jump to start/end of column.
+  - Criteria details panel preserving exact verbatim semantics: `"A learning aid, not an exam grade. Later review results are not part of the criteria."` and `"Not possible: solution revealed first"`.
+- **Navigation & Routing:**
+  - Registered route `/learn/:technologyId/mastery` and redirect `/mastery` -> `/learn/html/mastery` in `src/App.tsx`.
+  - Added 'Mastery map' link button on Track page (`src/pages/Track.tsx`).
+  - Added `cmd-nav-mastery` ("Go to Mastery Map") to command palette registry (`src/core/search/commands.ts`).
+  - Strict track neutrality: no hard-coded `'html'` literal strings across `src/pages/**`, `src/components/**`, `src/core/**` or `src/lib/**`.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Vitest test suite (`npx vitest run`): PASS (91 test files, 661 tests passed, +2 test files, +18 new tests vs Stage 14).
+  - Production build (`npm run build`): PASS (built in 905ms).
+  - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Sub-stage 15a exit gate: **PASS**.
+
+
 
 
 

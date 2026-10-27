@@ -15,7 +15,7 @@ interface NavItem { to: string; label: string; icon: IconName; match: (p: string
 
 const PRIMARY_NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: 'home', match: (p) => p === '/' },
-  { to: '/explore', label: 'Explore', icon: 'compass', match: (p) => ['/explore', '/learn', '/lesson', '/quiz', '/practice'].some((x) => p === x || p.startsWith(x + '/')) },
+  { to: '/explore', label: 'Explore', icon: 'compass', match: (p) => ['/explore', '/learn', '/lesson', '/quiz', '/practice', '/mastery'].some((x) => p === x || p.startsWith(x + '/')) },
   { to: '/progress', label: 'My Progress', icon: 'progress', match: (p) => p === '/progress' },
   { to: '/review', label: 'Review', icon: 'notebook', match: (p) => p === '/review' },
 ]

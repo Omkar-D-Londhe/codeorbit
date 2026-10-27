@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { getTechnology, getTopic, topicsFor, groups } from '../data/curriculum'
 import { LearningOrbit } from '../components/orbit/LearningOrbit'
 import { TopicDetail } from '../components/orbit/TopicDetail'
@@ -7,6 +7,7 @@ import { PageHeader } from '../components/PageHeader'
 import { Icon } from '../components/Icon'
 import { useDocumentTitle } from '../lib/hooks'
 import { topicProgress, trackProgress } from '../lib/progress'
+import { masteryPath } from '../lib/routes'
 import { useApp } from '../state/AppState'
 import { ConstellationOrbit } from '../core/orbit/constellation/ConstellationOrbit'
 import { fuzzy } from '../core/search/fuzzy'
@@ -116,6 +117,11 @@ function TrackInner({
           crumbs={[{ label: 'Explore', to: '/explore' }, { label: name }]}
           title={`${name} Learning Orbit`}
           lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done. Select a topic on the strip or the arch.`}
+          actions={
+            <Link className="btn btn--secondary btn--sm" to={masteryPath(technologyId)}>
+              <Icon name="compass" size={16} /> Mastery map
+            </Link>
+          }
         />
         <section className="card orbit-card" aria-label={`${name} Learning Orbit`}>
           <LearningOrbit topics={list} selectedId={selected.id} progressOf={progressOf} onSelect={select} />
@@ -137,6 +143,11 @@ function TrackInner({
         crumbs={[{ label: 'Explore', to: '/explore' }, { label: name }]}
         title={`${name} Learning Orbit`}
         lede={`${tp.completedTopics} of ${tp.totalTopics} topics complete · ${tp.parts} of ${tp.partsTotal} steps done.`}
+        actions={
+          <Link className="btn btn--secondary btn--sm" to={masteryPath(technologyId)}>
+            <Icon name="compass" size={16} /> Mastery map
+          </Link>
+        }
       />
 
       {/* 9.3 Filter bar & 2.8 Orbit search highlight */}
