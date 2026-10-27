@@ -5,6 +5,7 @@ import {
   FORCE_NODE_H,
   DEFAULT_FORCE_ITERATIONS,
   type ForceTopicInput,
+  type ForceLayout,
 } from '../core/orbit/forceLayout'
 import { topics } from '../data/curriculum'
 
@@ -166,7 +167,7 @@ describe('Deterministic Force Layout Engine (Stage 15b, 11.1)', () => {
 
     // Measure best of 3 runs to avoid parallel worker thread scheduling jitter
     let minElapsed = Infinity
-    let layout = null as any
+    let layout: ForceLayout | null = null
     for (let r = 0; r < 3; r++) {
       const start = performance.now()
       layout = computeForceLayout(synthTopics, 1200, { iterations: 200 })
@@ -174,8 +175,9 @@ describe('Deterministic Force Layout Engine (Stage 15b, 11.1)', () => {
       if (elapsed < minElapsed) minElapsed = elapsed
     }
 
-    expect(layout.nodes.length).toBe(60)
-    expect(layout.iterations).toBe(200)
+    expect(layout).not.toBeNull()
+    expect(layout?.nodes.length).toBe(60)
+    expect(layout?.iterations).toBe(200)
     // Must be under 20 ms
     expect(minElapsed).toBeLessThan(20)
   })
