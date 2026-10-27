@@ -5,11 +5,13 @@ import { lessonPath, quizPath, practicePath } from '../../../lib/routes'
 import { challengesForTopic } from '../../../data/challenges'
 import { Icon } from '../../../components/Icon'
 import { LegendCard } from './LegendCard'
+import { getRelatedTopics } from '../../content/related'
 
 export interface TopicDetailsPanelProps {
   topic?: Topic | null
   index?: number
   totalTopics: number
+  allTopics?: Topic[]
   nodeState?: NodeState
   progress?: TopicProgress | null
   prerequisiteTopics?: Topic[]
@@ -25,6 +27,7 @@ export function TopicDetailsPanel({
   topic,
   index = 0,
   totalTopics,
+  allTopics = [],
   nodeState = 'available',
   progress,
   prerequisiteTopics = [],
@@ -258,6 +261,85 @@ export function TopicDetailsPanel({
             ))}
           </div>
         )}
+
+        {/* 9.4 Related Topics */}
+        {(() => {
+          const related = allTopics.length > 0 ? getRelatedTopics(topic, allTopics, 4) : []
+          if (related.length === 0) return null
+          return (
+            <div
+              className="constellation-related-topics"
+              style={{
+                marginTop: '14px',
+                paddingTop: '12px',
+                borderTop: '1px solid var(--border, rgba(255,255,255,0.08))',
+              }}
+            >
+              <span className="muted" style={{ fontWeight: 600, fontSize: '12px', display: 'block', marginBottom: '8px' }}>
+                Related topics:
+              </span>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {related.map(({ topic: rt, reason }) => (
+                  <li
+                    key={rt.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '12px',
+                      gap: '8px',
+                    }}
+                  >
+                    {onSelectTopic ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelectTopic(rt.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          color: 'var(--accent, #9a8bff)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          textDecoration: 'underline',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {rt.title}
+                      </button>
+                    ) : (
+                      <Link
+                        to={lessonPath(rt.id)}
+                        style={{
+                          color: 'var(--accent, #9a8bff)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {rt.title}
+                      </Link>
+                    )}
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        color: 'var(--muted, #8b949e)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {reason}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })()}
       </div>
 
       <LegendCard />

@@ -27,6 +27,8 @@ export interface Topic {
   groupId: string
   /** Real prerequisite / relationship edges. Curriculum order is NOT an edge. */
   prerequisiteIds: string[]
+  /** Optional tags for filtering and discovery (e.g. 'forms', 'semantics', 'accessibility'). */
+  tags?: string[]
 }
 
 export interface LessonSection {

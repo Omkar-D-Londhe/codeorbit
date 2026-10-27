@@ -24,6 +24,7 @@ export interface ConstellationOrbitProps {
   groups: TopicGroup[]
   meta?: ConstellationTrackMeta
   injectedProgress?: Record<string, TopicProgress>
+  highlightIds?: string[] | null
 }
 
 const ORBIT_VIEW_STORAGE_KEY = 'codeorbit:ui:orbit-view'
@@ -37,6 +38,7 @@ export function ConstellationOrbit({
   groups,
   meta,
   injectedProgress,
+  highlightIds,
 }: ConstellationOrbitProps) {
   const { state, dispatch } = useApp()
   const selectedTopicId = state.selectedTopicId
@@ -267,6 +269,7 @@ export function ConstellationOrbit({
             selectedTopicId={selectedTopicId}
             lastVisitedTopicId={state.lastVisited?.topicId}
             pulsingTopicIds={pulsingTopicIds}
+            highlightIds={highlightIds}
             nodeViews={nodeViews}
             nodeStates={nodeStates}
             isExpanded={isExpanded}
@@ -293,6 +296,7 @@ export function ConstellationOrbit({
               topic={selectedTopic}
               index={selectedIndex >= 0 ? selectedIndex : 0}
               totalTopics={topics.length}
+              allTopics={topics}
               nodeState={selectedTopic ? nodeStates[selectedTopic.id] : undefined}
               progress={selectedTopic ? topicProgressMap[selectedTopic.id] : undefined}
               prerequisiteTopics={prereqTopics}

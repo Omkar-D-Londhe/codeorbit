@@ -284,6 +284,17 @@
   opacity: 0.75;
 }
 
+/* Stage 13 Orbit Search Highlight (Enhancement 2.8) */
+.constellation-star--dimmed {
+  opacity: 0.45;
+  transition: opacity 160ms ease-out;
+}
+
+.constellation-star--highlighted .constellation-star__disc {
+  box-shadow: 0 0 0 3px var(--accent, #9a8bff), 0 0 20px rgba(154, 139, 255, 0.6);
+  border-color: var(--accent, #9a8bff);
+}
+
 .constellation-star__badge {
   position: absolute;
   bottom: -4px;

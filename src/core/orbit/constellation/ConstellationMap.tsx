@@ -19,6 +19,7 @@ export interface ConstellationMapProps {
   selectedTopicId?: string | null
   lastVisitedTopicId?: string | null
   pulsingTopicIds?: Set<string>
+  highlightIds?: string[] | null
   nodeViews: Map<string, NodeView>
   nodeStates: Record<string, NodeState>
   isExpanded: boolean
@@ -37,6 +38,7 @@ export function ConstellationMap({
   selectedTopicId,
   lastVisitedTopicId,
   pulsingTopicIds,
+  highlightIds,
   nodeViews,
   nodeStates,
   isExpanded,
@@ -192,6 +194,9 @@ export function ConstellationMap({
 
           const isPulsing = pulsingTopicIds ? pulsingTopicIds.has(node.topicId) : false
           const isLastVisited = lastVisitedTopicId === node.topicId
+          const hasHighlightFilter = Array.isArray(highlightIds)
+          const isHighlighted = hasHighlightFilter && highlightIds.includes(node.topicId)
+          const isDimmed = hasHighlightFilter && !highlightIds.includes(node.topicId)
 
           return (
             <Star
@@ -202,6 +207,8 @@ export function ConstellationMap({
               isMastered={view.status === 'mastered'}
               isPulsing={isPulsing}
               isLastVisited={isLastVisited}
+              isHighlighted={isHighlighted}
+              isDimmed={isDimmed}
               zoom={transform.zoom}
               isRovingActive={isRovingActive}
               onSelect={onSelectTopic}

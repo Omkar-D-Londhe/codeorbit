@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { openErrorCount } from '../lib/progress'
 import { useMediaQuery } from '../lib/hooks'
@@ -6,6 +6,10 @@ import { useApp } from '../state/AppState'
 import { Emblem, Icon, type IconName } from './Icon'
 import { Atmosphere } from '../core/atmosphere/Atmosphere'
 import { RouteTransition } from '../core/atmosphere/RouteTransition'
+import { CommandPalette } from '../core/search/CommandPalette'
+import { ShortcutsModal } from '../core/a11y/ShortcutsModal'
+import { useGlobalShortcuts } from '../core/a11y/useGlobalShortcuts'
+import { Kbd } from '../core/ui/Kbd'
 
 interface NavItem { to: string; label: string; icon: IconName; match: (p: string) => boolean }
 
@@ -91,6 +95,15 @@ export function Shell() {
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
 
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+
+  // Attach global keyboard shortcuts: Ctrl/⌘+K, '/', '?'
+  useGlobalShortcuts({
+    onOpenPalette: () => setPaletteOpen(true),
+    onOpenShortcuts: () => setShortcutsOpen(true),
+  })
+
   // On route change: scroll to top and move focus to the main region (not on first load).
   useEffect(() => {
     if (first.current) { first.current = false; return }
@@ -103,20 +116,43 @@ export function Shell() {
       <Atmosphere />
       <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus() }}>Skip to main content</a>
       {isMobile ? (
-        <header className="topbar" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <header className="topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Brand />
-          <Link
-            to="/settings"
-            className={`icon-btn ${pathname === '/settings' ? 'is-active' : ''}`}
-            aria-label="Settings"
-            title="Settings"
-          >
-            <Icon name="settings" size={20} />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Search and command palette (Ctrl+K)"
+              title="Search (Ctrl+K)"
+              onClick={() => setPaletteOpen(true)}
+            >
+              <Icon name="search" size={20} />
+            </button>
+            <Link
+              to="/settings"
+              className={`icon-btn ${pathname === '/settings' ? 'is-active' : ''}`}
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Icon name="settings" size={20} />
+            </Link>
+          </div>
         </header>
       ) : (
         <aside className="sidebar" aria-label="Primary">
           <Brand />
+          <button
+            type="button"
+            className="sidebar-search-btn"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Search and command palette (Ctrl+K)"
+          >
+            <span className="sidebar-search-btn__left">
+              <Icon name="search" size={16} />
+              <span>Search...</span>
+            </span>
+            <Kbd className="sidebar-search-btn__kbd">Ctrl K</Kbd>
+          </button>
           <nav aria-label="Main"><NavLinks variant="side" /></nav>
           <SaveNote />
         </aside>
@@ -128,6 +164,19 @@ export function Shell() {
         </RouteTransition>
       </main>
       {isMobile && <nav className="bottom-nav" aria-label="Main"><NavLinks variant="bottom" /></nav>}
+
+      {/* Global Command Palette dialog */}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+      />
+
+      {/* Global Keyboard Shortcut Reference Modal */}
+      <ShortcutsModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { topicProgress } from '../lib/progress'
 import { practicePath, quizPath, trackPath } from '../lib/routes'
 import { formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { getRelatedTopics } from '../core/content/related'
 import { sectionBookmarkId } from '../state/types'
 import { useClock } from '../core/time/Clock'
 import { ReadingProgress } from '../core/learning/ReadingProgress'
@@ -184,6 +185,27 @@ function LessonInner({ topicId }: { topicId: string }) {
         <h2 className="study__h">Notes</h2>
         <NotesEditor topicId={topicId} title={topic.title} />
       </section>
+      {(() => {
+        const related = getRelatedTopics(topic, topics, 4)
+        if (related.length === 0) return null
+        return (
+          <section className="study__block">
+            <h2 className="study__h">Related topics</h2>
+            <ul className="related-topics-list" style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {related.map(({ topic: rt, reason }) => (
+                <li key={rt.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', fontSize: '13px' }}>
+                  <Link to={`/lesson/${rt.id}`} style={{ color: 'var(--accent, #9a8bff)', textDecoration: 'none' }} className="hover-underline">
+                    {rt.title}
+                  </Link>
+                  <span className="badge badge--subtle" style={{ fontSize: '10px', flexShrink: 0 }}>
+                    {reason}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      })()}
     </aside>
   )
 

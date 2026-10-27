@@ -560,6 +560,49 @@
   - Visual evidence screenshots saved in `docs/antigravity/status/screenshots/stage-12/`.
   - Stage 12 exit gate: **PASS**.
 
+## 2026-10-27 — Stage 13: Command palette, fuzzy search, filters/tags, related topics, orbit search highlight, shortcuts modal
+- **Branch:** `stage-13-command-palette-discovery`
+- **Scope & Implemented Changes:**
+  - **Command Palette (`src/core/search/CommandPalette.tsx`, Catalog 9.1):**
+    - Centered glass dialog (560px max width), input with search icon and Esc badge, results list with max 8 visible items.
+    - WAI-ARIA Combobox 1.2 compliant: `role="combobox"`, `role="listbox"`, `role="option"`, `aria-activedescendant`.
+    - Keyboard operation: `ArrowUp`/`ArrowDown` navigation with auto-scroll into view, `Enter` executes command or navigates to page, `Esc` dismisses and restores focus to opener element.
+    - Mobile layout: full-width sheet adapting seamlessly to narrow viewports.
+  - **Fuzzy Search with Highlighted Matches (`src/core/search/fuzzy.ts`, `src/core/search/Highlight.tsx`, Catalog 9.2):**
+    - Pure TypeScript subsequence matcher computing matching scores with bonuses for consecutive characters, word boundaries, and case match.
+    - Matches wrapped with `<mark className="search-highlight">` with accent-wash styling and accessible contrast (FC-02).
+  - **In-Memory Search Index & Commands (`src/core/search/index.ts`, `src/core/search/commands.ts`):**
+    - Lazy in-memory indexing of topics, lesson takeaways and objectives, challenges, user notes, bookmarks, and commands. Never written to disk/localStorage.
+    - Commands categorized by group: `Navigate`, `Learn`, `Practice`, `Settings`, `Data`, `Help`. Disabled commands omitted.
+  - **Filter & Tag System (`src/pages/Track.tsx`, `src/pages/Explore.tsx`, Catalog 9.3):**
+    - Synchronized with URL query parameters (`?status=...&tag=...&search=...&difficulty=...`) for shareable, bookmarkable, and restorable filters.
+    - Added optional `tags?: string[]` to `Topic` interface and tagged curriculum topics.
+  - **Related Topics Panel (`src/core/content/related.ts`, `src/core/orbit/constellation/TopicDetailsPanel.tsx`, `src/pages/Lesson.tsx`, Catalog 9.4):**
+    - Pure function deriving up to 4 related topics by prerequisite, dependent unlock, same group peer, and shared tag overlap.
+    - Rendered in constellation topic details panel and lesson study panel with clickable navigation.
+  - **Orbit Search Highlight (`src/core/orbit/constellation/Star.tsx`, `ConstellationMap.tsx`, `ConstellationOrbit.tsx`, Catalog 2.8):**
+    - Matching topics highlighted with glowing accent ring; non-matching topics dimmed to 45% opacity (`.constellation-star--dimmed`).
+    - Topic star coordinates (`left`, `top`) strictly preserved.
+    - Polite live region announces `${count} topics match`.
+  - **Keyboard Shortcut Reference Modal (`src/core/a11y/shortcuts.ts`, `ShortcutsModal.tsx`, Catalog 13.5):**
+    - Authoritative single registry powering palette hints and the modal, opened via `?`.
+    - Accessible dialog trapping focus, closing on Escape, and rendering shortcuts grouped by scope.
+  - **Global Shortcut Listener (`src/core/a11y/useGlobalShortcuts.ts`):**
+    - `Ctrl/⌘+K` and `/` open palette; `?` opens shortcuts modal.
+    - `isTypingTarget()` strictly prevents triggering when typing in inputs, textareas, selects, contenteditable, or CodeMirror editor (`.cm-editor`).
+  - **UI Shell Integration (`src/components/Shell.tsx`):**
+    - Desktop sidebar search button with `<Kbd>Ctrl K</Kbd>`, mobile header search button, and mounted dialogs.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 warnings, 0 errors).
+  - Full Vitest suite (`npm run test`): PASS (82 test files, 604 tests passed, +8 new test files, +32 new tests).
+  - Production build (`npm run build`): PASS (built in 1.43s; `index-*.js` 626.48 kB, CSS 94.31 kB).
+  - Security audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Clean architecture: 0 forbidden `'html'` string literals in `src/core/search/` and `src/core/a11y/`.
+  - Legacy orbit files (`src/lib/orbitGeometry.ts`, `src/components/orbit/*`) untouched.
+  - Stage 13 exit gate: **PASS**.
+
+
 
 
 

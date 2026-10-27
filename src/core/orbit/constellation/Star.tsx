@@ -10,6 +10,8 @@ export interface StarProps {
   isRovingActive?: boolean
   isPulsing?: boolean
   isLastVisited?: boolean
+  isHighlighted?: boolean
+  isDimmed?: boolean
   estimateMinutes?: number
   zoom?: number
   onSelect: (topicId: string) => void
@@ -26,6 +28,8 @@ export function Star({
   isRovingActive = false,
   isPulsing = false,
   isLastVisited = false,
+  isHighlighted = false,
+  isDimmed = false,
   estimateMinutes,
   zoom = 1,
   onSelect,
@@ -80,7 +84,9 @@ export function Star({
       type="button"
       className={`constellation-star constellation-star--${state} ${selected ? 'is-selected' : ''} ${
         isPulsing ? 'constellation-star--pulse' : ''
-      } ${isLastVisited ? 'is-last-visited' : ''}`}
+      } ${isLastVisited ? 'is-last-visited' : ''} ${
+        isHighlighted ? 'constellation-star--highlighted' : ''
+      } ${isDimmed ? 'constellation-star--dimmed' : ''}`}
       style={{ left: `${node.x}px`, top: `${node.y}px` }}
       aria-label={accessibleName}
       aria-current={selected ? 'true' : undefined}
