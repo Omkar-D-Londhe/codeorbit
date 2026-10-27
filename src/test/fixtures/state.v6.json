@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 6,
+  "topics": {
+    "html-structure": {
+      "lessonComplete": true,
+      "quizAttempts": 1,
+      "quizBest": { "correct": 3, "total": 3 }
+    }
+  },
+  "quizSessions": {},
+  "drafts": {},
+  "challenges": {
+    "ch-html-structure": {
+      "attempts": 2,
+      "hintsRevealed": 0,
+      "solutionRevealed": false,
+      "completed": true,
+      "completedWithoutSolution": true,
+      "lastCheck": {
+        "passed": 3,
+        "total": 3,
+        "failedIds": [],
+        "at": 1700000000000
+      },
+      "history": [
+        {
+          "passed": 3,
+          "total": 3,
+          "failedIds": [],
+          "at": 1700000000000
+        }
+      ]
+    }
+  },
+  "notes": {
+    "html-structure": {
+      "text": "The skeleton every document needs.",
+      "format": "markdown",
+      "tags": ["foundations"],
+      "updatedAt": 1700000000000
+    }
+  },
+  "bookmarks": ["html-structure"],
+  "sectionBookmarks": ["html-structure#doctype"],
+  "bookmarkFolders": [
+    {
+      "id": "unsorted",
+      "name": "Unsorted",
+      "itemIds": ["html-structure", "html-structure#doctype"]
+    }
+  ],
+  "errorNotebook": [],
+  "settings": {
+    "userName": "Ada",
+    "pace": "regular",
+    "theme": "obsidian",
+    "accent": "violet",
+    "contrast": "normal",
+    "motion": "system",
+    "gamificationEnabled": true
+  },
+  "activity": [],
+  "activityDays": ["2026-10-25"],
+  "dailyDone": ["2026-10-25"],
+  "dailyAssigned": {},
+  "streakBest": 1,
+  "badges": {
+    "first-challenge": { "firstSeenAt": 1700000000000, "backfilled": false }
+  },
+  "personalBests": {
+    "longestStreak": 1
+  }
+}

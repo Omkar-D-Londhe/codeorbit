@@ -16,6 +16,13 @@ import { useTrack } from '../core/content/useTrack'
 import { XpBar } from '../core/gamification/XpBar'
 import { BadgeGallery } from '../core/gamification/BadgeGallery'
 import { PersonalBestsSection } from '../core/gamification/PersonalBestsSection'
+import { calculateVelocity, VELOCITY_EMPTY_MESSAGE } from '../core/insights/velocity'
+import { compareGroupEstimates, compareTopicEstimates } from '../core/insights/estimates'
+import { calculateQuizBreakdown } from '../core/insights/quizBreakdown'
+import { calculateAttemptHeat, exportAttemptsToCsv } from '../core/insights/attemptHeat'
+import { AccessibleBarChart } from '../core/insights/charts/AccessibleBarChart'
+import { AccessibleLineChart } from '../core/insights/charts/AccessibleLineChart'
+import { ShareCard } from '../core/insights/ShareCard'
 
 export default function Progress() {
   useDocumentTitle('My Progress')
@@ -41,6 +48,23 @@ export default function Progress() {
   const action = nextAction(state, track.id)
   const next = action.topicId ? getTopic(action.topicId) : undefined
   const started = trackTopics.some((t) => topicProgress(state, t).touched)
+
+  const velocity = calculateVelocity(state)
+  const topicEstimates = compareTopicEstimates(state, trackTopics)
+  const groupEstimates = compareGroupEstimates(state, trackTopics, trackGroups)
+  const quizBreakdown = calculateQuizBreakdown(state, trackTopics)
+  const attemptHeat = calculateAttemptHeat(state)
+
+  const handleExportCsv = () => {
+    const csv = exportAttemptsToCsv(attemptHeat.rows)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `codeorbit-challenge-attempts.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="page">
@@ -73,6 +97,148 @@ export default function Progress() {
       </section>
 
       <PersonalBestsSection />
+
+      {/* Analytics Suite (Stage 15c: Velocity, Estimates vs Actual, Quizzes, Attempt Heat, Share Card) */}
+      <section className="analytics-suite" aria-label="Progress Analytics Suite">
+        <AccessibleLineChart
+          title="Learning Velocity (Last 14 Days)"
+          description="Derived from your real lesson, quiz and check milestones."
+          points={velocity.points.map((p) => ({ label: p.label, value: p.count }))}
+          emptyMessage={VELOCITY_EMPTY_MESSAGE}
+          yUnit="events"
+        />
+
+        <details className="card card--quiet analytics-collapsible">
+          <summary className="card__title">Time Estimates vs Actual Time</summary>
+          <p className="muted small" style={{ margin: '8px 0 16px' }}>
+            Time estimates are authored learning aids. Actual times appear only after at least 3 measured sessions on this device (Principle P-07).
+          </p>
+          <AccessibleBarChart
+            title="Estimated Time by Topic Group"
+            data={groupEstimates.map((g) => ({
+              label: g.groupTitle,
+              value: g.estimatedMinutes,
+              secondaryValue: g.measuredSeconds ? Math.round(g.measuredSeconds / 60) : undefined,
+            }))}
+            yUnit="min"
+          />
+          <table className="data-table" aria-label="Topic time estimates vs actual measurements">
+            <caption>Topic time estimates vs actual time (measured on this device)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Topic</th>
+                <th scope="col">Estimated</th>
+                <th scope="col">Actual Time</th>
+                <th scope="col">Sessions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topicEstimates.map((tc) => (
+                <tr key={tc.topicId}>
+                  <th scope="row">{tc.topicTitle}</th>
+                  <td>{tc.estimatedFormatted}</td>
+                  <td>{tc.hasSufficientSessions ? tc.measuredFormatted : <span className="muted">Needs ≥ 3 sessions</span>}</td>
+                  <td>{tc.sessionCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+
+        <details className="card card--quiet analytics-collapsible">
+          <summary className="card__title">Quiz Performance Breakdown</summary>
+          <p className="muted small" style={{ margin: '8px 0 16px' }}>
+            Performance across all track quizzes. Topics with best score &lt; 70% are flagged as review candidates.
+          </p>
+          <table className="data-table" aria-label="Quiz scores and attempt history">
+            <caption>Quiz breakdown per topic</caption>
+            <thead>
+              <tr>
+                <th scope="col">Topic</th>
+                <th scope="col">Questions</th>
+                <th scope="col">Attempts</th>
+                <th scope="col">Best Score</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quizBreakdown.items.map((qb) => (
+                <tr key={qb.topicId}>
+                  <th scope="row">{qb.topicTitle}</th>
+                  <td>{qb.questionCount}</td>
+                  <td>{qb.attemptsCount}</td>
+                  <td>{qb.bestScore ? `${qb.bestScore.correct}/${qb.bestScore.total} (${qb.bestScore.percentage}%)` : '–'}</td>
+                  <td>
+                    {qb.status === 'perfect' && <span className="status-chip status-chip--mastered">Perfect</span>}
+                    {qb.status === 'passed' && !qb.isWeak && <span className="status-chip status-chip--completed">Passed</span>}
+                    {qb.isWeak && <span className="status-chip status-chip--in-progress">Review Candidate</span>}
+                    {qb.status === 'not-started' && <span className="muted small">Not Started</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+
+        <details className="card card--quiet analytics-collapsible">
+          <summary className="card__title">Challenge Attempt Heat Table</summary>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 16px' }}>
+            <p className="muted small" style={{ margin: 0 }}>
+              Recent check attempts across challenges (up to last 10 attempts as ✓ / ✗).
+            </p>
+            <button type="button" className="btn btn--ghost small" onClick={handleExportCsv}>
+              <Icon name="download" size={14} /> Export CSV
+            </button>
+          </div>
+          <table className="data-table" aria-label="Challenge attempt heat table">
+            <caption>Challenge attempts and recent checks</caption>
+            <thead>
+              <tr>
+                <th scope="col">Challenge</th>
+                <th scope="col">Attempts</th>
+                <th scope="col">Hints Used</th>
+                <th scope="col">Status</th>
+                <th scope="col">Recent Checks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attemptHeat.rows.map((row) => (
+                <tr key={row.challengeId}>
+                  <th scope="row">{row.challengeTitle}</th>
+                  <td>{row.attemptsCount}</td>
+                  <td>{row.hintsUsed}</td>
+                  <td>
+                    {row.status === 'mastered' && <span className="status-chip status-chip--mastered">Mastered</span>}
+                    {row.status === 'passed' && <span className="status-chip status-chip--completed">Passed</span>}
+                    {row.status === 'in-progress' && <span className="status-chip status-chip--in-progress">In Progress</span>}
+                    {row.status === 'not-started' && <span className="muted small">Not Started</span>}
+                  </td>
+                  <td>
+                    {row.recentAttempts.length > 0 ? (
+                      <div className="heat-matrix" aria-label={`Recent checks for ${row.challengeTitle}`}>
+                        {row.recentAttempts.map((att, i) => (
+                          <span
+                            key={i}
+                            className={`heat-chip ${att.passed ? 'heat-chip--pass' : 'heat-chip--fail'}`}
+                            title={att.label}
+                            aria-label={att.label}
+                          >
+                            {att.passed ? '✓' : '✗'}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="muted small">No checks</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+
+        <ShareCard />
+      </section>
 
       {trackGroups.map((g) => {
         const ts = trackTopics.filter((t) => t.groupId === g.id)

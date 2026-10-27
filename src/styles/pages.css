@@ -1202,3 +1202,172 @@ html.is-focus .main { padding: var(--s-4); }
   }
 }
 
+/* ==========================================================================
+   Analytics Suite & Accessible Charts (Stage 15c)
+   ========================================================================== */
+
+.analytics-suite {
+  display: grid;
+  gap: 20px;
+  margin: 24px 0;
+}
+
+.analytics-collapsible summary {
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+  padding: 4px 0;
+}
+
+.accessible-chart-figure {
+  margin: 0;
+  padding: 16px;
+  border-radius: var(--r-md, 8px);
+}
+
+.chart-header {
+  margin-bottom: 12px;
+}
+
+.chart-empty-note {
+  margin: 8px 0 0;
+}
+
+.chart-svg-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  margin-bottom: 8px;
+}
+
+.accessible-svg-chart {
+  display: block;
+  min-width: 320px;
+  height: auto;
+}
+
+.chart-bar {
+  fill: var(--accent, #a855f7);
+  cursor: pointer;
+}
+
+.chart-bar:hover,
+.chart-bar:focus-visible {
+  fill: var(--accent-soft, #c084fc);
+  outline: 2px solid var(--text, #fff);
+  outline-offset: 2px;
+}
+
+.chart-dot {
+  fill: var(--accent, #a855f7);
+  stroke: var(--bg-card, #161622);
+  stroke-width: 2px;
+  cursor: pointer;
+}
+
+.chart-dot:hover,
+.chart-dot:focus-visible {
+  fill: var(--text, #fff);
+  stroke: var(--accent, #a855f7);
+  outline: none;
+}
+
+.chart-tooltip {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--surface-raised, #1f1f2e);
+  border: 1px solid var(--border-strong, #3b3b54);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.chart-data-table-toggle {
+  margin-top: 10px;
+}
+
+.chart-data-table-toggle summary {
+  cursor: pointer;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small, 13px);
+  margin-top: 8px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle, #28283c);
+  text-align: left;
+}
+
+.heat-matrix {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.heat-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.heat-chip--pass {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.heat-chip--fail {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.share-card-canvas-wrap {
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+.share-card-canvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong, #3b3b54);
+}
+
+.mastery-estimate-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-raised, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--r-full, 9999px);
+  font-size: var(--fs-small, 13px);
+  color: var(--text-muted, #94a3b8);
+  margin-top: 8px;
+}
+
+.recommendation-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: var(--r-md, 8px);
+  background: var(--surface-raised, rgba(255, 255, 255, 0.04));
+  border-left: 4px solid var(--accent, #a855f7);
+  margin: 12px 0 20px;
+}
+
+.recommendation-banner--gap {
+  border-left-color: var(--warning, #f59e0b);
+}
+

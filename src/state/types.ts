@@ -173,6 +173,8 @@ export interface CodeOrbitState {
   streakBest: number
   badges: Record<string, BadgeRecord>
   personalBests: Record<string, number>
+  timeSpent: Record<string, number>
+  timeSpentSessions: Record<string, number>
 }
 
 /** Helper to generate composite section bookmark ID (8.2) */

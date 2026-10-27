@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { migrateV5toV6 } from '../../core/storage/migrations'
-import { migrate, sanitizeState } from '../../lib/storage'
+import { migrate, sanitizeState, SCHEMA_VERSION } from '../../lib/storage'
 
 describe('Schema v5 to v6 migration (Notes & Bookmark Folders)', () => {
   it('converts plain notes to markdown format and empty tags', () => {
@@ -78,7 +78,7 @@ describe('Schema v5 to v6 migration (Notes & Bookmark Folders)', () => {
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
-    expect(state.schemaVersion).toBe(6)
+    expect(state.schemaVersion).toBe(SCHEMA_VERSION)
 
     const note = state.notes['html-structure']
     expect(note.text.length).toBeLessThanOrEqual(20000)

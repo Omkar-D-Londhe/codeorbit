@@ -18,6 +18,8 @@ import { topicProgress, type TopicProgress } from '../lib/progress'
 import { lessonPath, practicePath, quizPath, trackPath } from '../lib/routes'
 import { STATUS_ICON, STATUS_LABEL } from '../lib/status'
 import { useApp } from '../state/AppState'
+import { calculateTrackRemainingEstimate } from '../core/insights/estimates'
+import { recommend } from '../core/insights/recommendations'
 
 const GRAPH_MIN_WIDTH = 720
 
@@ -76,6 +78,16 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
         iterations: 200,
       }),
     [trackTopics, width, pinnedPositions]
+  )
+
+  const trackEstimate = useMemo(
+    () => calculateTrackRemainingEstimate(state, trackTopics),
+    [state, trackTopics]
+  )
+
+  const recommendations = useMemo(
+    () => recommend(state, { id: technologyId, topics: trackTopics }),
+    [state, technologyId, trackTopics]
   )
 
   const depths = useMemo(() => topicDepths(trackTopics), [trackTopics])
@@ -430,6 +442,45 @@ function MasteryInner({ track, technologyId }: { track: ReturnType<typeof getTec
           </Link>
         }
       />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', margin: '4px 0 16px' }}>
+        <div className="mastery-estimate-pill">
+          <Icon name="clock" size={14} />
+          <span>{trackEstimate.formatted} · {trackEstimate.completedTopics} of {trackEstimate.totalTopics} complete</span>
+        </div>
+      </div>
+
+      {recommendations.next && (
+        <div className="recommendation-banner" role="region" aria-label="Recommended next topic">
+          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--accent, #a855f7)' }}>
+            Recommended Next Step
+          </span>
+          <span className="small">
+            <Link to={lessonPath(recommendations.next.topicId)} style={{ fontWeight: 600 }}>
+              {recommendations.next.topicTitle}
+            </Link>
+            {' — '}
+            {recommendations.next.reason}
+          </span>
+        </div>
+      )}
+
+      {recommendations.gaps.length > 0 && (
+        <div className="recommendation-banner recommendation-banner--gap" role="region" aria-label="Knowledge gap recommendations">
+          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--warning, #f59e0b)' }}>
+            Knowledge Gap Recommendation
+          </span>
+          {recommendations.gaps.map((g) => (
+            <span key={g.topicId} className="small">
+              <Link to={lessonPath(g.topicId)} style={{ fontWeight: 600 }}>
+                {g.topicTitle}
+              </Link>
+              {' — '}
+              {g.reason}
+            </span>
+          ))}
+        </div>
+      )}
 
       <section className="card mastery-card" aria-label="Prerequisite map">
         {showGraph && (

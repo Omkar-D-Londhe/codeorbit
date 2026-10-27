@@ -24,10 +24,12 @@ import { Takeaways } from '../core/learning/Takeaways'
 import { A11yBox } from '../core/learning/A11yBox'
 import { FocusMode } from '../core/learning/FocusMode'
 import { NoteEditor } from '../core/notes/NoteEditor'
+import { useActiveTime } from '../core/insights/activeTime'
 import NotFound from './NotFound'
 
 export default function Lesson() {
   const { topicId = '' } = useParams()
+  useActiveTime(topicId)
   const topic = getTopic(topicId)
   if (!topic) return <NotFound />
   return <LessonInner key={topic.id} topicId={topic.id} />

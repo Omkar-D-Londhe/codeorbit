@@ -194,3 +194,34 @@ export function migrateV5toV6(old: Json): Json {
     bookmarkFolders,
   }
 }
+
+/**
+ * Migrates a version-6 state object to version-7 (Stage 15c: Analytics and active-time tracking).
+ * Initializes timeSpent: Record<string, number> (foreground-visible seconds per topic).
+ */
+export function migrateV6toV7(old: Json): Json {
+  const rawTimeSpent = isObj(old.timeSpent) ? old.timeSpent : {}
+  const timeSpent: Record<string, number> = {}
+
+  for (const [id, val] of Object.entries(rawTimeSpent)) {
+    if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+      timeSpent[id] = Math.round(val)
+    }
+  }
+
+  const rawSessions = isObj(old.timeSpentSessions) ? old.timeSpentSessions : {}
+  const timeSpentSessions: Record<string, number> = {}
+
+  for (const [id, val] of Object.entries(rawSessions)) {
+    if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+      timeSpentSessions[id] = Math.round(val)
+    }
+  }
+
+  return {
+    ...old,
+    schemaVersion: 7,
+    timeSpent,
+    timeSpentSessions,
+  }
+}

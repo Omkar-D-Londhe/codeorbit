@@ -698,3 +698,43 @@
   - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
   - Sub-stage 15b exit gate: **PASS**.
 
+## 2026-10-27 — Stage 15c: Analytics suite, active-time tracking and schema v7 migration
+- **Branch:** `stage-15c-mastery-map-analytics`
+- **Schema v7 & Migration Foundation (`src/state/types.ts`, `src/core/storage/migrations.ts`, `src/lib/storage.ts`):**
+  - Bumped `SCHEMA_VERSION` to 7. Added `timeSpent: Record<string, number>` and `timeSpentSessions: Record<string, number>` to `CodeOrbitState`.
+  - Implemented `migrateV6toV7(old: Json): Json` initializing both records with safe non-negative integer sanitization while preserving all v6 notes, bookmarks, folders, and progress data.
+  - Added fixture `src/test/fixtures/state.v6.json` and migration test suite (`src/test/migrations.test.ts`, 11 tests passing).
+- **Active-Time Tracking Engine (`src/core/insights/activeTime.ts`):**
+  - Implemented `useActiveTime(topicId)` hook on learning routes (`Lesson.tsx`, `Quiz.tsx`, `Practice.tsx`).
+  - Active time updates batched every 30 seconds; automatically idles after 60 seconds without user input.
+  - Pauses immediately on window blur or document visibility hidden (`document.hidden`), resuming only on user interaction.
+  - Flushes uncommitted seconds safely on unmount or topic navigation.
+  - P-07 measured session qualification: counts exactly one session per distinct visit exceeding 5 seconds; bounces (< 5s) do not increment session count; blur/idle periods do not duplicate sessions.
+  - Zero side effects on streak days, XP, or milestones. Tested with fake clocks (`src/test/insights/activeTime.test.tsx`, 10 tests passing).
+- **Time Estimates & Knowledge Gap Recommendations (`src/core/insights/estimates.ts`, `recommendations.ts`):**
+  - Remaining time calculation across track topics: `about N min remaining (estimate)`.
+  - Principle P-07 gate strictly enforced: suppresses the "actual" time column unless at least 3 measured sessions exist for that topic.
+  - Recommendation engine: finds first incomplete topic whose prerequisites are complete; flags knowledge gaps on completed topics with quiz best < perfect or open Error Notebook items.
+  - Added unit test suites (`src/test/insights/estimates.test.ts` [4 tests] and `recommendations.test.ts` [4 tests]).
+- **Analytics Derivations (`src/core/insights/velocity.ts`, `quizBreakdown.ts`, `attemptHeat.ts`):**
+  - Learning velocity rolling 14-day calculation; displays `"Complete a lesson to see your pace"` when activity is absent (spec §10).
+  - Quiz breakdown calculates attempts, retries, pass/perfect status, and flags weak quizzes (< 70%).
+  - Challenge attempt heat matrix lists challenges × last 10 attempts as accessible `✓` / `✗` indicators with CSV export (`exportAttemptsToCsv`).
+  - Added derivation test suites (`velocity.test.ts` [2 tests], `quizBreakdown.test.ts` [2 tests], `attemptHeat.test.ts` [3 tests]).
+- **Accessible SVG Charts & Progress Sharing Card (`src/core/insights/charts/`, `ShareCard.tsx`):**
+  - Built pure SVG `AccessibleBarChart` and `AccessibleLineChart` with zero external chart library bloat.
+  - Full keyboard inspection and semantic text-table alternatives (`<figure>`, `<figcaption>`, `<table>`).
+  - `ShareCard` generates local client-side PNG card using HTML canvas; includes only truthful visible metrics (learner name if set, completed count, mastered count, streak if > 0, level/XP if enabled). Screen-reader accessible alternative text included in DOM.
+  - Added test suites (`charts.test.tsx` [4 tests], `shareCard.test.tsx` [4 tests]).
+- **UI Integration on Progress and Mastery (`src/pages/Progress.tsx`, `Mastery.tsx`, `src/styles/pages.css`):**
+  - Mounted collapsible analytics suite on `Progress.tsx` under `<details>` cards.
+  - Integrated remaining estimate pill and recommendation alerts on `Mastery.tsx`.
+  - Added integration tests (`src/test/insights/analytics.integration.test.tsx`, 2 tests passing).
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Full Vitest suite (`npx vitest run`): PASS (101 test files, 718 tests passed, +9 test files, +37 new tests vs Stage 15b).
+  - Production build (`npm run build`): PASS (built in 533ms; `index-*.js` 717.23 kB, CSS 100.94 kB).
+  - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+  - Sub-stage 15c exit gate: **PASS**.
+

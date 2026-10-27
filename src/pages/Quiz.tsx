@@ -29,11 +29,13 @@ import { SpotBugQuestion } from '../core/learning/questions/SpotBugQuestion'
 import { BlankQuestion } from '../core/learning/questions/BlankQuestion'
 import { QuizTimer } from '../core/learning/QuizTimer'
 import { QuizBreakdown } from '../core/learning/QuizBreakdown'
+import { useActiveTime } from '../core/insights/activeTime'
 import type { QuizAnswer, ChoiceQuizQuestion, OutputPredictorQuizQuestion, SorterQuizQuestion, SpotBugQuizQuestion, BlankQuizQuestion } from '../data/types'
 import NotFound from './NotFound'
 
 export default function QuizPage() {
   const { topicId = '' } = useParams()
+  useActiveTime(topicId)
   const topic = getTopic(topicId)
   const quiz = getQuiz(topicId)
   if (!topic || !quiz) return <NotFound />

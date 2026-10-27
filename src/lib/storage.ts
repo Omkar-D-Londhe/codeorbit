@@ -4,12 +4,12 @@ import { getQuiz } from '../data/quizzes'
 import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -50,7 +50,9 @@ export const createDefaultState = (): CodeOrbitState => {
     dailyAssigned: {},
     streakBest: 0,
     badges: {},
-    personalBests: {}
+    personalBests: {},
+    timeSpent: {},
+    timeSpentSessions: {}
   }
 }
 
@@ -74,6 +76,7 @@ export const migrations: Array<(old: Json) => Json> = [
   migrateV3toV4,
   migrateV4toV5,
   migrateV5toV6,
+  migrateV6toV7,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -400,6 +403,26 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       } else drop()
     }
   } else if (raw.personalBests !== undefined) drop()
+
+  // Sanitize timeSpent (schema v7: active foreground seconds per topic)
+  if (isObj(raw.timeSpent)) {
+    s.timeSpent = {}
+    for (const [key, val] of Object.entries(raw.timeSpent)) {
+      if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+        s.timeSpent[key] = Math.round(val)
+      } else drop()
+    }
+  } else if (raw.timeSpent !== undefined) drop()
+
+  // Sanitize timeSpentSessions (schema v7: measured distinct session counts per topic)
+  if (isObj(raw.timeSpentSessions)) {
+    s.timeSpentSessions = {}
+    for (const [key, val] of Object.entries(raw.timeSpentSessions)) {
+      if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+        s.timeSpentSessions[key] = Math.round(val)
+      } else drop()
+    }
+  } else if (raw.timeSpentSessions !== undefined) drop()
 
   return { state: s, repaired }
 }

@@ -32,6 +32,7 @@ export type Action =
   | { type: 'AWARD_BADGE'; id: string; now?: number; backfilled?: boolean }
   | { type: 'RECORD_PERSONAL_BEST'; key: string; value: number }
   | { type: 'ASSIGN_DAILY'; dayKey: string; challengeId: string }
+  | { type: 'RECORD_ACTIVE_TIME'; topicId: string; seconds: number; isNewSession?: boolean }
 
 const emptyChallenge = (): ChallengeRecord => ({
   attempts: 0,
@@ -382,6 +383,24 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
           ...state.dailyAssigned,
           [action.dayKey]: action.challengeId,
         }
+      }
+    }
+    case 'RECORD_ACTIVE_TIME': {
+      if (!action.topicId || typeof action.seconds !== 'number' || action.seconds <= 0) return state
+      const current = state.timeSpent?.[action.topicId] || 0
+      const updatedSeconds = Math.round(current + action.seconds)
+      const currentSessions = state.timeSpentSessions?.[action.topicId] || 0
+      const updatedSessions = action.isNewSession ? currentSessions + 1 : currentSessions
+      return {
+        ...state,
+        timeSpent: {
+          ...state.timeSpent,
+          [action.topicId]: updatedSeconds,
+        },
+        timeSpentSessions: {
+          ...state.timeSpentSessions,
+          [action.topicId]: updatedSessions,
+        },
       }
     }
   }

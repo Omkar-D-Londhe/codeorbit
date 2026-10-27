@@ -33,6 +33,7 @@ import { Drawer } from '../core/ui/DockedPanel'
 import type { EditorHandle, EditorDiagnostic } from '../core/editor/types'
 import { FeedbackPanel } from '../core/learning/FeedbackPanel'
 import { requirementsToDiagnostics } from '../core/learning/diagnostics'
+import { useActiveTime } from '../core/insights/activeTime'
 import NotFound from './NotFound'
 
 const HINT_TITLES = ['Conceptual clue', 'Structural clue', 'Specific guidance']
@@ -48,6 +49,7 @@ export default function Practice() {
 function PracticeInner({ challengeId }: { challengeId: string }) {
   const challenge = getChallenge(challengeId)!
   const topic = getTopic(challenge.topicId)!
+  useActiveTime(topic?.id)
   useDocumentTitle(challenge.title)
   const { state, dispatch, saveStatus } = useApp()
   const now = useClock()
