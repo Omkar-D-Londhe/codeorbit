@@ -148,7 +148,7 @@ export default function Explore() {
     return (
       <div className="page">
         <PageHeader title="Explore technologies" lede="Choose a learning track to begin." />
-        <EmptyState icon="compass" title="No learning tracks are available yet">
+        <EmptyState variant="tracks" icon="compass" title="No learning tracks are available yet">
           Learning tracks will appear here once registered.
         </EmptyState>
       </div>
@@ -319,7 +319,7 @@ export default function Explore() {
 
       {/* No results empty state */}
       {filteredAvailable.length === 0 && filteredPlanned.length === 0 && matchingItems.length === 0 && (
-        <EmptyState icon="compass" title="No matching tracks or topics">
+        <EmptyState variant="tracks" icon="compass" title="No matching tracks or topics">
           <p>No results matched your filters. Try clearing filters or searching for different keywords.</p>
           <button type="button" className="btn btn--secondary" onClick={clearFilters} style={{ marginTop: '12px' }}>
             Clear all filters

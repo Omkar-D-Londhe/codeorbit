@@ -116,6 +116,54 @@ describe('versioned storage', () => {
     expect(saveState(createDefaultState(), st)).toEqual({ ok: false, reason: 'failed' })
   })
 
+  it('sanitizes and preserves Stage 16 accessibility and reminder settings', () => {
+    const raw = {
+      schemaVersion: 7,
+      settings: {
+        fontScale: 1.25,
+        dyslexiaFont: true,
+        announcements: false,
+        reminders: {
+          enabled: true,
+          time: '09:30',
+          days: [1, 3, 5],
+          lastShownDate: '2026-10-27',
+        },
+      },
+    }
+    const r = loadState(memoryStorage({ [STORAGE_KEY]: JSON.stringify(raw) }))
+    expect(r.state.settings.fontScale).toBe(1.25)
+    expect(r.state.settings.dyslexiaFont).toBe(true)
+    expect(r.state.settings.announcements).toBe(false)
+    expect(r.state.settings.reminders).toEqual({
+      enabled: true,
+      time: '09:30',
+      days: [1, 3, 5],
+      lastShownDate: '2026-10-27',
+    })
+
+    // Corrupted accessibility settings are dropped and repaired
+    const bad = {
+      schemaVersion: 7,
+      settings: {
+        fontScale: 99.9, // invalid scale
+        dyslexiaFont: 'not-a-bool',
+        reminders: {
+          enabled: 'yes',
+          time: 'bad-time',
+          days: [-1, 10, 'monday'],
+        },
+      },
+    }
+    const rBad = loadState(memoryStorage({ [STORAGE_KEY]: JSON.stringify(bad) }))
+    expect(rBad.recovery).toBe('repaired')
+    expect(rBad.state.settings.fontScale).toBe(1)
+    expect(rBad.state.settings.dyslexiaFont).toBe(false)
+    expect(rBad.state.settings.reminders?.enabled).toBe(false)
+    expect(rBad.state.settings.reminders?.time).toBe('18:00')
+    expect(rBad.state.settings.reminders?.days).toEqual([1, 2, 3, 4, 5])
+  })
+
   it('clears both state and backup', () => {
     const st = memoryStorage({ [STORAGE_KEY]: '{}', [BACKUP_KEY]: 'x' })
     expect(clearState(st)).toEqual({ ok: true })

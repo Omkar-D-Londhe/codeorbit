@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { challengesForTopic } from '../data/challenges'
 import { getGroup, getTopic, topicIndex, topics } from '../data/curriculum'
@@ -13,7 +13,9 @@ import { topicProgress } from '../lib/progress'
 import { practicePath, quizPath, trackPath } from '../lib/routes'
 import { useApp } from '../state/AppState'
 import { getRelatedTopics } from '../core/content/related'
-import { sectionBookmarkId } from '../state/types'
+import { sectionBookmarkId, sectionReviewCardId } from '../state/types'
+import { createReviewCard } from '../core/learning/spaced'
+import { VoiceRead, type VoiceReadParagraph } from '../core/speech/VoiceRead'
 import { useClock } from '../core/time/Clock'
 import { ReadingProgress } from '../core/learning/ReadingProgress'
 import { EstimatedTime } from '../core/learning/EstimatedTime'
@@ -75,36 +77,105 @@ function LessonInner({ topicId }: { topicId: string }) {
     heading: s.heading,
   }))
 
+  const [readingParagraph, setReadingParagraph] = useState<VoiceReadParagraph | null>(null)
+
+  const voiceParagraphs = useMemo<VoiceReadParagraph[]>(() => {
+    const list: VoiceReadParagraph[] = []
+    lesson.sections.forEach((s, sIdx) => {
+      const sectionId = getSectionId(s, sIdx)
+      s.body.forEach((para, pIdx) => {
+        list.push({
+          sectionId,
+          paragraphIndex: pIdx,
+          text: para,
+        })
+      })
+    })
+    return list
+  }, [lesson.sections])
+
   const lessonPanel = (
     <article className="lesson" aria-labelledby="lesson-h">
       <div className="lesson__meta-bar">
         <EstimatedTime lesson={lesson} />
       </div>
+      <VoiceRead paragraphs={voiceParagraphs} onHighlightParagraph={setReadingParagraph} />
       <p className="lesson__objective"><strong>Objective.</strong> {lesson.objective}</p>
       {lesson.sections.map((s, i) => {
         const sectionId = getSectionId(s, i)
         const isSectionBookmarked = (state.sectionBookmarks ?? []).includes(sectionBookmarkId(topicId, sectionId))
+        const reviewCardId = sectionReviewCardId(topicId, sectionId)
+        const isSectionInReview = Boolean(state.review?.[reviewCardId])
         return (
           <section key={sectionId} id={`section-${sectionId}`} className="lesson__section" aria-labelledby={sectionId}>
             <div className="lesson__section-header">
               <h2 id={sectionId}>{s.heading}</h2>
-              <button
-                type="button"
-                className={`btn btn--ghost btn--sm ${isSectionBookmarked ? 'is-active' : ''}`}
-                aria-pressed={isSectionBookmarked}
-                aria-label={isSectionBookmarked ? `Remove bookmark for ${s.heading}` : `Bookmark ${s.heading}`}
-                onClick={() => {
-                  dispatch({ type: 'TOGGLE_SECTION_BOOKMARK', topicId, sectionId })
-                  toast.show(isSectionBookmarked ? 'Section bookmark removed' : 'Section bookmarked')
-                }}
-              >
-                <Icon name="bookmark" size={16} />
-                <span className="sr-only">{isSectionBookmarked ? 'Bookmarked' : 'Bookmark section'}</span>
-              </button>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className={`btn btn--ghost btn--sm ${isSectionInReview ? 'is-active' : ''}`}
+                  aria-pressed={isSectionInReview}
+                  aria-label={isSectionInReview ? `Remove ${s.heading} from review` : `Add ${s.heading} to review`}
+                  onClick={() => {
+                    if (isSectionInReview) {
+                      dispatch({ type: 'REMOVE_REVIEW_CARD', cardId: reviewCardId })
+                      toast.show('Removed from review queue')
+                    } else {
+                      dispatch({
+                        type: 'ADD_REVIEW_CARD',
+                        card: createReviewCard({
+                          id: reviewCardId,
+                          source: { kind: 'section', refId: `${topicId}#${sectionId}` },
+                          topicId,
+                          prompt: `Review section: ${s.heading} (${topic.title})`,
+                          answer: s.body[0] || lesson.objective,
+                        }),
+                      })
+                      toast.show('Added to spaced review queue')
+                    }
+                  }}
+                >
+                  <Icon name="refresh" size={16} />
+                  <span className="small">{isSectionInReview ? 'In review' : 'Add to review'}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn--ghost btn--sm ${isSectionBookmarked ? 'is-active' : ''}`}
+                  aria-pressed={isSectionBookmarked}
+                  aria-label={isSectionBookmarked ? `Remove bookmark for ${s.heading}` : `Bookmark ${s.heading}`}
+                  onClick={() => {
+                    dispatch({ type: 'TOGGLE_SECTION_BOOKMARK', topicId, sectionId })
+                    toast.show(isSectionBookmarked ? 'Section bookmark removed' : 'Section bookmarked')
+                  }}
+                >
+                  <Icon name="bookmark" size={16} />
+                  <span className="sr-only">{isSectionBookmarked ? 'Bookmarked' : 'Bookmark section'}</span>
+                </button>
+              </div>
             </div>
-            {s.body.map((para, j) => (
-              <p key={j}>{renderTextWithTerms(para, lesson.terms)}</p>
-            ))}
+            {s.body.map((para, j) => {
+              const isReading = readingParagraph?.sectionId === sectionId && readingParagraph?.paragraphIndex === j
+              return (
+                <p
+                  key={j}
+                  className={isReading ? 'is-reading' : undefined}
+                  style={
+                    isReading
+                      ? {
+                          backgroundColor: 'rgba(154, 139, 255, 0.15)',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          borderLeft: '3px solid var(--accent, #9A8BFF)',
+                          transition: 'background-color 160ms ease-out',
+                        }
+                      : undefined
+                  }
+                  aria-current={isReading ? 'true' : undefined}
+                >
+                  {renderTextWithTerms(para, lesson.terms)}
+                </p>
+              )
+            })}
             {s.code && <CodeBlock code={s.code.code} label={s.code.label} />}
             {s.callout && (
               <aside className={`callout callout--${s.callout.kind}`}>

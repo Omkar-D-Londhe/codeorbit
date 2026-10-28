@@ -1,15 +1,15 @@
 import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
-import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry } from '../state/types'
+import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry, OnboardingState } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7 } from '../core/storage/migrations'
-import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, readEarlyAppearance } from '../core/settings/appearance'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8 } from '../core/storage/migrations'
+import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, isValidFontScale, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -40,7 +40,9 @@ export const createDefaultState = (): CodeOrbitState => {
             theme: early.theme,
             accent: early.accent,
             contrast: early.contrast,
-            ...(early.motion ? { motion: early.motion } : {})
+            ...(early.motion ? { motion: early.motion } : {}),
+            ...(early.fontScale ? { fontScale: early.fontScale } : {}),
+            ...(typeof early.dyslexiaFont === 'boolean' ? { dyslexiaFont: early.dyslexiaFont } : {})
           }
         : {})
     },
@@ -52,7 +54,9 @@ export const createDefaultState = (): CodeOrbitState => {
     badges: {},
     personalBests: {},
     timeSpent: {},
-    timeSpentSessions: {}
+    timeSpentSessions: {},
+    review: {},
+    custom: { challenges: [] }
   }
 }
 
@@ -77,6 +81,7 @@ export const migrations: Array<(old: Json) => Json> = [
   migrateV4toV5,
   migrateV5toV6,
   migrateV6toV7,
+  migrateV7toV8,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -353,6 +358,73 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
     if (typeof rawSet.gamificationEnabled === 'boolean') set.gamificationEnabled = rawSet.gamificationEnabled
     if (nonNegInt(rawSet.dailyGoal)) set.dailyGoal = rawSet.dailyGoal
 
+    if (isValidFontScale(rawSet.fontScale)) {
+      set.fontScale = rawSet.fontScale
+    } else if (rawSet.fontScale !== undefined) drop()
+
+    if (typeof rawSet.dyslexiaFont === 'boolean') {
+      set.dyslexiaFont = rawSet.dyslexiaFont
+    } else if (rawSet.dyslexiaFont !== undefined) drop()
+
+    if (typeof rawSet.announcements === 'boolean') {
+      set.announcements = rawSet.announcements
+    } else if (rawSet.announcements !== undefined) drop()
+
+    if (isObj(rawSet.reminders)) {
+      const r = rawSet.reminders
+      let enabled = DEFAULT_SETTINGS.reminders!.enabled
+      if (typeof r.enabled === 'boolean') {
+        enabled = r.enabled
+      } else if (r.enabled !== undefined) drop()
+
+      let time = DEFAULT_SETTINGS.reminders!.time
+      if (typeof r.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.time)) {
+        time = r.time
+      } else if (r.time !== undefined) drop()
+
+      let days = DEFAULT_SETTINGS.reminders!.days
+      if (Array.isArray(r.days)) {
+        let hasInvalidDay = false
+        const validDays: number[] = []
+        for (const d of r.days) {
+          if (typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 6) {
+            validDays.push(d)
+          } else {
+            hasInvalidDay = true
+          }
+        }
+        if (hasInvalidDay) drop()
+        days = validDays.length === 0 && r.days.length > 0 ? DEFAULT_SETTINGS.reminders!.days : validDays
+      } else if (r.days !== undefined) drop()
+
+      let lastShownDate: string | undefined
+      if (typeof r.lastShownDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.lastShownDate)) {
+        lastShownDate = r.lastShownDate
+      } else if (r.lastShownDate !== undefined) drop()
+
+      set.reminders = {
+        enabled,
+        time,
+        days: Array.from(new Set(days)).sort((a, b) => a - b),
+        ...(lastShownDate ? { lastShownDate } : {}),
+      }
+    } else if (rawSet.reminders !== undefined) drop()
+
+    if (isObj(rawSet.onboarding)) {
+      const ob = rawSet.onboarding
+      if (typeof ob.completed === 'boolean') {
+        const onboardingRec: OnboardingState = { completed: ob.completed }
+        if (isNum(ob.skippedAt) && ob.skippedAt > 0) {
+          onboardingRec.skippedAt = ob.skippedAt
+        } else if (ob.skippedAt !== undefined) {
+          drop()
+        }
+        set.onboarding = onboardingRec
+      } else {
+        drop()
+      }
+    } else if (rawSet.onboarding !== undefined) drop()
+
     s.settings = set
   } else if (raw.settings !== undefined) drop()
 
@@ -363,7 +435,7 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       if (
         isObj(item) &&
         typeof item.id === 'string' &&
-        (item.type === 'lesson-complete' || item.type === 'quiz-finish' || item.type === 'challenge-check') &&
+        (item.type === 'lesson-complete' || item.type === 'quiz-finish' || item.type === 'challenge-check' || item.type === 'review-answer') &&
         isNum(item.at)
       ) {
         validEvents.push({
@@ -423,6 +495,54 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
       } else drop()
     }
   } else if (raw.timeSpentSessions !== undefined) drop()
+
+  // Sanitize review (schema v8: Spaced repetition cards)
+  if (isObj(raw.review)) {
+    s.review = {}
+    for (const [id, val] of Object.entries(raw.review)) {
+      if (
+        isObj(val) &&
+        typeof val.id === 'string' &&
+        isObj(val.source) &&
+        typeof val.source.kind === 'string' &&
+        ['quiz', 'error', 'section'].includes(val.source.kind) &&
+        typeof val.source.refId === 'string' &&
+        typeof val.due === 'string' &&
+        typeof val.intervalDays === 'number' &&
+        val.intervalDays >= 0 &&
+        typeof val.ease === 'number' &&
+        val.ease >= 1.3 &&
+        typeof val.lapses === 'number' &&
+        val.lapses >= 0
+      ) {
+        s.review[id] = {
+          id: val.id,
+          source: {
+            kind: val.source.kind as 'quiz' | 'error' | 'section',
+            refId: val.source.refId,
+          },
+          ...(typeof val.prompt === 'string' ? { prompt: val.prompt } : {}),
+          ...(typeof val.answer === 'string' ? { answer: val.answer } : {}),
+          ...(typeof val.topicId === 'string' ? { topicId: val.topicId } : {}),
+          due: val.due,
+          intervalDays: val.intervalDays,
+          ease: val.ease,
+          lapses: val.lapses,
+          ...(typeof val.lastGrade === 'string' && ['again', 'hard', 'good', 'easy'].includes(val.lastGrade)
+            ? { lastGrade: val.lastGrade as 'again' | 'hard' | 'good' | 'easy' }
+            : {}),
+          ...(typeof val.lastAt === 'number' ? { lastAt: val.lastAt } : {}),
+        }
+      } else drop()
+    }
+  } else if (raw.review !== undefined) drop()
+
+  // Sanitize custom (schema v8: Custom authored challenges)
+  if (isObj(raw.custom)) {
+    s.custom = {
+      challenges: Array.isArray(raw.custom.challenges) ? raw.custom.challenges : [],
+    }
+  } else if (raw.custom !== undefined) drop()
 
   return { state: s, repaired }
 }

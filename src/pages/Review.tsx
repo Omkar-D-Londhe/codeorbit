@@ -13,12 +13,18 @@ import { useTrack } from '../core/content/useTrack'
 import { Flashcards } from '../core/learning/Flashcards'
 import { renderMarkdown } from '../core/notes/markdown'
 import { exportNotesAsMarkdownFile, exportBackupAsJsonFile } from '../core/storage/exportNotes'
+import { useToast } from '../components/Toast'
+import { DueReview } from '../core/learning/DueReview'
+import { dueCards, toDayKey } from '../core/learning/spaced'
 
 export default function Review() {
   useDocumentTitle('Review')
   const { state, dispatch } = useApp()
+  const toast = useToast()
   const track = useTrack()
-  const [tab, setTab] = useState<'errors' | 'journal'>('errors')
+  const dueList = dueCards(state.review ?? {}, toDayKey())
+  const dueCount = dueList.length
+  const [tab, setTab] = useState<'due' | 'errors' | 'journal'>('due')
   const [errorViewMode, setErrorViewMode] = useState<'list' | 'flashcards'>('list')
   const [del, setDel] = useState<string | null>(null)
   
@@ -49,6 +55,17 @@ export default function Review() {
         <button
           role="tab"
           type="button"
+          id="rtab-due"
+          aria-selected={tab === 'due'}
+          aria-controls="rpanel-due"
+          className={`tab${tab === 'due' ? ' is-active' : ''}`}
+          onClick={() => setTab('due')}
+        >
+          Due today ({dueCount})
+        </button>
+        <button
+          role="tab"
+          type="button"
           id="rtab-errors"
           aria-selected={tab === 'errors'}
           aria-controls="rpanel-errors"
@@ -70,9 +87,14 @@ export default function Review() {
         </button>
       </div>
 
+      <div role="tabpanel" id="rpanel-due" aria-labelledby="rtab-due" hidden={tab !== 'due'}>
+        <DueReview />
+      </div>
+
       <div role="tabpanel" id="rpanel-errors" aria-labelledby="rtab-errors" hidden={tab !== 'errors'}>
         {state.errorNotebook.length === 0 ? (
           <EmptyState
+            variant="review"
             icon="notebook"
             title="Your Error Notebook is empty"
             action={<Link className="btn btn--secondary" to={track ? trackPath(track.id) : '/explore'}>Open the Learning Orbit</Link>}
@@ -228,6 +250,7 @@ export default function Review() {
 
         {notes.length === 0 ? (
           <EmptyState
+            variant="notes"
             icon="pencil"
             title="No notes yet"
             action={<Link className="btn btn--secondary" to={lessonPath('html-structure')}>Open the first lesson</Link>}
@@ -273,7 +296,7 @@ export default function Review() {
         </div>
 
         {state.bookmarks.length === 0 ? (
-          <EmptyState icon="bookmark" title="No bookmarks yet">
+          <EmptyState variant="bookmarks" icon="bookmark" title="No bookmarks yet">
             Use “Bookmark this topic” in a lesson to keep a shortcut here.
           </EmptyState>
         ) : (
@@ -303,7 +326,14 @@ export default function Review() {
         danger
         onCancel={() => setDel(null)}
         onConfirm={() => {
-          if (del) dispatch({ type: 'DELETE_ERROR', id: del })
+          if (del && delEntry) {
+            const entryToRestore = { ...delEntry }
+            dispatch({ type: 'DELETE_ERROR', id: del })
+            toast.show('Entry removed from Error Notebook', 'info', undefined, {
+              label: 'Undo',
+              onClick: () => dispatch({ type: 'RESTORE_ERROR', entry: entryToRestore }),
+            })
+          }
           setDel(null)
         }}
       >

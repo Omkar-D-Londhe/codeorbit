@@ -172,7 +172,7 @@
 }
 
 .streak-month-th {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
   font-weight: 500;
   text-align: left;
@@ -180,7 +180,7 @@
 }
 
 .streak-weekday-th {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
   font-weight: 500;
   width: 18px;
@@ -225,7 +225,7 @@
   justify-content: flex-end;
   gap: var(--s-2);
   margin-top: var(--s-3);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .streak-legend-swatch {
@@ -339,7 +339,7 @@
 }
 
 .activity-feed-time {
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 /* 3.6 Quick Actions */
@@ -612,7 +612,7 @@
   color: var(--accent-soft);
 }
 .definition-term__body {
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.45;
   color: var(--text);
 }
@@ -650,7 +650,7 @@
 .live-demo__editor {
   width: 100%;
   font-family: var(--font-mono, monospace);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   background: var(--bg);
   color: var(--text);
@@ -723,7 +723,7 @@
 }
 .focus-mode__kbd {
   font-family: inherit;
-  font-size: 11px;
+  font-size: 0.6875rem;
   padding: 2px 6px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
@@ -859,20 +859,20 @@ html.is-focus .main { padding: var(--s-4); }
 .daily { display: grid; gap: var(--s-3); margin-top: var(--s-4); }
 .daily__state { display: flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--text-muted); font-weight: 500; }
 .daily__state.is-done { color: var(--success); }
-.daily__stamp { display: inline-block; padding: 2px 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--success-wash); color: var(--success); border: 1px solid rgb(195 244 119 / 0.5); margin-left: 8px; }
+.daily__stamp { display: inline-block; padding: 2px 8px; border-radius: var(--r-sm); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--success-wash); color: var(--success); border: 1px solid rgb(195 244 119 / 0.5); margin-left: 8px; }
 .daily__actions { margin-top: var(--s-2); }
 
 /* XP & Level Bar */
 .xp-bar-card { margin-top: var(--s-4); display: grid; gap: var(--s-3); }
 .xp-bar__top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--s-3); }
 .xp-bar__badge-col { display: flex; align-items: center; gap: var(--s-4); }
-.xp-bar__badge { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-wash); border: 2px solid var(--accent); color: var(--accent-soft); font-weight: 700; font-size: 13px; }
+.xp-bar__badge { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-wash); border: 2px solid var(--accent); color: var(--accent-soft); font-weight: 700; font-size: 0.8125rem; }
 .xp-bar__title { margin: 0; font-size: 1.2rem; }
 .xp-bar__track { width: 100%; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; position: relative; }
 .xp-bar__fill { height: 100%; background: linear-gradient(90deg, var(--accent), #c3f477); border-radius: 5px; transition: width 0.4s ease; }
 
 /* XP Award Indicator (5.7) */
-.xp-award { font-family: var(--font-mono); font-weight: 700; color: #c3f477; font-size: 14px; text-shadow: 0 0 8px rgba(195, 244, 119, 0.4); }
+.xp-award { font-family: var(--font-mono); font-weight: 700; color: #c3f477; font-size: 0.875rem; text-shadow: 0 0 8px rgba(195, 244, 119, 0.4); }
 .xp-award--animated { display: inline-block; animation: xpFloatFade 0.6s ease-out forwards; }
 .xp-award--static { display: inline-block; }
 
@@ -895,7 +895,7 @@ html.is-focus .main { padding: var(--s-4); }
 .badge-card__top { display: flex; justify-content: space-between; align-items: center; }
 .badge-card__icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
 .badge-card__icon--earned { background: rgb(195 244 119 / 0.15); color: #c3f477; border-color: #c3f477; }
-.badge-status-pill { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: var(--r-sm); }
+.badge-status-pill { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: var(--r-sm); }
 .badge-status-pill.is-earned { background: rgb(195 244 119 / 0.2); color: #c3f477; }
 .badge-status-pill.is-unearned { background: var(--border); color: var(--text-muted); }
 .badge-card__title { margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text); }
@@ -1184,7 +1184,7 @@ html.is-focus .main { padding: var(--s-4); }
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--accent-soft);
@@ -1252,7 +1252,8 @@ html.is-focus .main { padding: var(--s-4); }
 }
 
 .chart-bar:hover,
-.chart-bar:focus-visible {
+.chart-bar:focus-visible,
+.chart-bar.is-active {
   fill: var(--accent-soft, #c084fc);
   outline: 2px solid var(--text, #fff);
   outline-offset: 2px;
@@ -1266,20 +1267,38 @@ html.is-focus .main { padding: var(--s-4); }
 }
 
 .chart-dot:hover,
-.chart-dot:focus-visible {
+.chart-dot:focus-visible,
+.chart-dot.is-active {
   fill: var(--text, #fff);
   stroke: var(--accent, #a855f7);
   outline: none;
 }
 
+.chart-tooltip-wrap {
+  min-height: 28px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
 .chart-tooltip {
   display: inline-block;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
+  line-height: 1.25;
   background: var(--surface-raised, #1f1f2e);
   border: 1px solid var(--border-strong, #3b3b54);
   border-radius: 4px;
-  margin-bottom: 8px;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.chart-tooltip--placeholder {
+  visibility: hidden;
+  opacity: 0;
+  border-color: transparent;
+  background: transparent;
 }
 
 .chart-data-table-toggle {
@@ -1317,7 +1336,7 @@ html.is-focus .main { padding: var(--s-4); }
   width: 22px;
   height: 22px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 

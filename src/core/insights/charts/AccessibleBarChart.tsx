@@ -51,12 +51,22 @@ export function AccessibleBarChart({
         {description && <p className="muted small chart-desc">{description}</p>}
       </div>
 
-      {activeItem && (
-        <div className="chart-tooltip" role="status" aria-live="polite">
-          <strong>{activeItem.label}:</strong> {activeItem.value} {yUnit}
-          {activeItem.secondaryValue !== undefined && ` (Secondary: ${activeItem.secondaryValue})`}
+      <div className="chart-tooltip-wrap">
+        <div
+          className={`chart-tooltip ${activeItem ? '' : 'chart-tooltip--placeholder'}`}
+          role="status"
+          aria-live="polite"
+        >
+          {activeItem ? (
+            <>
+              <strong>{activeItem.label}:</strong> {activeItem.value} {yUnit}
+              {activeItem.secondaryValue !== undefined && ` (Secondary: ${activeItem.secondaryValue})`}
+            </>
+          ) : (
+            <span aria-hidden="true">&nbsp;</span>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="chart-svg-wrap" tabIndex={0} aria-label={`${title} graphical representation`}>
         <svg
@@ -83,6 +93,7 @@ export function AccessibleBarChart({
             const x = paddingX + idx * (barWidth + gap)
             const h = Math.max(4, (item.value / maxValue) * usableHeight)
             const y = chartHeight - paddingY - h
+            const isActive = activeItem?.label === item.label
 
             return (
               <g key={item.label}>
@@ -92,7 +103,7 @@ export function AccessibleBarChart({
                   width={barWidth}
                   height={h}
                   rx={3}
-                  className="chart-bar"
+                  className={`chart-bar ${isActive ? 'is-active' : ''}`}
                   tabIndex={0}
                   role="graphics-symbol"
                   aria-label={`${item.label}: ${item.value} ${yUnit}`}

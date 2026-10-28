@@ -18,7 +18,8 @@
 export const MEANINGFUL_ACTIVITY_TYPES = [
   'lesson-complete',
   'quiz-finish',
-  'challenge-check'
+  'challenge-check',
+  'review-answer'
 ] as const
 
 export type MeaningfulActivityType = (typeof MEANINGFUL_ACTIVITY_TYPES)[number]

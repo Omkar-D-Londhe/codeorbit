@@ -12,10 +12,12 @@ import { useDocumentTitle } from '../../lib/hooks'
 import { renderMarkdown } from './markdown'
 import { NoteEditor } from './NoteEditor'
 import { exportNotesAsMarkdownFile, exportBackupAsJsonFile } from '../storage/exportNotes'
+import { useToast } from '../../components/Toast'
 
 export default function NotesPage() {
   useDocumentTitle('All Notes')
   const { state, dispatch } = useApp()
+  const toast = useToast()
   
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -108,6 +110,7 @@ export default function NotesPage() {
 
       {!hasNotes ? (
         <EmptyState
+          variant="notes"
           icon="pencil"
           title="Write your first note from any topic"
           action={
@@ -364,6 +367,8 @@ export default function NotesPage() {
         onCancel={() => setDeletingTopicId(null)}
         onConfirm={() => {
           if (deletingTopicId) {
+            const noteToRestore = state.notes[deletingTopicId]
+            const topicIdToRestore = deletingTopicId
             dispatch({
               type: 'SET_NOTE',
               topicId: deletingTopicId,
@@ -374,14 +379,19 @@ export default function NotesPage() {
             if (editingTopicId === deletingTopicId) {
               setEditingTopicId(null)
             }
+            if (noteToRestore && (noteToRestore.text.trim() || (noteToRestore.tags && noteToRestore.tags.length > 0))) {
+              toast.show('Note deleted', 'info', undefined, {
+                label: 'Undo',
+                onClick: () => dispatch({ type: 'RESTORE_NOTE', topicId: topicIdToRestore, note: { ...noteToRestore } }),
+              })
+            }
           }
           setDeletingTopicId(null)
         }}
       >
         <p>
           Are you sure you want to delete your note for{' '}
-          <strong>{deletingTopicId ? getTopic(deletingTopicId)?.title || deletingTopicId : ''}</strong>? This action
-          cannot be undone.
+          <strong>{deletingTopicId ? getTopic(deletingTopicId)?.title || deletingTopicId : ''}</strong>?
         </p>
       </ConfirmDialog>
     </div>

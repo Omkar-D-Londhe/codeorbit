@@ -7,13 +7,34 @@ import { useToast } from '../components/Toast'
 import { buildExport, parseImport, type ImportResult } from '../core/storage/exportImport'
 import { getQuotaInfo } from '../core/storage/quota'
 import { dayKey } from '../core/gamification/streak'
-import { DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS, type AtmosphereSettings, type EditorSettings, type EditorEngine } from '../state/types'
+import {
+  DEFAULT_ATMOSPHERE_SETTINGS,
+  DEFAULT_EDITOR_SETTINGS,
+  DEFAULT_REMINDER_SETTINGS,
+  type AtmosphereSettings,
+  type EditorSettings,
+  type EditorEngine,
+  type FontScale,
+} from '../state/types'
 import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
+import { loadDyslexiaFont } from '../core/a11y/dyslexiaFont'
+import { Icon } from '../components/Icon'
+import { useTour } from '../core/onboarding/Tour'
+
+const FONT_SCALE_STEPS: FontScale[] = [0.875, 1, 1.125, 1.25, 1.5]
+const FONT_SCALE_PERCENTAGES: Record<FontScale, string> = {
+  0.875: '87.5%',
+  1: '100%',
+  1.125: '112.5%',
+  1.25: '125%',
+  1.5: '150%',
+}
 
 export default function Settings() {
   useDocumentTitle('Settings')
   const { state, dispatch, resetAll } = useApp()
   const toast = useToast()
+  const { startTour } = useTour()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const settings = state.settings
@@ -63,6 +84,56 @@ export default function Settings() {
     const motion = e.target.value as MotionPreference
     dispatch({ type: 'SET_SETTINGS', patch: { motion } })
     toast.show(`Motion preference set to ${motion}.`, 'info')
+  }
+
+  const currentScale = settings.fontScale ?? 1
+  const currentScaleIndex = FONT_SCALE_STEPS.indexOf(currentScale) >= 0 ? FONT_SCALE_STEPS.indexOf(currentScale) : 1
+
+  const handleFontScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const idx = parseInt(e.target.value, 10)
+    const newScale = FONT_SCALE_STEPS[idx] ?? 1
+    dispatch({ type: 'SET_SETTINGS', patch: { fontScale: newScale } })
+  }
+
+  const handleDyslexiaToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked
+    if (checked) {
+      await loadDyslexiaFont()
+    }
+    dispatch({ type: 'SET_SETTINGS', patch: { dyslexiaFont: checked } })
+    toast.show(
+      checked
+        ? 'Dyslexia-friendly font enabled (Atkinson Hyperlegible).'
+        : 'Default interface typography restored.',
+      'info'
+    )
+  }
+
+  const handleAnnouncementsToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch({ type: 'SET_SETTINGS', patch: { announcements: e.target.checked } })
+    toast.show(
+      e.target.checked
+        ? 'Screen-reader progress announcements enabled.'
+        : 'Screen-reader progress announcements disabled.',
+      'info'
+    )
+  }
+
+  const handleNotificationRequest = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast.show('Browser notifications are not supported in this environment. In-app reminders will still appear.', 'warning')
+      return
+    }
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        toast.show('Browser notification permission granted! Reminders appear when CodeOrbit is open.', 'info')
+      } else {
+        toast.show('Notification permission not granted. In-app reminders will continue to display.', 'warning')
+      }
+    } catch {
+      toast.show('Unable to request notification permission. In-app reminders will continue to display.', 'warning')
+    }
   }
 
   const atmosphere = settings.atmosphere ?? DEFAULT_ATMOSPHERE_SETTINGS
@@ -255,6 +326,199 @@ export default function Settings() {
                 checked={settings.contrast === 'high'}
                 onChange={handleContrastToggle}
               />
+              {settings.contrast === 'high' && (
+                <div style={{ display: 'flex', gap: '8px', padding: '8px', background: 'var(--c-surface-1)', border: '2px solid var(--c-border-strong)', borderRadius: 'var(--r-sm)' }}>
+                  <div style={{ padding: '6px 12px', background: 'var(--c-bg)', color: 'var(--c-text)', border: '1px solid var(--c-border)', fontWeight: 600, fontSize: '12px' }}>
+                    Text: High Contrast (≥ 12:1)
+                  </div>
+                  <div style={{ padding: '6px 12px', background: 'var(--c-surface-2)', color: 'var(--c-accent)', border: '2px solid var(--c-focus)', fontWeight: 600, fontSize: '12px' }}>
+                    Focus & Border (≥ 4.5:1)
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* Accessibility & Inclusivity (Stage 16: 13.1, 13.2, 13.3, 13.4, 14.3) */}
+        <Card title="Accessibility & Inclusivity" eyebrow="Sensory & Interaction Control">
+          <div style={{ display: 'grid', gap: 'var(--s-5)', marginTop: 'var(--s-3)' }}>
+            {/* 13.1 Font Size Scaler */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--s-1)' }}>
+                <label htmlFor="font-scale-slider" className="field-label" style={{ margin: 0 }}>
+                  Font Size Scale
+                </label>
+                <span className="small muted" style={{ fontWeight: 600 }}>
+                  {FONT_SCALE_PERCENTAGES[currentScale]} {currentScale === 1 ? '(Default)' : ''}
+                </span>
+              </div>
+              <p className="muted small" id="font-scale-desc" style={{ margin: '0 0 var(--s-2)' }}>
+                Scales interface and curriculum reading size from 87.5% to 150% in five steps.
+              </p>
+              <input
+                type="range"
+                id="font-scale-slider"
+                aria-label="Font Size Scale"
+                aria-describedby="font-scale-desc"
+                aria-valuemin={0}
+                aria-valuemax={4}
+                aria-valuenow={currentScaleIndex}
+                aria-valuetext={FONT_SCALE_PERCENTAGES[currentScale]}
+                min={0}
+                max={4}
+                step={1}
+                value={currentScaleIndex}
+                onChange={handleFontScaleChange}
+                list="font-scale-ticks"
+                style={{ width: '100%', cursor: 'pointer' }}
+              />
+              <datalist id="font-scale-ticks">
+                <option value={0} label="87.5%" />
+                <option value={1} label="100%" />
+                <option value={2} label="112.5%" />
+                <option value={3} label="125%" />
+                <option value={4} label="150%" />
+              </datalist>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--c-text-muted)', marginTop: '4px' }}>
+                <span>87.5%</span>
+                <span>100%</span>
+                <span>112.5%</span>
+                <span>125%</span>
+                <span>150%</span>
+              </div>
+              <div className="card card--quiet" style={{ marginTop: 'var(--s-3)', padding: 'var(--s-3)' }} aria-label="Font scale preview">
+                <p className="small muted" style={{ margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}>
+                  Live Reading Sample
+                </p>
+                <p style={{ margin: 0, lineHeight: 1.5 }}>
+                  The quick brown fox jumps over the lazy dog. CodeOrbit makes web development accessible to everyone.
+                </p>
+              </div>
+            </div>
+
+            {/* 13.2 Dyslexia-Friendly Font */}
+            <Toggle
+              label="Dyslexia-Friendly Font (Atkinson Hyperlegible)"
+              description="Swaps the primary interface font to Atkinson Hyperlegible, emphasizing distinct letterforms to reduce character confusion. Code blocks remain strictly monospaced."
+              checked={!!settings.dyslexiaFont}
+              onChange={handleDyslexiaToggle}
+            />
+
+            {/* 13.4 Screen-Reader Progress Announcements */}
+            <Toggle
+              label="Screen-Reader Progress Announcements"
+              description="Automatically announces milestone updates (lessons completed, quizzes passed, badges earned, and level ups) to assistive technology via ARIA live regions."
+              checked={settings.announcements !== false}
+              onChange={handleAnnouncementsToggle}
+            />
+
+            {/* 14.3 Local Study Reminders */}
+            <div>
+              <Toggle
+                label="Daily Study Reminders (Local)"
+                description="Receive a reminder banner when opening CodeOrbit on scheduled study days. Operates entirely locally on this device."
+                checked={!!settings.reminders?.enabled}
+                onChange={(e) => {
+                  const enabled = e.target.checked
+                  dispatch({
+                    type: 'SET_SETTINGS',
+                    patch: {
+                      reminders: {
+                        ...(settings.reminders || DEFAULT_REMINDER_SETTINGS),
+                        enabled,
+                      },
+                    },
+                  })
+                }}
+              />
+
+              {settings.reminders?.enabled && (
+                <div style={{ display: 'grid', gap: 'var(--s-3)', marginTop: 'var(--s-3)', paddingLeft: 'var(--s-4)', borderLeft: '2px solid var(--c-border)' }}>
+                  <div>
+                    <label htmlFor="reminder-time-input" className="field-label">
+                      Preferred Practice Time
+                    </label>
+                    <p className="muted small" id="reminder-time-desc" style={{ margin: '0 0 var(--s-1)' }}>
+                      Time of day to prompt for your daily learning session.
+                    </p>
+                    <input
+                      type="time"
+                      id="reminder-time-input"
+                      aria-label="Reminder time"
+                      aria-describedby="reminder-time-desc"
+                      value={settings.reminders?.time || '18:00'}
+                      onChange={(e) => {
+                        dispatch({
+                          type: 'SET_SETTINGS',
+                          patch: {
+                            reminders: {
+                              ...(settings.reminders || DEFAULT_REMINDER_SETTINGS),
+                              time: e.target.value,
+                            },
+                          },
+                        })
+                      }}
+                      className="form-input"
+                      style={{ maxWidth: '160px' }}
+                    />
+                  </div>
+
+                  <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                    <legend className="field-label">Scheduled Study Days</legend>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'var(--s-1)' }}>
+                      {[
+                        { day: 0, label: 'Sun' },
+                        { day: 1, label: 'Mon' },
+                        { day: 2, label: 'Tue' },
+                        { day: 3, label: 'Wed' },
+                        { day: 4, label: 'Thu' },
+                        { day: 5, label: 'Fri' },
+                        { day: 6, label: 'Sat' },
+                      ].map(({ day, label }) => {
+                        const isChecked = (settings.reminders?.days || []).includes(day)
+                        return (
+                          <label key={day} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              aria-label={`Remind on ${label}`}
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const currentDays = settings.reminders?.days || []
+                                const newDays = e.target.checked
+                                  ? [...currentDays, day].sort((a, b) => a - b)
+                                  : currentDays.filter((d) => d !== day)
+                                dispatch({
+                                  type: 'SET_SETTINGS',
+                                  patch: {
+                                    reminders: {
+                                      ...(settings.reminders || DEFAULT_REMINDER_SETTINGS),
+                                      days: newDays,
+                                    },
+                                  },
+                                })
+                              }}
+                            />
+                            <span className="small">{label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <div>
+                    <Button
+                      variant="secondary"
+                      onClick={handleNotificationRequest}
+                    >
+                      <Icon name="bell" size={16} /> Request Browser Notifications (Optional)
+                    </Button>
+                    <p className="muted small" style={{ marginTop: 'var(--s-1)', fontStyle: 'italic' }}>
+                      Reminders appear while CodeOrbit is open in this browser. No background push or network tracking is used.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -276,6 +540,28 @@ export default function Settings() {
                 )
               }}
             />
+          </div>
+        </Card>
+
+        {/* Onboarding Tour (Stage 17b, 15.1) */}
+        <Card title="Guided Tour" eyebrow="Onboarding & Help">
+          <div style={{ display: 'grid', gap: 'var(--s-3)', marginTop: 'var(--s-3)' }}>
+            <p className="muted small">
+              Take a guided spotlight tour of CodeOrbit to re-explore the Learning Orbit, practice lab, error notebook, and settings.
+            </p>
+            <div>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  dispatch({ type: 'SET_ONBOARDING', patch: { completed: false, skippedAt: undefined } })
+                  startTour()
+                  toast.show('Starting guided onboarding tour.', 'info')
+                }}
+              >
+                <Icon name="compass" size={16} />
+                Replay onboarding tour
+              </Button>
+            </div>
           </div>
         </Card>
 

@@ -262,6 +262,7 @@ export default function BookmarksPage() {
 
       {totalBookmarks === 0 && folders.length === 1 && folders[0].itemIds.length === 0 ? (
         <EmptyState
+          variant="bookmarks"
           icon="bookmark"
           title="No bookmarks yet"
           action={

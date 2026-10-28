@@ -101,4 +101,44 @@ describe('Settings Page (14.1, 14.2, 14.4, FC-07)', () => {
     await user.click(particlesToggle)
     expect(particlesToggle).toBeChecked()
   })
+
+  it('renders Stage 16 accessibility and reminder controls with proper accessibility', async () => {
+    const user = userEvent.setup()
+    const { container } = renderSettings()
+
+    // 13.1 Font Size Scaler: input type="range"
+    const fontScaleSlider = screen.getByRole('slider', { name: /Font Size Scale/i })
+    expect(fontScaleSlider).toBeInTheDocument()
+    expect(fontScaleSlider).toHaveAttribute('type', 'range')
+
+    // 13.2 Dyslexia font toggle
+    const dyslexiaToggle = screen.getByRole('switch', { name: /Dyslexia-Friendly Font/i })
+    expect(dyslexiaToggle).not.toBeChecked()
+    await user.click(dyslexiaToggle)
+    expect(dyslexiaToggle).toBeChecked()
+
+    // 13.4 Screen-Reader Announcements toggle
+    const announceToggle = screen.getByRole('switch', { name: /Screen-Reader Progress Announcements/i })
+    expect(announceToggle).toBeChecked()
+    await user.click(announceToggle)
+    expect(announceToggle).not.toBeChecked()
+
+    // 14.3 Study reminders toggle
+    const reminderToggle = screen.getByRole('switch', { name: /Daily Study Reminders/i })
+    expect(reminderToggle).not.toBeChecked()
+    await user.click(reminderToggle)
+    expect(reminderToggle).toBeChecked()
+
+    // Time input appears when reminders are enabled
+    const timeInput = screen.getByLabelText(/Preferred Practice Time/i)
+    expect(timeInput).toBeInTheDocument()
+    expect(timeInput).toHaveAttribute('type', 'time')
+
+    // Day checkboxes
+    const monCheckbox = screen.getByRole('checkbox', { name: /Remind on Mon/i })
+    expect(monCheckbox).toBeInTheDocument()
+
+    // Verify no accessibility violations with all controls mounted
+    await expectNoA11yViolations(container)
+  })
 })

@@ -4,6 +4,7 @@ import { reducer, type Action } from './reducer'
 import type { CodeOrbitState } from './types'
 import { estimateBytes, quotaStatus } from '../core/storage/quota'
 import { applyAppearance, writeEarlyAppearance } from '../core/settings/appearance'
+import { loadDyslexiaFont } from '../core/a11y/dyslexiaFont'
 
 export type SaveStatus =
   | { kind: 'idle'; quotaWarn?: boolean }
@@ -17,8 +18,9 @@ interface Ctx {
   recovery: RecoveryReason
   dismissRecovery: () => void
   /** Write immediately (used before navigation-sensitive actions and in tests). */
-  flush: () => void
+  flush: () => boolean | void
   resetAll: () => void
+  rollback: () => void
 }
 
 const AppCtx = createContext<Ctx | null>(null)
@@ -33,29 +35,63 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     initial.current.recovery === 'unavailable' ? { kind: 'error', reason: 'unavailable' } : { kind: 'idle' },
   )
   const stateRef = useRef(state)
+  const lastSavedState = useRef<CodeOrbitState>(initial.current.state)
+  const hadDestructiveAction = useRef(false)
   const dirty = useRef(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const firstRender = useRef(true)
+
+  // Track destructive actions for optimistic rollback protection
+  const dispatch: Dispatch<Action> = useCallback((action: Action) => {
+    if (
+      action.type === 'DELETE_ERROR' ||
+      (action.type === 'SET_NOTE' && !action.text.trim() && (!action.tags || action.tags.length === 0))
+    ) {
+      hadDestructiveAction.current = true
+    }
+    baseDispatch(action)
+  }, [])
 
   // Sync settings with DOM and early-appearance storage
   useEffect(() => {
     if (state.settings) {
       applyAppearance(state.settings)
       writeEarlyAppearance(state.settings)
+      if (state.settings.dyslexiaFont) {
+        loadDyslexiaFont()
+      }
     }
   }, [state.settings])
 
-  const flush = useCallback(() => {
+  const rollback = useCallback(() => {
+    if (lastSavedState.current) {
+      baseDispatch({ type: 'IMPORT_STATE', state: lastSavedState.current })
+      dirty.current = false
+      hadDestructiveAction.current = false
+      setSaveStatus({ kind: 'idle' })
+    }
+  }, [])
+
+  const flush = useCallback((): boolean => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null }
-    if (!dirty.current) return
+    if (!dirty.current) return true
     const res = saveState(stateRef.current)
     const bytes = estimateBytes(stateRef.current)
     const isWarn = quotaStatus(bytes) !== 'ok'
     if (res.ok) {
       dirty.current = false
+      hadDestructiveAction.current = false
+      lastSavedState.current = stateRef.current
       setSaveStatus({ kind: 'saved', at: Date.now(), quotaWarn: isWarn })
+      return true
     } else {
       setSaveStatus({ kind: 'error', reason: res.reason, quotaWarn: isWarn })
+      if (hadDestructiveAction.current) {
+        baseDispatch({ type: 'IMPORT_STATE', state: lastSavedState.current })
+        dirty.current = false
+        hadDestructiveAction.current = false
+      }
+      return false
     }
   }, [])
 
@@ -103,6 +139,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const resetAll = useCallback(() => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null }
     dirty.current = false
+    hadDestructiveAction.current = false
     baseDispatch({ type: 'RESET_ALL' })
     const res = clearState()
     setSaveStatus(res.ok ? { kind: 'idle' } : { kind: 'error', reason: res.reason })
@@ -111,8 +148,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<Ctx>(
-    () => ({ state, dispatch: baseDispatch, saveStatus, recovery, dismissRecovery: () => setRecovery('none'), flush, resetAll }),
-    [state, saveStatus, recovery, flush, resetAll],
+    () => ({ state, dispatch, saveStatus, recovery, dismissRecovery: () => setRecovery('none'), flush, resetAll, rollback }),
+    [state, dispatch, saveStatus, recovery, flush, resetAll, rollback],
   )
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
 }

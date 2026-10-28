@@ -225,3 +225,22 @@ export function migrateV6toV7(old: Json): Json {
     timeSpentSessions,
   }
 }
+
+/**
+ * Migrates a version-7 state object to version-8 (Stage 18: Spaced repetition and custom authoring).
+ * Initializes review: Record<string, ReviewCard> and custom: { challenges: ChallengeV2[] }.
+ */
+export function migrateV7toV8(old: Json): Json {
+  const review = isObj(old.review) ? old.review : {}
+  const rawCustom = isObj(old.custom) ? old.custom : {}
+  const custom = {
+    challenges: Array.isArray(rawCustom.challenges) ? rawCustom.challenges : [],
+  }
+
+  return {
+    ...old,
+    schemaVersion: 8,
+    review,
+    custom,
+  }
+}

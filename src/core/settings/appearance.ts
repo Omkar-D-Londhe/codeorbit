@@ -1,3 +1,5 @@
+import { type FontScale, VALID_FONT_SCALES } from '../../state/types'
+
 export type ThemeId = 'obsidian' | 'starlight' | 'aurora'
 export type AccentId = 'violet' | 'teal' | 'amber' | 'rose' | 'azure'
 export type ContrastMode = 'normal' | 'high'
@@ -8,6 +10,8 @@ export interface Appearance {
   accent: AccentId
   contrast: ContrastMode
   motion?: MotionPreference
+  fontScale?: FontScale
+  dyslexiaFont?: boolean
 }
 
 export interface StoredEarlyAppearance {
@@ -16,6 +20,8 @@ export interface StoredEarlyAppearance {
   accent: AccentId
   contrast: ContrastMode
   motion?: MotionPreference
+  fontScale?: FontScale
+  dyslexiaFont?: boolean
 }
 
 export const EARLY_APPEARANCE_STORAGE_KEY = 'codeorbit:settings:early'
@@ -24,7 +30,9 @@ export const DEFAULT_APPEARANCE: Appearance = {
   theme: 'obsidian',
   accent: 'violet',
   contrast: 'normal',
-  motion: 'system'
+  motion: 'system',
+  fontScale: 1,
+  dyslexiaFont: false,
 }
 
 export const VALID_THEMES: readonly ThemeId[] = ['obsidian', 'starlight', 'aurora']
@@ -48,6 +56,10 @@ export function isValidMotion(val: unknown): val is MotionPreference {
   return typeof val === 'string' && (VALID_MOTIONS.includes(val as MotionPreference) || val === 'reduce')
 }
 
+export function isValidFontScale(val: unknown): val is FontScale {
+  return typeof val === 'number' && VALID_FONT_SCALES.includes(val as FontScale)
+}
+
 /**
  * Applies theme, accent, contrast, and motion attributes to the given root element (defaults to <html>).
  */
@@ -63,6 +75,7 @@ export function applyAppearance(
   const accent = isValidAccent(appearance.accent) ? appearance.accent : DEFAULT_APPEARANCE.accent
   const contrast = isValidContrast(appearance.contrast) ? appearance.contrast : DEFAULT_APPEARANCE.contrast
   const motion = isValidMotion(appearance.motion) ? appearance.motion : DEFAULT_APPEARANCE.motion
+  const fontScale = isValidFontScale(appearance.fontScale) ? appearance.fontScale : DEFAULT_APPEARANCE.fontScale
 
   root.setAttribute('data-theme', theme)
   root.setAttribute('data-accent', accent)
@@ -71,6 +84,16 @@ export function applyAppearance(
     root.setAttribute('data-motion', motion)
   } else {
     root.removeAttribute('data-motion')
+  }
+
+  // Font scale (rem-based root scaling, spec §5, 13.1)
+  root.style.setProperty('--font-scale', String(fontScale))
+
+  // Dyslexia font attribute (13.2)
+  if (appearance.dyslexiaFont) {
+    root.setAttribute('data-dyslexia', 'true')
+  } else {
+    root.removeAttribute('data-dyslexia')
   }
 
   if (appearance.atmosphere) {
@@ -100,7 +123,9 @@ export function readEarlyAppearance(): Appearance {
       theme: isValidTheme(parsed.theme) ? parsed.theme : DEFAULT_APPEARANCE.theme,
       accent: isValidAccent(parsed.accent) ? parsed.accent : DEFAULT_APPEARANCE.accent,
       contrast: isValidContrast(parsed.contrast) ? parsed.contrast : DEFAULT_APPEARANCE.contrast,
-      motion: isValidMotion(parsed.motion) ? parsed.motion : DEFAULT_APPEARANCE.motion
+      motion: isValidMotion(parsed.motion) ? parsed.motion : DEFAULT_APPEARANCE.motion,
+      fontScale: isValidFontScale(parsed.fontScale) ? parsed.fontScale : DEFAULT_APPEARANCE.fontScale,
+      dyslexiaFont: typeof parsed.dyslexiaFont === 'boolean' ? parsed.dyslexiaFont : DEFAULT_APPEARANCE.dyslexiaFont,
     }
   } catch {
     return { ...DEFAULT_APPEARANCE }
@@ -117,7 +142,9 @@ export function writeEarlyAppearance(appearance: Appearance): void {
       theme: isValidTheme(appearance.theme) ? appearance.theme : DEFAULT_APPEARANCE.theme,
       accent: isValidAccent(appearance.accent) ? appearance.accent : DEFAULT_APPEARANCE.accent,
       contrast: isValidContrast(appearance.contrast) ? appearance.contrast : DEFAULT_APPEARANCE.contrast,
-      motion: isValidMotion(appearance.motion) ? appearance.motion : DEFAULT_APPEARANCE.motion
+      motion: isValidMotion(appearance.motion) ? appearance.motion : DEFAULT_APPEARANCE.motion,
+      fontScale: isValidFontScale(appearance.fontScale) ? appearance.fontScale : DEFAULT_APPEARANCE.fontScale,
+      dyslexiaFont: typeof appearance.dyslexiaFont === 'boolean' ? appearance.dyslexiaFont : DEFAULT_APPEARANCE.dyslexiaFont,
     }
     localStorage.setItem(EARLY_APPEARANCE_STORAGE_KEY, JSON.stringify(record))
   } catch {

@@ -14,6 +14,8 @@ describe('core/settings/appearance', () => {
     document.documentElement.removeAttribute('data-accent')
     document.documentElement.removeAttribute('data-contrast')
     document.documentElement.removeAttribute('data-motion')
+    document.documentElement.removeAttribute('data-dyslexia')
+    document.documentElement.style.removeProperty('--font-scale')
   })
 
   it('applies default appearance attributes to documentElement', () => {
@@ -23,20 +25,26 @@ describe('core/settings/appearance', () => {
     expect(document.documentElement.getAttribute('data-contrast')).toBe('normal')
     expect(document.documentElement.hasAttribute('data-motion')).toBe(false)
     expect(document.documentElement.style.colorScheme).toBe('dark')
+    expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('1')
+    expect(document.documentElement.hasAttribute('data-dyslexia')).toBe(false)
   })
 
-  it('applies light theme with custom accent, high contrast, and reduced motion', () => {
+  it('applies light theme with custom accent, high contrast, fontScale and dyslexiaFont', () => {
     applyAppearance({
       theme: 'starlight',
       accent: 'teal',
       contrast: 'high',
-      motion: 'reduced'
+      motion: 'reduced',
+      fontScale: 1.5,
+      dyslexiaFont: true,
     })
     expect(document.documentElement.getAttribute('data-theme')).toBe('starlight')
     expect(document.documentElement.getAttribute('data-accent')).toBe('teal')
     expect(document.documentElement.getAttribute('data-contrast')).toBe('high')
     expect(document.documentElement.getAttribute('data-motion')).toBe('reduced')
     expect(document.documentElement.style.colorScheme).toBe('light')
+    expect(document.documentElement.style.getPropertyValue('--font-scale')).toBe('1.5')
+    expect(document.documentElement.getAttribute('data-dyslexia')).toBe('true')
   })
 
   it('falls back to defaults when invalid values are passed to applyAppearance', () => {
@@ -52,14 +60,18 @@ describe('core/settings/appearance', () => {
       theme: 'aurora',
       accent: 'amber',
       contrast: 'normal',
-      motion: 'full'
+      motion: 'full',
+      fontScale: 1.25,
+      dyslexiaFont: true,
     })
     const read = readEarlyAppearance()
     expect(read).toEqual({
       theme: 'aurora',
       accent: 'amber',
       contrast: 'normal',
-      motion: 'full'
+      motion: 'full',
+      fontScale: 1.25,
+      dyslexiaFont: true,
     })
   })
 

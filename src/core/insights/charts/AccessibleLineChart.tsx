@@ -61,11 +61,21 @@ export function AccessibleLineChart({
         {description && <p className="muted small chart-desc">{description}</p>}
       </div>
 
-      {activePoint && (
-        <div className="chart-tooltip" role="status" aria-live="polite">
-          <strong>{activePoint.label}:</strong> {activePoint.value} {yUnit}
+      <div className="chart-tooltip-wrap">
+        <div
+          className={`chart-tooltip ${activePoint ? '' : 'chart-tooltip--placeholder'}`}
+          role="status"
+          aria-live="polite"
+        >
+          {activePoint ? (
+            <>
+              <strong>{activePoint.label}:</strong> {activePoint.value} {yUnit}
+            </>
+          ) : (
+            <span aria-hidden="true">&nbsp;</span>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="chart-svg-wrap" tabIndex={0} aria-label={`${title} graphical line chart`}>
         <svg
@@ -104,32 +114,35 @@ export function AccessibleLineChart({
           />
 
           {/* Data points */}
-          {coords.map(({ x, y, point }) => (
-            <g key={point.label}>
-              <circle
-                cx={x}
-                cy={y}
-                r={5}
-                className="chart-dot"
-                tabIndex={0}
-                role="graphics-symbol"
-                aria-label={`${point.label}: ${point.value} ${yUnit}`}
-                onFocus={() => setActivePoint(point)}
-                onBlur={() => setActivePoint(null)}
-                onMouseEnter={() => setActivePoint(point)}
-                onMouseLeave={() => setActivePoint(null)}
-              />
-              <text
-                x={x}
-                y={chartHeight - paddingY + 14}
-                fill="var(--c-muted, #888)"
-                fontSize="9"
-                textAnchor="middle"
-              >
-                {point.label}
-              </text>
-            </g>
-          ))}
+          {coords.map(({ x, y, point }) => {
+            const isActive = activePoint?.label === point.label
+            return (
+              <g key={point.label}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={5}
+                  className={`chart-dot ${isActive ? 'is-active' : ''}`}
+                  tabIndex={0}
+                  role="graphics-symbol"
+                  aria-label={`${point.label}: ${point.value} ${yUnit}`}
+                  onFocus={() => setActivePoint(point)}
+                  onBlur={() => setActivePoint(null)}
+                  onMouseEnter={() => setActivePoint(point)}
+                  onMouseLeave={() => setActivePoint(null)}
+                />
+                <text
+                  x={x}
+                  y={chartHeight - paddingY + 14}
+                  fill="var(--c-muted, #888)"
+                  fontSize="9"
+                  textAnchor="middle"
+                >
+                  {point.label}
+                </text>
+              </g>
+            )
+          })}
         </svg>
       </div>
 

@@ -8,6 +8,7 @@ import { ToastProvider } from '../../components/Toast'
 import { createDefaultState, saveState } from '../../lib/storage'
 import { registerTrack, clearTracks } from '../../core/content/registry'
 import { htmlTrack } from '../../tracks/html/track'
+import { dayKey } from '../../core/gamification/streak'
 import type { CodeOrbitState } from '../../state/types'
 
 describe('Dashboard Integration (Stage 12: Catalog 3.1–3.6, 15.3, REF-08)', () => {
@@ -65,7 +66,7 @@ describe('Dashboard Integration (Stage 12: Catalog 3.1–3.6, 15.3, REF-08)', ()
         'html-structure': { lessonComplete: true, quizAttempts: 1, quizBest: { correct: 3, total: 3 } },
       },
       lastVisited: { topicId: 'elements-attributes', activity: 'lesson', at: 1700000000000 },
-      activityDays: ['2026-10-26'],
+      activityDays: [dayKey(Date.now())],
       activity: [
         {
           id: 'ev-1',

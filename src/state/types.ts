@@ -1,4 +1,8 @@
 import type { QuizSession } from '../lib/quiz'
+import type { ReviewCard, Grade } from '../core/learning/spaced'
+import type { ChallengeV2 } from '../core/content/types'
+
+export type { ReviewCard, Grade }
 import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
 
 export type Activity = 'lesson' | 'quiz' | 'practice'
@@ -88,6 +92,22 @@ export const DEFAULT_ATMOSPHERE_SETTINGS: AtmosphereSettings = {
 
 export type EditorEngine = 'codemirror' | 'plain'
 
+export type FontScale = 0.875 | 1 | 1.125 | 1.25 | 1.5
+export const VALID_FONT_SCALES: readonly FontScale[] = [0.875, 1, 1.125, 1.25, 1.5]
+
+export interface ReminderSettings {
+  enabled: boolean
+  time: string
+  days: number[]
+  lastShownDate?: string
+}
+
+export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
+  enabled: false,
+  time: '18:00',
+  days: [1, 2, 3, 4, 5],
+}
+
 export interface EditorSettings {
   engine: EditorEngine
   fontSize: number
@@ -108,6 +128,11 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   autoClose: true,
 }
 
+export interface OnboardingState {
+  completed: boolean
+  skippedAt?: number
+}
+
 export interface Settings {
   userName?: string
   pace: 'casual' | 'regular' | 'intensive'
@@ -121,6 +146,11 @@ export interface Settings {
   gamificationEnabled?: boolean
   atmosphere?: AtmosphereSettings
   editor?: EditorSettings
+  fontScale?: FontScale
+  dyslexiaFont?: boolean
+  announcements?: boolean
+  reminders?: ReminderSettings
+  onboarding?: OnboardingState
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -132,12 +162,17 @@ export const DEFAULT_SETTINGS: Settings = {
   motion: 'system',
   gamificationEnabled: true,
   atmosphere: { ...DEFAULT_ATMOSPHERE_SETTINGS },
-  editor: { ...DEFAULT_EDITOR_SETTINGS }
+  editor: { ...DEFAULT_EDITOR_SETTINGS },
+  fontScale: 1,
+  dyslexiaFont: false,
+  announcements: true,
+  reminders: { ...DEFAULT_REMINDER_SETTINGS },
+  onboarding: { completed: false },
 }
 
 export interface ActivityEvent {
   id: string
-  type: 'lesson-complete' | 'quiz-finish' | 'challenge-check'
+  type: 'lesson-complete' | 'quiz-finish' | 'challenge-check' | 'review-answer'
   at: number
   trackId?: string
   topicId?: string
@@ -175,7 +210,12 @@ export interface CodeOrbitState {
   personalBests: Record<string, number>
   timeSpent: Record<string, number>
   timeSpentSessions: Record<string, number>
+  review: Record<string, ReviewCard>
+  custom: { challenges: ChallengeV2[] }
 }
+
+/** Helper to generate composite section review card ID (18a) */
+export const sectionReviewCardId = (topicId: string, sectionId: string): string => `section:${topicId}#${sectionId}`
 
 /** Helper to generate composite section bookmark ID (8.2) */
 export const sectionBookmarkId = (topicId: string, sectionId: string): string => `${topicId}#${sectionId}`

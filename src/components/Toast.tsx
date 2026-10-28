@@ -1,9 +1,24 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Icon } from './Icon'
 
-type Kind = 'info' | 'success' | 'warning'
-interface ToastItem { id: number; key?: string; message: string; kind: Kind }
-interface Ctx { show: (message: string, kind?: Kind, key?: string) => void }
+export type ToastKind = 'info' | 'success' | 'warning'
+
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
+interface ToastItem {
+  id: number
+  key?: string
+  message: string
+  kind: ToastKind
+  action?: ToastAction
+}
+
+interface Ctx {
+  show: (message: string, kind?: ToastKind, key?: string, action?: ToastAction) => void
+}
 
 const ToastCtx = createContext<Ctx>({ show: () => {} })
 export const useToast = (): Ctx => useContext(ToastCtx)
@@ -15,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const recentKeys = useRef<Set<string>>(new Set())
 
   const dismiss = useCallback((id: number) => setItems((xs) => xs.filter((x) => x.id !== id)), [])
-  const show = useCallback((message: string, kind: Kind = 'success', key?: string) => {
+  const show = useCallback((message: string, kind: ToastKind = 'success', key?: string, action?: ToastAction) => {
     if (key) {
       if (recentKeys.current.has(key)) return
       recentKeys.current.add(key)
@@ -25,7 +40,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
 
     const id = nextId.current++
-    setItems((xs) => [...xs.slice(-2), { id, key, message, kind }])
+    setItems((xs) => [...xs.slice(-2), { id, key, message, kind, action }])
     setTimeout(() => dismiss(id), 8000)
   }, [dismiss])
   const value = useMemo(() => ({ show }), [show])
@@ -38,6 +53,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div key={t.id} className={`toast toast--${t.kind}`}>
             <Icon name={t.kind === 'warning' ? 'alert' : t.kind === 'success' ? 'check' : 'info'} size={18} />
             <span>{t.message}</span>
+            {t.action && (
+              <button
+                type="button"
+                className="btn btn--sm toast-action-btn"
+                onClick={() => {
+                  t.action?.onClick()
+                  dismiss(t.id)
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
             <button type="button" className="icon-btn" aria-label="Dismiss notification" onClick={() => dismiss(t.id)}>
               <Icon name="close" size={16} />
             </button>

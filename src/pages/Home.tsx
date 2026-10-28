@@ -7,6 +7,7 @@ import { PageHeader } from '../components/PageHeader'
 import { ProgressRing } from '../components/ProgressRing'
 import { useDocumentTitle } from '../lib/hooks'
 import { openErrorCount, topicProgress, trackProgress } from '../lib/progress'
+import { dueCards } from '../core/learning/spaced'
 import { ACTIVITY_LABEL, lessonPath, resumePath, trackPath } from '../lib/routes'
 import { STATUS_LABEL, formatDateTime } from '../lib/status'
 import { useApp } from '../state/AppState'
@@ -57,7 +58,7 @@ export default function Home() {
           title="Learn by exploring"
           lede="Short lessons, quick checks and a safe practice lab — all in this browser."
         />
-        <EmptyState icon="compass" title="No learning tracks are available yet">
+        <EmptyState variant="tracks" icon="compass" title="No learning tracks are available yet">
           Learning tracks will appear here once registered.
         </EmptyState>
       </div>
@@ -77,6 +78,7 @@ export default function Home() {
   const allDone = tp.completedTopics === tp.totalTopics
   const anyProgress = tp.parts > 0 || !!lv || trackTopics.some((t) => topicProgress(state, t).touched)
   const open = openErrorCount(state)
+  const due = dueCards(state.review ?? {}).length
   const notesCount = Object.keys(state.notes || {}).length
   const today = dayKey(Date.now())
   const gamificationEnabled = state.settings.gamificationEnabled !== false
@@ -106,7 +108,7 @@ export default function Home() {
           </div>
 
           <div className="dashboard-item dashboard-item--continue">
-            <section className="card card--feature continue" aria-labelledby="continue-h">
+            <section className="card card--feature continue" aria-labelledby="continue-h" data-tour="lesson">
               <OrbitFrame />
               <div className="continue__body">
                 <p className="eyebrow">Continue learning</p>
@@ -187,7 +189,7 @@ export default function Home() {
             </section>
           </div>
 
-          <div className="dashboard-item dashboard-item--daily">
+          <div className="dashboard-item dashboard-item--daily" data-tour="practice">
             <DailyChallengeCard />
           </div>
         </div>
@@ -254,16 +256,22 @@ export default function Home() {
             <NextStepCard state={state} trackId={track.id} trackName={track.name} />
           </div>
 
-          {open > 0 && (
+          {(open > 0 || due > 0) && (
             <div className="dashboard-item dashboard-item--review">
               <section className="card card--quiet" aria-labelledby="rev-h">
                 <p className="eyebrow">Review</p>
                 <h2 id="rev-h" className="card__title">
-                  {open} open {open === 1 ? 'item' : 'items'} in your Error Notebook
+                  {due > 0
+                    ? `${due} ${due === 1 ? 'card' : 'cards'} due for spaced review today`
+                    : `${open} open ${open === 1 ? 'item' : 'items'} in your Error Notebook`}
                 </h2>
-                <p className="muted">Things you saved from checks and quizzes, ready to revisit.</p>
+                <p className="muted">
+                  {due > 0
+                    ? 'Strengthen retention with scheduled spaced repetition practice.'
+                    : 'Things you saved from checks and quizzes, ready to revisit.'}
+                </p>
                 <Link className="btn btn--secondary" to="/review">
-                  Open Error Notebook
+                  {due > 0 ? 'Start Due Review' : 'Open Error Notebook'}
                 </Link>
               </section>
             </div>

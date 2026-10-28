@@ -1,36 +1,49 @@
-import { lazy, Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Shell } from './components/Shell'
 import { ToastProvider } from './components/Toast'
 import { AppStateProvider } from './state/AppState'
 import { MilestoneToastListener } from './core/gamification/MilestoneToastListener'
-import Explore from './pages/Explore'
+import { ServiceWorkerUpdater } from './core/pwa/ServiceWorkerUpdater'
+import { TourProvider } from './core/onboarding/Tour'
 import Home from './pages/Home'
-import Lesson from './pages/Lesson'
-import Mastery from './pages/Mastery'
-import NotFound from './pages/NotFound'
-import Practice from './pages/Practice'
-import Progress from './pages/Progress'
-import QuizPage from './pages/Quiz'
-import Review from './pages/Review'
-import NotesPage from './core/notes/NotesPage'
-import BookmarksPage from './core/notes/BookmarksPage'
-import Track from './pages/Track'
-import Settings from './pages/Settings'
 import { ClockProvider } from './core/time/Clock'
+import { prefetchRoutesOnIdle } from './core/ui/prefetchRoutes'
 
-const UiGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiGallery')) : null
-const UiOrbitGallery = import.meta.env.DEV ? lazy(() => import('./pages/UiOrbitGallery')) : null
+import { lazyRoute } from './core/ui/lazyRoute'
+
+// Route-level code splitting (Stage 17a, 16.1): Home is eagerly imported; all other routes are lazy
+const Explore = lazyRoute(() => import('./pages/Explore'), 'Explore')
+const Track = lazyRoute(() => import('./pages/Track'), 'Track')
+const Mastery = lazyRoute(() => import('./pages/Mastery'), 'Mastery')
+const Lesson = lazyRoute(() => import('./pages/Lesson'), 'Lesson')
+const QuizPage = lazyRoute(() => import('./pages/Quiz'), 'Quiz')
+const Practice = lazyRoute(() => import('./pages/Practice'), 'Practice')
+const Progress = lazyRoute(() => import('./pages/Progress'), 'Progress')
+const Review = lazyRoute(() => import('./pages/Review'), 'Review')
+const NotesPage = lazyRoute(() => import('./core/notes/NotesPage'), 'NotesPage')
+const BookmarksPage = lazyRoute(() => import('./core/notes/BookmarksPage'), 'BookmarksPage')
+const Settings = lazyRoute(() => import('./pages/Settings'), 'Settings')
+const NotFound = lazyRoute(() => import('./pages/NotFound'), 'NotFound')
+
+const UiGallery = import.meta.env.DEV ? lazyRoute(() => import('./pages/UiGallery'), 'UiGallery') : null
+const UiOrbitGallery = import.meta.env.DEV ? lazyRoute(() => import('./pages/UiOrbitGallery'), 'UiOrbitGallery') : null
 
 export default function App() {
+  useEffect(() => {
+    prefetchRoutesOnIdle()
+  }, [])
+
   return (
     <ErrorBoundary>
       <ClockProvider>
         <AppStateProvider>
           <ToastProvider>
             <MilestoneToastListener />
-            <Routes>
+            <ServiceWorkerUpdater />
+            <TourProvider>
+              <Routes>
               <Route element={<Shell />}>
                 <Route index element={<Home />} />
                 <Route path="explore" element={<Explore />} />
@@ -68,6 +81,7 @@ export default function App() {
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
+            </TourProvider>
           </ToastProvider>
         </AppStateProvider>
       </ClockProvider>

@@ -738,3 +738,249 @@
   - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
   - Sub-stage 15c exit gate: **PASS**.
 
+## Stage 16: Accessibility & Inclusivity Features, Local Reminders
+- **Font Scaling (Catalog 13.1):**
+  - Added `FontScale` (`0.875 | 1 | 1.125 | 1.25 | 1.5`) and wired `--font-scale` to root element; converted component font sizes in CSS to `rem` tokens (`html { font-size: calc(100% * var(--font-scale, 1)) }`).
+  - Added 5-step range slider with visible tick marks, percentage labels, and live typography preview text in `src/pages/Settings.tsx`.
+- **Dyslexia-Friendly Font (Catalog 13.2):**
+  - Installed `@fontsource/atkinson-hyperlegible`; created lazy `loadDyslexiaFont()` dynamic loader in `src/core/a11y/dyslexiaFont.ts`.
+  - Wired `[data-dyslexia="true"]` in `src/styles/tokens.css` swapping `--font-sans` to `'Atkinson Hyperlegible'`; preserves `--font-mono` (`JetBrains Mono Variable`) for code editors and snippets.
+- **High-Contrast Mode (Catalog 13.3):**
+  - Verified `[data-contrast="high"]` styles in `src/styles/themes.css`; disables glassmorphism, blurs, and atmosphere layers.
+  - Verified WCAG AAA text contrast (≥ 12:1) and UI borders (≥ 4.5:1) in `src/test/contrast.test.ts`.
+- **Screen-Reader Progress Announcements (Catalog 13.4):**
+  - Created `src/core/a11y/Announcer.tsx` (polite live region `role="status"` and assertive channel `role="alert"`), `useAnnounce.ts`, `progressAnnouncements.ts`, and `ProgressAnnouncementListener.tsx`.
+  - Enforced deduplication of identical messages within 1.5 seconds and max queue depth 3.
+  - Maps derived progress events (lesson completed, quiz score/perfect, challenge passed, level up, badge earned) to screen-reader announcements; respects `settings.announcements` preference.
+- **Local Reminders (Catalog 14.3, Decision C-10):**
+  - Created `src/core/reminders/reminders.ts` (`isReminderDue`) and `ReminderBanner.tsx` mounted in `src/components/Shell.tsx`.
+  - Honest copy stating limitations (`"Reminders appear while CodeOrbit is open."`). Zero background push claims.
+- **A11y Matrix Sweep (FC-32):**
+  - Created `src/test/a11y.matrix.test.tsx` running `vitest-axe` checks across nine core routes in four theme/contrast/scale combinations (`obsidian/normal/1`, `starlight/normal/1`, `obsidian/high/1.5`, `starlight/high/1.5`). 36 matrix tests pass with zero serious or critical violations.
+  - Non-blocking observation: Aurora theme and `/learn/html/mastery` route are covered by separate dedicated tests (`contrast.test.ts`, `Mastery.test.tsx`, `regression.smoke.test.tsx`) rather than the matrix loop.
+- **Audit-Verified Quality Gates & Acceptance:**
+  - Independent Acceptance Audit: **ACCEPT WITH DOCUMENTED NON-BLOCKING ISSUES**.
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Full Vitest suite (`npx vitest run`): PASS (104 test files, 770 tests passed, 0 failed, 0 skipped, +52 tests vs Stage 15c).
+  - Production build (`npm run build`): PASS (0 errors).
+  - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+- **Invariants & Open Items:**
+  - Storage schema remains strictly at v7 (`SCHEMA_VERSION = 7`).
+  - Stage 15c learning-velocity and time-tracking behavior unchanged.
+  - All Stage 16 implementation changes remain uncommitted on branch `stage-15c-mastery-map-analytics` (HEAD `4cc4603`) for review; no branch switch, commit, or push performed.
+
+## 2026-10-27 (Post-Stage 16 Manual Visual Inspection & Targeted Orbit Polish)
+- **Visual Inspection Findings from Uploaded Screenshots:**
+  - **Screenshot Evidence:** Reviewed 4 user screenshots (`media_1793123009425_fe53c4c5.png`, `media_1793123052810_1ff54103.png`, `media_1793123058428_8f18f201.png`, `media_1793123064234_a3358f5c.png`).
+  - **Finding A (Topic Rows Clipped / Obscured):** In `constellation.css`, updated `.constellation-body` to use `minmax(0, 1fr) 340px` to prevent grid blowout; updated `.constellation-list-row` with `flex-wrap: wrap`, `flex: 1 1 200px`, `min-width: 0`, and `overflow-x: hidden` on `.constellation-list-view`; added `padding-right: 356px` in expanded mode so floating details card never overlaps list rows.
+  - **Finding B (Selected-Topic Card Translucency):** Updated `.constellation-expanded-card` and `.constellation-panel .card` in `constellation.css` with 86% opacity dark background (`rgba(22, 19, 36, 0.86)`), 10px backdrop blur (`backdrop-filter: blur(10px)`), subtle purple border (`rgba(154, 139, 255, 0.28)`), `@supports not (backdrop-filter)` solid fallback, and high-contrast overrides (`[data-contrast="high"]`) for WCAG AAA compliance.
+  - **Finding C (Sidebar & Workspace Width Scope Determination):** Global collapsible sidebar in `Shell.tsx` is an architectural change outside Stage 16 scope ("Accessibility, Inclusivity & Reminders"). Confirmed existing `FullscreenEditor` in `Practice.tsx` (`Ctrl+Shift+F`, `Esc`) provides full-screen distraction-free workspace. Recommended for explicit future stage.
+  - **Viewport 320px at 150% Font Scale Check:** Verified via screenshots. Core content wraps cleanly, `<Announcer />` live region active in DOM, no horizontal overflow. Minor bottom-nav text wrap ("My Progress") noted as non-blocking cosmetic observation.
+- **Settings Switches Refinement:** Polished `.toggle-wrapper`, `.toggle-switch`, `.toggle-switch::after`, `.toggle-label-group`, and high-contrast outlines in `src/styles/components.css`.
+- **Quality Gates Verification:**
+  - `npm run typecheck`: PASS (0 errors)
+  - `npm run lint`: PASS (0 errors, 0 warnings)
+  - `npx vitest run`: PASS (104 test files, 770 tests passed, 0 failures)
+  - `npm run build`: PASS (built cleanly in 572ms)
+  - `npm audit --omit=dev`: PASS (0 vulnerabilities)
+- **Invariants:**
+  - Schema remains strictly v7 (`SCHEMA_VERSION = 7`).
+  - No changes committed or staged (working tree preserved for user review).
+
+## 2026-10-27 (Learning Velocity Chart Hover Stutter Fix)
+- **Defect Investigation & Root Cause Identification:**
+  - Diagnosed interaction stutter in `AccessibleLineChart` ("Learning Velocity (Last 14 Days)") and `AccessibleBarChart`.
+  - **Root Cause:** When the pointer entered any data-point circle (`chart-dot`), `setActivePoint(point)` conditionally mounted `<div className="chart-tooltip">` directly in the normal document flow between `.chart-header` and `.chart-svg-wrap`. Adding this element (~32px height) pushed the entire SVG downwards, displacing the circle out from under the stationary cursor and immediately triggering `onMouseLeave`. Unmounting the tooltip collapsed the space, pulling the SVG back up, re-triggering `onMouseEnter`, and producing an infinite 60fps layout-displacement oscillation (visual stutter).
+- **Minimal Fix Applied:**
+  - In `AccessibleLineChart.tsx` and `AccessibleBarChart.tsx`, wrapped the tooltip in a dedicated stable slot (`.chart-tooltip-wrap`) that always renders the tooltip container with a placeholder (`.chart-tooltip--placeholder`) when inactive, maintaining identical line height and padding without shifting the SVG.
+  - In `src/styles/pages.css`, defined `.chart-tooltip-wrap` with stable `min-height: 28px`, added `pointer-events: none` and `user-select: none` to `.chart-tooltip`, and applied `visibility: hidden; opacity: 0; background: transparent; border-color: transparent;` to `.chart-tooltip--placeholder`.
+  - Added `.chart-dot.is-active` and `.chart-bar.is-active` styles and mapped `isActive` state on dots and bars to ensure immediate visual stability on enter/leave.
+- **Verification:**
+  - Added test in `src/test/insights/charts.test.tsx` verifying placeholder reservation, stable mouseEnter/mouseLeave, and adjacent node transitions.
+  - Vitest: 104 test files passed, 771 tests passed (0 failures).
+  - TypeScript typecheck (`tsc -b --noEmit`): 0 errors.
+  - ESLint (`eslint .`): 0 errors, 0 warnings.
+  - Production build (`npm run build`): Built cleanly in 567ms.
+  - Production audit (`npm audit --omit=dev`): 0 vulnerabilities.
+  - Invariants: Schema strictly remains v7, zero changes staged or committed.
+
+## 2026-10-28 — Sub-Stage 17a: Code Splitting, Error Boundary, Empty States & Optimistic UI
+- **Branch:** `stage-15c-mastery-map-analytics` (baseline commit `4cc4603`)
+- **Scope & Objectives:**
+  - Implemented Sub-Stage 17a strictly within catalog bounds: 16.1 (Route-level code splitting), 15.2 (Animated empty states), 16.5 (Error boundary recovery UI), and 16.2 (Optimistic UI & destructive rollback).
+  - Explicitly excluded Stage 17b (first-run onboarding tour) and Stage 17c (PWA manifest, service worker, offline cache).
+  - Preserved storage schema at v7 (`SCHEMA_VERSION = 7`), with zero database migrations or changes to index.
+- **Implemented Changes:**
+  - **Route-Level Code Splitting & Accessible Skeletons (16.1):**
+    - Created `src/core/ui/Skeletons.tsx` providing `RouteSkeleton` with `role="status"`, `aria-busy="true"`, accessible label, pulse animation, title/subtitle bars, and responsive card skeleton placeholders.
+    - Added `@keyframes skeleton-pulse` and skeleton styles in `src/styles/components.css`, including reduced-motion suppression (`animation: none`) and high-contrast border overrides.
+    - Updated `src/App.tsx` and `src/components/Shell.tsx` to wrap lazy routes in `<Suspense fallback={<RouteSkeleton />}>`.
+    - Code-split non-home routes (`Explore`, `Track`, `Mastery`, `Lesson`, `Quiz`, `Practice`, `Progress`, `Review`, `NotesPage`, `BookmarksPage`, `Settings`, `NotFound`) via `src/core/ui/lazyRoute.ts`, keeping `Home` eagerly imported.
+    - Pre-split bundle: `dist/assets/index-DA3CIe-Y.js` **731.83 kB** (gzip: **213.64 kB**).
+    - Post-split bundle: `dist/assets/index-Bkgaf4PD.js` **322.84 kB** (gzip: **101.01 kB**) — a **>55% reduction** in initial JavaScript chunk size.
+    - Verified lazy chunk emissions for each non-home route.
+  - **Animated Contextual Empty States (15.2):**
+    - Created `src/components/illustrations/EmptyIllustrations.tsx` defining 5 tailored 96×96 SVG illustrations: `notes`, `bookmarks`, `review`, `activity`, and `tracks`, plus `ContextualEmptyIllustration`.
+    - Updated `src/components/EmptyState.tsx` to support `variant?: EmptyIllustrationVariant`, rendering contextual vector illustrations while preserving 100% backward-compatibility with icon fallback.
+    - Added `@keyframes empty-pulse` in `src/styles/components.css` with reduced motion (`@media (prefers-reduced-motion: reduce)`) disabling all animations.
+    - Updated consumer pages (`Review.tsx`, `Home.tsx`, `Explore.tsx`, `NotesPage.tsx`, `BookmarksPage.tsx`) to supply contextual variants.
+  - **Error Boundary Recovery UI (16.5):**
+    - Upgraded `src/components/ErrorBoundary.tsx` with a four-action recovery panel:
+      1. Reassurance notice: local learning progress is saved and unaffected.
+      2. "Reload CodeOrbit" button (`window.location.assign('/')`).
+      3. "Reset this screen" button (resets internal error state).
+      4. "Copy diagnostic info" button (sanitized JSON payload with timestamp, error name, error message, truncated stack, path, and user agent — strictly excluding learner code and notes; with clipboard fallback textarea).
+      5. "Export my data" button (triggers full JSON backup download via `buildExport`/`triggerDownload` from Stage 03).
+    - Wrapped `<Outlet />` inside `src/components/Shell.tsx` with `<ErrorBoundary>` so navigation and layout shell stay functional if a single route crashes.
+    - Added `.error-recovery` CSS styling in `src/styles/components.css`.
+  - **Optimistic UI & Destructive Rollback (16.2):**
+    - Enhanced `src/components/Toast.tsx` to support optional toast actions (`action?: { label: string; onClick: () => void }`), rendered via `.toast-action-btn`.
+    - Added `RESTORE_ERROR` and `RESTORE_NOTE` action types in `src/state/types.ts` and `src/state/reducer.ts` for instantaneous, idempotent data restoration.
+    - In `src/pages/Review.tsx`, error notebook deletion triggers an optimistic state update with an "Undo" toast that restores the error notebook entry.
+    - In `src/core/notes/NotesPage.tsx`, note deletion triggers an optimistic state update with an "Undo" toast that restores the note and tags.
+    - In `src/state/AppState.tsx`, tracked clean state snapshots (`lastSavedState`) and destructive operations (`hadDestructiveAction`), adding automatic state rollback if storage persistence fails, alongside an exposed `rollback()` context function.
+- **Verification & Quality Gates:**
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Vitest test suite (`npm test`): PASS (108 test files, 790 tests passed, 0 failed, 0 skipped, +19 tests added in Stage 17a across `codeSplitting.test.tsx`, `emptyState.test.tsx`, `errorBoundary.test.tsx`, and `optimisticUi.test.tsx`).
+  - Production build (`npm run build`): PASS (built in 461ms, initial chunk 322.84 kB).
+  - Production audit (`npm audit --omit=dev`): PASS (0 vulnerabilities).
+- **Invariants Maintained:**
+  - `SCHEMA_VERSION` strictly at 7 (`src/lib/storage.ts`).
+  - Working tree preserved uncommitted for review; no git commit, tag, branch creation, or branch switch executed.
+  - Stage 17b and Stage 17c strictly withheld pending authorization.
+
+## 2026-10-28 — Sub-Stage 17b: First-Run Onboarding Tour
+- **Scope & Authoritative Constraints:**
+  - Implemented Sub-Stage 17b strictly according to `docs/antigravity/stages/STAGE_17_ONBOARDING_RESILIENCE_OFFLINE.md` (Catalog item 15.1).
+  - Explicitly excluded Stage 17c (PWA manifest, service worker, offline cache) and Stage 18 features.
+  - Resolved step count discrepancy: authored exactly 6 steps (`Step 1 of 6` through `Step 6 of 6`) fulfilling the §9 authoritative requirement.
+- **Architectural Implementation:**
+  - **Data Contract & Persistence (`settings.onboarding`):**
+    - Extended `Settings` interface in `src/state/types.ts` with optional `onboarding?: OnboardingState` (`{ completed: boolean; skippedAt?: number }`).
+    - Added `onboarding: { completed: false }` to `DEFAULT_SETTINGS`.
+    - Added `SET_ONBOARDING` reducer action in `src/state/reducer.ts` supporting partial updates and full state replacement.
+    - Added sanitization and type-checking in `sanitizeState()` in `src/lib/storage.ts`, repairing invalid shapes and clamping negative/invalid `skippedAt` timestamps without altering `SCHEMA_VERSION = 7`.
+  - **Authored Tour Steps (`src/core/onboarding/steps.ts`):**
+    - Authored 6 discrete, sequential tour steps:
+      1. `orbit`: Learning Orbit (`[data-tour="orbit"]`, placement: bottom)
+      2. `lesson`: Lesson Studio (`[data-tour="lesson"]`, placement: bottom)
+      3. `practice`: Practice Lab (`[data-tour="practice"]`, placement: bottom)
+      4. `review`: Review & Retention (`[data-tour="review"]`, placement: right)
+      5. `search`: Command Palette & Search (`[data-tour="search"]`, placement: bottom)
+      6. `settings`: Settings & Customization (`[data-tour="settings"]`, placement: right)
+  - **Tour Component System (`src/core/onboarding/Tour.tsx`):**
+    - Created `TourProvider` and `useTour()` hook.
+    - Integrated with App root (`src/App.tsx`), wrapping `<Routes>`.
+    - Automated first-run trigger: on cold load on the home root (`/`), starts after initial mount delay (350ms) if `onboarding.completed` is false and `skippedAt` is absent.
+    - Single-run invariant: suppressed once completed or skipped; does not auto-start on non-root routes.
+    - Replay capability: integrated "Replay onboarding tour" button in Settings page (`src/pages/Settings.tsx` under "Guided Tour" section). Navigates to `/` and restarts step 1.
+    - Accessible dialog & focus trapping: popover rendered as `role="dialog"`, `aria-modal="true"`, with `aria-labelledby="tour-step-title"` and `aria-describedby="tour-step-body"`.
+    - Trapped Tab/Shift+Tab navigation inside popover interactive buttons (`Close`, `Skip`, `Back`, `Next`/`Finish`).
+    - Escape key handler and close button dismiss tour immediately with focus restoration to trigger/previous active element.
+    - Missing target handling: `findNextValidStep` skips missing targets silently; if all targets missing, closes gracefully.
+    - Responsive viewport clamping: constrained positioning prevents overflow on 320px screens.
+    - Motion & Contrast compliance: respects `[data-motion="reduced"]` / `@media (prefers-reduced-motion)` by disabling pulses and animations, and provides high-contrast borders for `[data-contrast="high"]`.
+  - **Target Markup Integrations:**
+    - Tagged `data-tour="orbit"`, `data-tour="review"`, `data-tour="search"`, and `data-tour="settings"` in `src/components/Shell.tsx`.
+    - Tagged `data-tour="lesson"` and `data-tour="practice"` in `src/pages/Home.tsx`.
+- **Verification & Quality Gates:**
+  - Sub-Stage 17b focused tests (`src/test/onboarding.test.tsx`): 13 tests passing (100% green), covering sanitization, first-run auto-start, navigation, skip, Escape dismissal, focus trapping, replay from Settings, missing target fallback, and automated axe accessibility.
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Vitest regression suite (`npm test`): PASS (109 test files, 803 tests passed, 0 failed, 0 skipped, +13 tests added in Stage 17b).
+  - Production build (`npm run build`): PASS (built in 512ms, initial chunk 329.77 kB).
+- **Invariants Maintained:**
+  - `SCHEMA_VERSION` strictly at 7 (`src/lib/storage.ts`).
+  - Working tree preserved uncommitted for review; no git commit, tag, branch creation, or branch switch executed.
+
+## 2026-10-28 — Sub-Stage 17c: PWA & Offline Support
+- **Scope & Authoritative Constraints:**
+  - Implemented Sub-Stage 17c strictly according to `docs/antigravity/stages/STAGE_17_ONBOARDING_RESILIENCE_OFFLINE.md` (Catalog items 16.3 & 17.6).
+  - Maintained `SCHEMA_VERSION = 7`.
+  - Zero external telemetry; no student data or private state in service worker caches.
+  - Workbox-free, dependency-light vanilla Service Worker.
+- **Architectural Implementation:**
+  - **PWA Manifest & Icons:**
+    - Authored `public/manifest.webmanifest`: `name` and `short_name` ("CodeOrbit"), `start_url` (`/`), `scope` (`/`), `display: standalone`, `theme_color` (`#111219`), `background_color` (`#111219`), `categories` (`["education", "productivity"]`).
+    - Generated PNG icons via `scripts/generate-icons.js`: `icon-192.png` (6.5 kB), `icon-512.png` (30.3 kB), `icon-192-maskable.png` (6.3 kB), `icon-512-maskable.png` (29.8 kB), and `icon.svg`.
+    - Added `<link rel="manifest" href="/manifest.webmanifest">` and `<link rel="apple-touch-icon" href="/icons/icon-192.png">` in `index.html`.
+  - **Service Worker & Strategic Routing (`public/sw.js` & `src/core/pwa/swLogic.ts`):**
+    - Extracted pure caching logic into `src/core/pwa/swLogic.ts` for unit testability without service-worker runtime mocks.
+    - Versioned caches: `codeorbit-shell-v0.1.0` and `codeorbit-assets-v0.1.0`.
+    - `install` event: precaches shell assets (`/`, `/index.html`, `/manifest.webmanifest`, `/favicon.svg`, icons). Never calls `skipWaiting` automatically.
+    - `activate` event: deterministic cache cleanup of obsolete `codeorbit-*` caches; claims active clients.
+    - `fetch` event:
+      - Navigation requests: Network-first strategy with `/index.html` fallback for client-side deep links.
+      - Static assets (`/assets/*`, fonts, icons): Cache-first strategy with runtime network caching into `ASSETS_CACHE`.
+      - Other same-origin GET: Network-first with cache fallback.
+  - **Service Worker Registration & Update Notification:**
+    - Implemented `src/core/pwa/register.ts`: registers `/sw.js` in production environment.
+    - Created `<ServiceWorkerUpdater />` component in `src/core/pwa/ServiceWorkerUpdater.tsx` rendered in `src/App.tsx`.
+    - Prompts user with accessible toast: "New version available" with "Reload" button.
+    - Dispatches `{ type: 'SKIP_WAITING' }` to worker only upon explicit user action; reloads cleanly on `controllerchange` without reload loops.
+  - **Idle Route Prefetching:**
+    - Implemented `src/core/ui/prefetchRoutes.ts` calling `requestIdleCallback` (or timeout fallback) to prefetch lazy route chunks while online.
+    - Pre-caches route chunks so direct offline navigation to `/review`, `/progress`, `/settings`, etc. works without errors.
+- **Verification & Quality Gates:**
+  - Sub-Stage 17c unit tests (`src/test/pwa.test.ts`): 18 tests passing (100% green), covering manifest schema, icon existence, cache keys, routing logic, obsolete cache pruning, and registration invariants.
+  - Real-browser E2E test (`e2e/pwa-offline.spec.ts`): 3 Playwright tests passing in Chromium, validating manifest delivery, service worker presence, and full offline reload + deep navigation (`context.setOffline(true)`) with local storage preservation.
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Production build (`npm run build`): PASS (built in 510ms, `dist/sw.js` and `dist/manifest.webmanifest` verified).
+  - Status documentation: Created `docs/antigravity/status/STAGE_17_STATUS.md`.
+- **Invariants Maintained:**
+  - `SCHEMA_VERSION` strictly at 7 (`src/lib/storage.ts`).
+  - Working tree preserved uncommitted for review; no git commit, tag, branch creation, or branch switch executed.
+  - Stage 18 strictly withheld pending authorization.
+
+## 2026-10-28 — Sub-Stage 18a: Schema v8, Spaced Repetition & Voice Read
+- **Branch:** `stage-15c-mastery-map-analytics` (HEAD: `4cc460350c8dfc28674c8210e1e6bc8c1f2f339a`)
+- **Scope & Authoritative Specification:**
+  - Implemented Sub-Stage 18a strictly according to `docs/antigravity/stages/STAGE_18_LEARNING_SCIENCE_AUTHORING.md`.
+  - Bumped `SCHEMA_VERSION = 8` in `src/lib/storage.ts` and added migration `migrateV7toV8` in `src/core/storage/migrations.ts`.
+  - Strictly withheld Sub-Stage 18b (challenge authoring, peer snapshots, portfolio export).
+  - Maintained mastery immunity: review answers never alter topic mastery.
+- **Architectural Implementation:**
+  - **SM-2 Scheduler (`src/core/learning/spaced.ts`):**
+    - Pure functions: `schedule(card, grade, now)`, `dueCards(cards, now)`, `nextDueDate(cards, now)`, `toDayKey(d)`, `addDays(dayKey, days)`, `createReviewCard`.
+    - Documented progression: 1 -> 3 -> 7 -> 16 -> `Math.round(interval * ease)` days for consecutive Good grades; Again lapses reset interval to 1 day; Hard uses conservative multipliers; Easy increases ease and skips ahead.
+    - DST-safe UTC noon calendar math for day-key date calculations preventing midnight clock jumps on ±1 hour adjustments.
+  - **Schema v8 Contract & Storage Runtime (`src/core/storage/migrations.ts`, `src/lib/storage.ts`, `src/state/types.ts`):**
+    - Extended state shape with `review: Record<string, ReviewCard>` and `custom: { challenges: ChallengeV2[] }`.
+    - Full non-destructive migration of all v1–v7 stores to v8.
+    - Updated `sanitizeState()` to validate review cards, ease factor clamping ($\ge 1.3$), day-key formatting, and `custom.challenges`.
+  - **Reducer & Meaningful Activity (`src/state/reducer.ts`, `src/core/activity/meaningful.ts`):**
+    - Added reducer actions: `ADD_REVIEW_CARD`, `REMOVE_REVIEW_CARD`, `ANSWER_REVIEW_CARD`.
+    - Added `'review-answer'` to `MEANINGFUL_ACTIVITY_TYPES` and `ActivityEvent['type']`. Answering review cards logs activity and maintains learner streaks without mutating `state.topics`.
+    - Automatic card generation: missed quiz questions generate cards on `QUIZ_FINISH`; Error Notebook entries generate cards on `ADD_ERROR`; lesson sections offer manual "Add to review" toggle via `sectionReviewCardId`.
+  - **Due Review Experience (`src/core/learning/DueReview.tsx`, `src/pages/Review.tsx`, `src/components/Shell.tsx`, `src/pages/Home.tsx`):**
+    - Built single-card review session UI: prompt card, "Show answer" reveal, 4 grade controls (`Again · 1d`, `Hard · Xd`, `Good · Yd`, `Easy · Zd`), keyboard shortcuts 1–4 and Space/Enter, session counter, and contextual empty state with next due date.
+    - Review page navigation tabs: "Due today ({dueCount})", "Error Notebook", "Journal & bookmarks".
+    - Shell navigation badge reflects combined open errors + due cards; Home review dashboard card displays due count.
+  - **Voice Read Aloud (`src/core/speech/VoiceRead.tsx`, `src/pages/Lesson.tsx`):**
+    - Web Speech API integration (`speechSynthesis` + `SpeechSynthesisUtterance`) with paragraph queue, Play, Pause, Resume, Stop, 4 speed rates (0.75× to 1.5×), voice dropdown, fallback note for unsupported browsers, active paragraph callback, unmount speech cancellation, and `useMotionAllowed` integration.
+    - Integrated sticky `<VoiceRead />` into `src/pages/Lesson.tsx` with active paragraph highlighting (`.is-reading`, `aria-current="true"`).
+- **Verification & Quality Gates:**
+  - `src/test/spaced.test.ts`: 12 tests passing (100% green).
+  - `src/test/dueReview.test.tsx`: 7 tests passing (100% green).
+  - `src/test/voiceRead.test.tsx`: 5 tests passing (100% green).
+  - `src/test/migrations.test.ts`: 12 tests passing (100% green).
+  - `src/test/storage.test.ts`: 16 tests passing (100% green).
+  - `src/test/activity.test.ts`: 4 tests passing (100% green).
+  - TypeScript typecheck (`tsc -b --noEmit`): PASS (0 errors).
+  - ESLint (`eslint .`): PASS (0 errors, 0 warnings).
+  - Production build (`npm run build`): PASS (built in 483ms).
+  - Status documentation: Created `docs/antigravity/status/STAGE_18A_STATUS.md`.
+- **Invariants Maintained:**
+  - `SCHEMA_VERSION` strictly at 8 (`src/lib/storage.ts`).
+  - Topic mastery immunity: review answers never alter mastery.
+  - Working tree preserved uncommitted for review; no git commit, tag, branch creation, or branch switch executed.
+  - Stage 18b strictly withheld pending authorization.
+
+
+
+
+
+

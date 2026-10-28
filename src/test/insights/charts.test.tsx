@@ -87,5 +87,42 @@ describe('Accessible SVG Charts (Stage 15c, Catalog 12.1)', () => {
       expect(within(table).getByText('Oct 27')).toBeDefined()
       expect(within(table).getByText('5')).toBeDefined()
     })
+
+    it('remains stable and updates tooltip smoothly on mouseEnter, adjacent node transitions, and mouseLeave', () => {
+      const points = [
+        { label: 'Oct 26', value: 2 },
+        { label: 'Oct 27', value: 5 },
+      ]
+
+      const { getByRole, getAllByRole, container } = render(
+        <AccessibleLineChart title="Learning Velocity" points={points} yUnit="events" />
+      )
+
+      const dots = getAllByRole('graphics-symbol')
+      const tooltipSlot = container.querySelector('.chart-tooltip-wrap')
+      expect(tooltipSlot).toBeDefined()
+
+      // Before hover: placeholder is mounted so layout space is reserved (prevents layout shift / stutter)
+      const tooltip = getByRole('status')
+      expect(tooltip.classList.contains('chart-tooltip--placeholder')).toBe(true)
+
+      // Hover dot 0
+      fireEvent.mouseEnter(dots[0])
+      expect(dots[0].classList.contains('is-active')).toBe(true)
+      expect(tooltip.classList.contains('chart-tooltip--placeholder')).toBe(false)
+      expect(tooltip.textContent).toContain('Oct 26: 2 events')
+
+      // Move directly to adjacent dot 1
+      fireEvent.mouseLeave(dots[0])
+      fireEvent.mouseEnter(dots[1])
+      expect(dots[0].classList.contains('is-active')).toBe(false)
+      expect(dots[1].classList.contains('is-active')).toBe(true)
+      expect(tooltip.textContent).toContain('Oct 27: 5 events')
+
+      // Mouse leaves chart
+      fireEvent.mouseLeave(dots[1])
+      expect(dots[1].classList.contains('is-active')).toBe(false)
+      expect(tooltip.classList.contains('chart-tooltip--placeholder')).toBe(true)
+    })
   })
 })

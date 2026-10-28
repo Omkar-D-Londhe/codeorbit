@@ -1,14 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { openErrorCount } from '../lib/progress'
+import { dueCards } from '../core/learning/spaced'
 import { useMediaQuery } from '../lib/hooks'
 import { useApp } from '../state/AppState'
 import { Emblem, Icon, type IconName } from './Icon'
 import { Atmosphere } from '../core/atmosphere/Atmosphere'
 import { RouteTransition } from '../core/atmosphere/RouteTransition'
+import { RouteSkeleton } from '../core/ui/Skeletons'
+import { ErrorBoundary } from './ErrorBoundary'
 import { CommandPalette } from '../core/search/CommandPalette'
 import { ShortcutsModal } from '../core/a11y/ShortcutsModal'
 import { useGlobalShortcuts } from '../core/a11y/useGlobalShortcuts'
+import { Announcer, announce } from '../core/a11y/Announcer'
+import { ProgressAnnouncementListener } from '../core/a11y/ProgressAnnouncementListener'
+import {
+  isReminderDue,
+  getLastReminderShown,
+  setLastReminderShown,
+  getLocalDateKey,
+  notifyIfPermitted,
+  REMINDER_BANNER_MESSAGE,
+} from '../core/reminders/reminders'
+import { ReminderBanner } from '../core/reminders/ReminderBanner'
 import { Kbd } from '../core/ui/Kbd'
 
 interface NavItem { to: string; label: string; icon: IconName; match: (p: string) => boolean }
@@ -29,19 +43,28 @@ function NavLinks({ variant }: { variant: 'side' | 'bottom' }) {
   const { pathname } = useLocation()
   const { state } = useApp()
   const open = openErrorCount(state)
+  const due = dueCards(state.review ?? {}).length
+  const reviewCount = open + due
   const items = variant === 'side' ? SIDEBAR_NAV : PRIMARY_NAV
 
   return (
     <ul className={`nav nav--${variant}`}>
       {items.map((item) => {
         const active = item.match(pathname)
+        const tourAttr = item.to === '/explore' ? 'orbit' : item.to === '/review' ? 'review' : item.to === '/settings' ? 'settings' : undefined
         return (
           <li key={item.to}>
-            <Link to={item.to} className={`nav__link${active ? ' is-active' : ''}`} aria-current={active ? 'page' : undefined} title={item.label}>
+            <Link
+              to={item.to}
+              className={`nav__link${active ? ' is-active' : ''}`}
+              aria-current={active ? 'page' : undefined}
+              title={item.label}
+              data-tour={tourAttr}
+            >
               <Icon name={item.icon} size={20} />
               <span className="nav__label">{item.label}</span>
-              {item.to === '/review' && open > 0 && (
-                <span className="nav__count" aria-label={`${open} open Error Notebook ${open === 1 ? 'item' : 'items'}`}>{open}</span>
+              {item.to === '/review' && reviewCount > 0 && (
+                <span className="nav__count" aria-label={`${reviewCount} review items (${due} due today, ${open} open error items)`}>{reviewCount}</span>
               )}
             </Link>
           </li>
@@ -90,6 +113,7 @@ function StorageBanner() {
 }
 
 export function Shell() {
+  const { state } = useApp()
   const isMobile = useMediaQuery('(max-width: 767px)')
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
@@ -97,6 +121,22 @@ export function Shell() {
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [showReminder, setShowReminder] = useState(false)
+
+  // Check on app open if a study reminder is due (Catalog 14.3, C-10)
+  useEffect(() => {
+    const reminderSettings = state.settings?.reminders
+    const lastShown = getLastReminderShown()
+    if (isReminderDue(reminderSettings, Date.now(), lastShown)) {
+      const todayKey = getLocalDateKey(new Date())
+      setLastReminderShown(todayKey)
+      setShowReminder(true)
+      announce(REMINDER_BANNER_MESSAGE, 'polite')
+      notifyIfPermitted('CodeOrbit Reminder', {
+        body: `${REMINDER_BANNER_MESSAGE}. Reminders appear while CodeOrbit is open.`,
+      })
+    }
+  }, [state.settings?.reminders])
 
   // Attach global keyboard shortcuts: Ctrl/⌘+K, '/', '?'
   useGlobalShortcuts({
@@ -145,6 +185,7 @@ export function Shell() {
             type="button"
             className="sidebar-search-btn"
             onClick={() => setPaletteOpen(true)}
+            data-tour="search"
             aria-label="Search and command palette (Ctrl+K)"
           >
             <span className="sidebar-search-btn__left">
@@ -158,9 +199,16 @@ export function Shell() {
         </aside>
       )}
       <main id="main" ref={mainRef} tabIndex={-1} className="main">
+        <Announcer />
+        <ProgressAnnouncementListener />
+        {showReminder && <ReminderBanner onDismiss={() => setShowReminder(false)} />}
         <StorageBanner />
         <RouteTransition>
-          <Outlet />
+          <ErrorBoundary>
+            <Suspense fallback={<RouteSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </RouteTransition>
       </main>
       {isMobile && <nav className="bottom-nav" aria-label="Main"><NavLinks variant="bottom" /></nav>}

@@ -1,7 +1,9 @@
 import { createDefaultState, MAX_DAYS, MAX_ACTIVITY_EVENTS } from '../lib/storage'
-import type { QuizSession } from '../lib/quiz'
-import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent, ChallengeRecord, CheckHistoryEntry } from './types'
+import { getQuiz } from '../data/quizzes'
+import { scoreQuestion, type QuizSession } from '../lib/quiz'
+import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent, ChallengeRecord, CheckHistoryEntry, NoteRecord, OnboardingState, ReviewCard, Grade } from './types'
 import { addDay, dayKey, streakInfo, nextStreakBest } from '../core/gamification/streak'
+import { createReviewCard, schedule, toDayKey } from '../core/learning/spaced'
 
 export type Action =
   | { type: 'RESET_ALL' }
@@ -18,6 +20,7 @@ export type Action =
   | { type: 'REVEAL_SOLUTION'; challengeId: string }
   | { type: 'SET_NOTE'; topicId: string; text: string; now: number; tags?: string[]; format?: 'markdown' }
   | { type: 'SET_NOTE_TAGS'; topicId: string; tags: string[]; now: number }
+  | { type: 'RESTORE_NOTE'; topicId: string; note: NoteRecord }
   | { type: 'TOGGLE_BOOKMARK'; topicId: string }
   | { type: 'TOGGLE_SECTION_BOOKMARK'; topicId: string; sectionId: string }
   | { type: 'CREATE_BOOKMARK_FOLDER'; name: string; id?: string }
@@ -27,12 +30,17 @@ export type Action =
   | { type: 'ADD_ERROR'; entry: ErrorEntry }
   | { type: 'SET_ERROR_STATUS'; id: string; status: ErrorStatus }
   | { type: 'DELETE_ERROR'; id: string }
+  | { type: 'RESTORE_ERROR'; entry: ErrorEntry }
   | { type: 'SET_SETTINGS'; patch: Partial<Settings> }
+  | { type: 'SET_ONBOARDING'; patch?: Partial<OnboardingState>; onboarding?: OnboardingState }
   | { type: 'IMPORT_STATE'; state: CodeOrbitState }
   | { type: 'AWARD_BADGE'; id: string; now?: number; backfilled?: boolean }
   | { type: 'RECORD_PERSONAL_BEST'; key: string; value: number }
   | { type: 'ASSIGN_DAILY'; dayKey: string; challengeId: string }
   | { type: 'RECORD_ACTIVE_TIME'; topicId: string; seconds: number; isNewSession?: boolean }
+  | { type: 'ADD_REVIEW_CARD'; card: ReviewCard }
+  | { type: 'REMOVE_REVIEW_CARD'; cardId: string }
+  | { type: 'ANSWER_REVIEW_CARD'; cardId: string; grade: Grade; now?: number }
 
 const emptyChallenge = (): ChallengeRecord => ({
   attempts: 0,
@@ -133,6 +141,33 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         refId: action.topicId,
         meta: { correct: action.correct, total: action.total }
       })
+
+      // Stage 18a: Populate review cards for any incorrect or skipped quiz questions
+      const quiz = getQuiz(action.topicId)
+      if (quiz) {
+        const today = toDayKey(action.now || Date.now())
+        const nextReview = { ...nextState.review }
+        for (let i = 0; i < quiz.questions.length; i++) {
+          const q = quiz.questions[i]
+          const chosen = action.session.answers[i]
+          const isCorrect = scoreQuestion(q, chosen) === 1
+          if (!isCorrect || action.session.skipped[i]) {
+            const cardId = `quiz:${action.topicId}:${q.id}`
+            if (!nextReview[cardId]) {
+              nextReview[cardId] = createReviewCard({
+                id: cardId,
+                source: { kind: 'quiz', refId: `${action.topicId}:${q.id}` },
+                topicId: action.topicId,
+                prompt: q.prompt,
+                answer: q.explanation || 'See lesson for full concept explanation.',
+                due: today,
+              })
+            }
+          }
+        }
+        nextState = { ...nextState, review: nextReview }
+      }
+
       return nextState
     }
     case 'SET_DRAFT': {
@@ -237,6 +272,15 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         },
       }
     }
+    case 'RESTORE_NOTE': {
+      return {
+        ...state,
+        notes: {
+          ...state.notes,
+          [action.topicId]: { ...action.note },
+        },
+      }
+    }
     case 'CREATE_BOOKMARK_FOLDER': {
       const name = action.name.trim().slice(0, 50)
       if (!name) return state
@@ -330,17 +374,41 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
     case 'ADD_ERROR': {
       // One open entry per source+ref: update it rather than piling up duplicates.
       const i = state.errorNotebook.findIndex((e) => e.source === action.entry.source && e.refId === action.entry.refId && e.status === 'open')
+      let nextErrorNotebook: ErrorEntry[]
       if (i >= 0) {
         const list = state.errorNotebook.slice()
         list[i] = { ...action.entry, id: list[i].id, createdAt: list[i].createdAt }
-        return { ...state, errorNotebook: list }
+        nextErrorNotebook = list
+      } else {
+        nextErrorNotebook = [action.entry, ...state.errorNotebook]
       }
-      return { ...state, errorNotebook: [action.entry, ...state.errorNotebook] }
+
+      // Stage 18a: Generate review card from Error Notebook entry
+      const errCardId = `error:${action.entry.id}`
+      const nextReview = { ...state.review }
+      if (!nextReview[errCardId]) {
+        nextReview[errCardId] = createReviewCard({
+          id: errCardId,
+          source: { kind: 'error', refId: action.entry.id },
+          topicId: action.entry.topicId,
+          prompt: `Fix mistake: ${action.entry.title}`,
+          answer: action.entry.detail,
+          due: toDayKey(action.entry.createdAt || Date.now()),
+        })
+      }
+
+      return { ...state, errorNotebook: nextErrorNotebook, review: nextReview }
     }
     case 'SET_ERROR_STATUS':
       return { ...state, errorNotebook: state.errorNotebook.map((e) => (e.id === action.id ? { ...e, status: action.status } : e)) }
     case 'DELETE_ERROR':
       return { ...state, errorNotebook: state.errorNotebook.filter((e) => e.id !== action.id) }
+    case 'RESTORE_ERROR': {
+      if (state.errorNotebook.some((e) => e.id === action.entry.id)) {
+        return state
+      }
+      return { ...state, errorNotebook: [action.entry, ...state.errorNotebook] }
+    }
     case 'SET_SETTINGS': {
       return {
         ...state,
@@ -348,6 +416,20 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
           ...state.settings,
           ...action.patch
         }
+      }
+    }
+    case 'SET_ONBOARDING': {
+      const patch = action.patch ?? action.onboarding ?? {}
+      const current = state.settings.onboarding ?? { completed: false }
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          onboarding: {
+            ...current,
+            ...patch,
+          },
+        },
       }
     }
     case 'IMPORT_STATE': {
@@ -402,6 +484,37 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
           [action.topicId]: updatedSessions,
         },
       }
+    }
+    case 'ADD_REVIEW_CARD': {
+      return {
+        ...state,
+        review: {
+          ...state.review,
+          [action.card.id]: action.card,
+        },
+      }
+    }
+    case 'REMOVE_REVIEW_CARD': {
+      const { [action.cardId]: _removed, ...rest } = state.review
+      void _removed
+      return {
+        ...state,
+        review: rest,
+      }
+    }
+    case 'ANSWER_REVIEW_CARD': {
+      const card = state.review[action.cardId]
+      if (!card) return state
+      const atTime = action.now || Date.now()
+      const updated = schedule(card, action.grade, atTime)
+      const nextReview = { ...state.review, [action.cardId]: updated }
+      const nextState = { ...state, review: nextReview }
+      return withActivity(nextState, atTime, {
+        type: 'review-answer',
+        topicId: card.topicId,
+        refId: card.id,
+        meta: { grade: action.grade, intervalDays: updated.intervalDays },
+      })
     }
   }
 }

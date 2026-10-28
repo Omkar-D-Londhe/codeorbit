@@ -122,3 +122,8 @@
   --content-w-wide: 1320px;
   --z-nav: 20; --z-fade: 2; --z-dialog: 100; --z-toast: 110;
 }
+
+/* Dyslexia-friendly font swap (13.2) - swaps UI sans font only, keeps code monospaced */
+[data-dyslexia="true"] {
+  --font-sans: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
