@@ -71,6 +71,13 @@ Commands (all run from `codeorbit/`): `npm run typecheck` · `npm run lint` · `
 | `constellation/youAreHere.test.tsx` | Catalog 2.6: "You Are Here" beacon marker on lastVisited topic star with accessible status announcement |
 | `constellation/miniConstellation.test.tsx` | Catalog 2.7: 48x48 px mini constellation preview in breadcrumb bar highlighting active topic, linking to track orbit, with accessible text alternative |
 | `constellation/scale42.test.ts` | Stage 10b: 42-node track fixture scale, DAG validation, hub clearance, and deterministic layout within 50ms budget |
+| `runner/workerHost.test.ts` | Stage 20a (PLT-05): Worker runner host, bidirectional message schema validation, 3 s timeout kill, 64 KiB output cap, AbortSignal, and static sandbox policy checker |
+| `analysis.test.tsx` | Stage 20b (PLT-06, PLT-07): Canonical Big-O ordering, `<sup>` rendering, spoken aria-label, `validateEstimate`, registry zero-provider test, AnalysisPanel honest unavailable states, OptimisationPanel draft preservation, ComparisonView deltas, copy rules, and schema v9 quota drop |
+| `angularTrack.test.ts` | Stage 27: Angular track registration, decision-gated availability, capabilities strictly `['lessons', 'quizzes']`, empty challenges array, undefined runner/analysis provider, acyclic DAG of 6 topics, lessons, quizzes with valid answer keys, achievements, snippets, and FC-29 concept mapping with note 'no course evidence found' |
+| `angularHonesty.test.tsx` | Stage 27: Explore card renders 'Decision pending' badge and memo callout, /learn/angular route renders without crashing, no practice buttons present on track page or TopicDetail, zero @angular framework imports in src/core (Rule L-14), and ANGULAR_OPTIONS.md contains empirical measured sizes |
+| `servicesRegistry.test.ts` | Stage 28: Typed external service registry, 3 registered services, default 'not-connected' statuses, isApproved=false, privacy disclosures >=30 chars, offline fallbacks, and Hard Gates O-06, O-07, O-14 mapping |
+| `networkSilence.test.tsx` | Stage 28: Spy proves zero third-party network requests on load, route navigation, or challenge practice across the application |
+| `settingsServices.test.tsx` | Stage 28: Settings Connected Services card, Not connected badges, privacy disclosure statements, disabled 'Not configured' action buttons, and zero client API key input forms |
 
 ## Browser Smoke Suite (Playwright, production build preview) — `e2e/` (19 tests)
 Real committed Playwright script executed against `vite preview` (`npm run test:e2e`):
