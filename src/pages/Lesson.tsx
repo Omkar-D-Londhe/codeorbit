@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { challengesForTopic } from '../data/challenges'
-import { getGroup, getTopic, topicIndex, topics } from '../data/curriculum'
+import { getGroup, getTopic, topicsFor } from '../data/curriculum'
 import { getLesson, getSectionId } from '../data/lessons'
 import { getQuiz } from '../data/quizzes'
 import { CodeBlock } from '../components/CodeBlock'
@@ -62,9 +62,10 @@ function LessonInner({ topicId }: { topicId: string }) {
 
   useEffect(() => { dispatch({ type: 'VISIT', topicId, activity: 'lesson', now: Date.now() }) }, [topicId, dispatch])
 
-  const idx = topicIndex(topicId)
-  const prev = topics[idx - 1]
-  const next = topics[idx + 1]
+  const trackTopics = topicsFor(topic.technologyId)
+  const idx = trackTopics.findIndex((t) => t.id === topicId)
+  const prev = trackTopics[idx - 1]
+  const next = trackTopics[idx + 1]
   const p = topicProgress(state, topic)
   const bookmarked = state.bookmarks.includes(topicId)
   const quizBest = state.topics[topicId]?.quizBest
@@ -189,7 +190,7 @@ function LessonInner({ topicId }: { topicId: string }) {
       {lesson.demos && lesson.demos.length > 0 && (
         <div className="lesson__demos" aria-label="Interactive demos">
           {lesson.demos.map((demo) => (
-            <LiveDemo key={demo.id} demo={demo} />
+            <LiveDemo key={demo.id} demo={demo} trackId={topic?.technologyId} />
           ))}
         </div>
       )}
@@ -236,7 +237,7 @@ function LessonInner({ topicId }: { topicId: string }) {
         <NoteEditor topicId={topicId} title={topic.title} />
       </section>
       {(() => {
-        const related = getRelatedTopics(topic, topics, 4)
+        const related = getRelatedTopics(topic, trackTopics, 4)
         if (related.length === 0) return null
         return (
           <section className="study__block">
@@ -281,7 +282,7 @@ function LessonInner({ topicId }: { topicId: string }) {
         crumbs={[{ label: 'Explore', to: '/explore' }, { label: topic.technologyId.toUpperCase(), to: trackPath(topic.technologyId) }, { label: topic.title }]}
         miniConstellation={{ technologyId: topic.technologyId, topicId: topic.id }}
         title={topic.title}
-        lede={`${getGroup(topic.groupId)?.title} · Topic ${idx + 1} of ${topics.length}`}
+        lede={`${getGroup(topic.groupId)?.title} · Topic ${idx + 1} of ${trackTopics.length}`}
         actions={
           <div style={{ display: 'flex', gap: '8px' }}>
             <button

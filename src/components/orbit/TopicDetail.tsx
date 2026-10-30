@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Topic } from '../../data/types'
 import { challengesForTopic } from '../../data/challenges'
-import { dependentsOf, getGroup, getTopic, topicIndex, topics as allTopics } from '../../data/curriculum'
+import { dependentsOf, getGroup, getTopic, topicsFor } from '../../data/curriculum'
 import type { TopicProgress } from '../../lib/progress'
 import { STATUS_ICON, STATUS_LABEL } from '../../lib/status'
 import { Icon } from '../Icon'
@@ -15,20 +15,21 @@ interface Props {
 }
 
 export function TopicDetail({ topic, progress, bookmarked, hasNote, onSelect }: Props) {
-  const idx = topicIndex(topic.id)
+  const trackTopics = topicsFor(topic.technologyId)
+  const idx = trackTopics.findIndex((t) => t.id === topic.id)
   const prereqs = topic.prerequisiteIds.map((id) => getTopic(id)).filter((t): t is Topic => !!t)
   const leadsTo = dependentsOf(topic.id)
   const challenge = challengesForTopic(topic.id)[0]
   const parts = [
     { label: 'Lesson', done: progress.lessonDone },
     { label: 'Quiz passed', done: progress.quizPassed },
-    { label: 'Practice', done: progress.practiceDone },
+    ...(challenge ? [{ label: 'Practice', done: progress.practiceDone }] : []),
   ]
   return (
     <section className="detail" aria-labelledby="detail-title" aria-live="polite">
       <div className="detail__main">
         <p className="eyebrow">
-          {getGroup(topic.groupId)?.title} · Topic {idx + 1} of {allTopics.length}
+          {getGroup(topic.groupId)?.title} · Topic {idx + 1} of {trackTopics.length}
         </p>
         <h2 id="detail-title" className="detail__title">{topic.title}</h2>
         <p className="detail__desc">{topic.description}</p>

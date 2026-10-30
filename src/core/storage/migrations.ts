@@ -244,3 +244,23 @@ export function migrateV7toV8(old: Json): Json {
     custom,
   }
 }
+
+/**
+ * Migrates a version-8 state object to version-9 (Stage 20: Complexity analysis and optimisation framework).
+ * Initializes analysis: { history: AnalysisRecord[] } capped at 30 records.
+ */
+export function migrateV8toV9(old: Json): Json {
+  const rawAnalysis = isObj(old.analysis) ? old.analysis : {}
+  const rawHistory = Array.isArray(rawAnalysis.history) ? rawAnalysis.history : []
+  const history = rawHistory
+    .filter((item): item is Json => isObj(item) && typeof item.id === 'string')
+    .slice(0, 30)
+
+  return {
+    ...old,
+    schemaVersion: 9,
+    analysis: {
+      history,
+    },
+  }
+}

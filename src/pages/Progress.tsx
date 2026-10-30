@@ -23,6 +23,7 @@ import { calculateAttemptHeat, exportAttemptsToCsv } from '../core/insights/atte
 import { AccessibleBarChart } from '../core/insights/charts/AccessibleBarChart'
 import { AccessibleLineChart } from '../core/insights/charts/AccessibleLineChart'
 import { ShareCard } from '../core/insights/ShareCard'
+import { downloadPortfolioFile } from '../core/portfolio/exportPortfolio'
 
 export default function Progress() {
   useDocumentTitle('My Progress')
@@ -55,6 +56,15 @@ export default function Progress() {
   const quizBreakdown = calculateQuizBreakdown(state, trackTopics)
   const attemptHeat = calculateAttemptHeat(state)
 
+  const handleExportPortfolio = () => {
+    const result = downloadPortfolioFile(state)
+    if (result.success) {
+      toast.show(`Downloaded portfolio with ${result.count} project${result.count === 1 ? '' : 's'}!`, 'success')
+    } else {
+      toast.show(result.error || 'Could not export portfolio.', 'warning')
+    }
+  }
+
   const handleExportCsv = () => {
     const csv = exportAttemptsToCsv(attemptHeat.rows)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -68,7 +78,20 @@ export default function Progress() {
 
   return (
     <div className="page">
-      <PageHeader title="My progress" lede="Everything here comes from what you have actually done in this browser." />
+      <PageHeader
+        title="My progress"
+        lede="Everything here comes from what you have actually done in this browser."
+        actions={
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
+            onClick={handleExportPortfolio}
+            title="Export an offline HTML portfolio of your completed projects"
+          >
+            <Icon name="download" size={14} /> Export HTML Portfolio
+          </button>
+        }
+      />
 
       <XpBar />
 
@@ -96,7 +119,9 @@ export default function Progress() {
         </div>
       </section>
 
-      <PersonalBestsSection />
+      <div data-concept-id="fc-14" className="personal-bests-section">
+        <PersonalBestsSection />
+      </div>
 
       {/* Analytics Suite (Stage 15c: Velocity, Estimates vs Actual, Quizzes, Attempt Heat, Share Card) */}
       <section className="analytics-suite" aria-label="Progress Analytics Suite">
@@ -122,7 +147,8 @@ export default function Progress() {
             }))}
             yUnit="min"
           />
-          <table className="data-table" aria-label="Topic time estimates vs actual measurements">
+          <div className="table-scroll-container">
+          <table className="data-table" data-concept-id="fc-06" aria-label="Topic time estimates vs actual measurements">
             <caption>Topic time estimates vs actual time (measured on this device)</caption>
             <thead>
               <tr>
@@ -143,6 +169,7 @@ export default function Progress() {
               ))}
             </tbody>
           </table>
+          </div>
         </details>
 
         <details className="card card--quiet analytics-collapsible">
@@ -150,47 +177,50 @@ export default function Progress() {
           <p className="muted small" style={{ margin: '8px 0 16px' }}>
             Performance across all track quizzes. Topics with best score &lt; 70% are flagged as review candidates.
           </p>
-          <table className="data-table" aria-label="Quiz scores and attempt history">
-            <caption>Quiz breakdown per topic</caption>
-            <thead>
-              <tr>
-                <th scope="col">Topic</th>
-                <th scope="col">Questions</th>
-                <th scope="col">Attempts</th>
-                <th scope="col">Best Score</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quizBreakdown.items.map((qb) => (
-                <tr key={qb.topicId}>
-                  <th scope="row">{qb.topicTitle}</th>
-                  <td>{qb.questionCount}</td>
-                  <td>{qb.attemptsCount}</td>
-                  <td>{qb.bestScore ? `${qb.bestScore.correct}/${qb.bestScore.total} (${qb.bestScore.percentage}%)` : '–'}</td>
-                  <td>
-                    {qb.status === 'perfect' && <span className="status-chip status-chip--mastered">Perfect</span>}
-                    {qb.status === 'passed' && !qb.isWeak && <span className="status-chip status-chip--completed">Passed</span>}
-                    {qb.isWeak && <span className="status-chip status-chip--in-progress">Review Candidate</span>}
-                    {qb.status === 'not-started' && <span className="muted small">Not Started</span>}
-                  </td>
+          <div className="table-scroll-container">
+            <table className="data-table" aria-label="Quiz scores and attempt history">
+              <caption>Quiz breakdown per topic</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Topic</th>
+                  <th scope="col">Questions</th>
+                  <th scope="col">Attempts</th>
+                  <th scope="col">Best Score</th>
+                  <th scope="col">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {quizBreakdown.items.map((qb) => (
+                  <tr key={qb.topicId}>
+                    <th scope="row">{qb.topicTitle}</th>
+                    <td>{qb.questionCount}</td>
+                    <td>{qb.attemptsCount}</td>
+                    <td>{qb.bestScore ? `${qb.bestScore.correct}/${qb.bestScore.total} (${qb.bestScore.percentage}%)` : '–'}</td>
+                    <td>
+                      {qb.status === 'perfect' && <span className="status-chip status-chip--mastered">Perfect</span>}
+                      {qb.status === 'passed' && !qb.isWeak && <span className="status-chip status-chip--completed">Passed</span>}
+                      {qb.isWeak && <span className="status-chip status-chip--in-progress">Review Candidate</span>}
+                      {qb.status === 'not-started' && <span className="muted small">Not Started</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </details>
 
         <details className="card card--quiet analytics-collapsible">
           <summary className="card__title">Challenge Attempt Heat Table</summary>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0 16px' }}>
+          <div className="section-toolbar-row">
             <p className="muted small" style={{ margin: 0 }}>
               Recent check attempts across challenges (up to last 10 attempts as ✓ / ✗).
             </p>
-            <button type="button" className="btn btn--ghost small" onClick={handleExportCsv}>
+            <button type="button" className="btn btn--secondary btn--sm" onClick={handleExportCsv}>
               <Icon name="download" size={14} /> Export CSV
             </button>
           </div>
-          <table className="data-table" aria-label="Challenge attempt heat table">
+          <div className="table-scroll-container">
+            <table className="data-table" aria-label="Challenge attempt heat table">
             <caption>Challenge attempts and recent checks</caption>
             <thead>
               <tr>
@@ -235,6 +265,7 @@ export default function Progress() {
               ))}
             </tbody>
           </table>
+          </div>
         </details>
 
         <ShareCard />
@@ -284,7 +315,14 @@ export default function Progress() {
       <section className="card card--quiet" aria-labelledby="data-h">
         <h2 id="data-h" className="card__title">Your data</h2>
         <p className="muted">Progress, drafts, notes and bookmarks are stored in this browser only. They do not sync to other devices or browsers.</p>
-        <button type="button" className="btn btn--danger-ghost" onClick={() => setConfirm(true)}><Icon name="trash" size={18} />Clear all saved data…</button>
+        <div className="btn-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn--secondary" onClick={handleExportPortfolio}>
+            <Icon name="download" size={18} /> Export HTML Portfolio
+          </button>
+          <button type="button" className="btn btn--danger-ghost" onClick={() => setConfirm(true)}>
+            <Icon name="trash" size={18} /> Clear all saved data…
+          </button>
+        </div>
       </section>
       <ConfirmDialog open={confirm} title="Clear all saved data?" confirmLabel="Clear everything" danger onCancel={() => setConfirm(false)}
         onConfirm={() => { resetAll(); setConfirm(false); toast.show('All saved data was cleared.', 'info') }}>

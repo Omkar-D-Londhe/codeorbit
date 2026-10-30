@@ -1,0 +1,93 @@
+import type { Topic, TopicGroup } from '../../data/types'
+
+export const PYTHON_TECH_ID = 'python'
+
+export const pythonGroups: TopicGroup[] = [
+  { id: 'py-foundations', title: 'Foundations & Control Flow' },
+  { id: 'py-collections', title: 'Functions & Data Structures' },
+  { id: 'py-advanced-patterns', title: 'Idiomatic Patterns & Recursion' },
+  { id: 'py-engineering', title: 'Algorithms & Testing' },
+]
+
+export const pythonTopics: Topic[] = [
+  {
+    id: 'py-basics',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Python syntax, types and f-strings',
+    shortTitle: 'Basics',
+    groupId: 'py-foundations',
+    description: 'Dynamic typing, variables, primitive types (int, float, str, bool), and formatted string interpolation.',
+    prerequisiteIds: [],
+    tags: ['python', 'foundations', 'syntax', 'types'],
+  },
+  {
+    id: 'py-control-flow',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Control flow and conditionals',
+    shortTitle: 'Conditionals',
+    groupId: 'py-foundations',
+    description: 'Branching logic with if, elif, and else, Boolean operators, and guard clauses.',
+    prerequisiteIds: ['py-basics'],
+    tags: ['python', 'control-flow', 'branching'],
+  },
+  {
+    id: 'py-functions',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Functions, arguments and scope',
+    shortTitle: 'Functions',
+    groupId: 'py-collections',
+    description: 'First-class functions, default parameter values, variable scope, and clean return values.',
+    prerequisiteIds: ['py-control-flow'],
+    tags: ['python', 'functions', 'modular'],
+  },
+  {
+    id: 'py-data-structures',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Lists, tuples, dictionaries and sets',
+    shortTitle: 'Data structures',
+    groupId: 'py-collections',
+    description: 'Choosing the right collection: mutable lists, immutable tuples, key-value dicts, and unique sets.',
+    prerequisiteIds: ['py-functions'],
+    tags: ['python', 'collections', 'data-structures'],
+  },
+  {
+    id: 'py-comprehensions',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Comprehensions and generators',
+    shortTitle: 'Comprehensions',
+    groupId: 'py-advanced-patterns',
+    description: 'Idiomatic list, dictionary, and set comprehensions for clean, readable transformations.',
+    prerequisiteIds: ['py-data-structures'],
+    tags: ['python', 'comprehensions', 'idiomatic'],
+  },
+  {
+    id: 'py-recursion',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Recursion and divide-and-conquer',
+    shortTitle: 'Recursion',
+    groupId: 'py-advanced-patterns',
+    description: 'Recursive problem solving, base case formulation, recursive steps, and call stack management.',
+    prerequisiteIds: ['py-functions'],
+    tags: ['python', 'recursion', 'algorithms'],
+  },
+  {
+    id: 'py-algorithms',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Search and algorithmic patterns',
+    shortTitle: 'Algorithms',
+    groupId: 'py-engineering',
+    description: 'Linear vs binary search, pointer patterns, and asymptotic scaling in Python.',
+    prerequisiteIds: ['py-comprehensions', 'py-recursion'],
+    tags: ['python', 'algorithms', 'binary-search'],
+  },
+  {
+    id: 'py-testing-basics',
+    technologyId: PYTHON_TECH_ID,
+    title: 'Defensive coding and test assertions',
+    shortTitle: 'Testing',
+    groupId: 'py-engineering',
+    description: 'Writing test assertions with assert, defensive parameter validation, and custom exceptions.',
+    prerequisiteIds: ['py-algorithms'],
+    tags: ['python', 'testing', 'assertions', 'quality'],
+  },
+]

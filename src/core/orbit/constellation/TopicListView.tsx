@@ -8,8 +8,8 @@ export interface TopicListViewProps {
   topics: Topic[]
   groups: TopicGroup[]
   selectedTopicId?: string | null
-  nodeStates: Record<string, NodeState>
-  progressMap: Record<string, TopicProgress | undefined>
+  nodeStates?: Record<string, NodeState>
+  progressMap?: Record<string, TopicProgress | undefined>
   onSelectTopic: (topicId: string) => void
 }
 
@@ -17,8 +17,8 @@ export function TopicListView({
   topics,
   groups,
   selectedTopicId,
-  nodeStates,
-  progressMap,
+  nodeStates = {},
+  progressMap = {},
   onSelectTopic,
 }: TopicListViewProps) {
   // Group topics by groupId

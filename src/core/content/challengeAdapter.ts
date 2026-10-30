@@ -19,17 +19,31 @@ export function toChallengeV2(challenge: Challenge, trackId?: string): Challenge
   const langId = track?.language.id ?? resolvedTrackId
   const fileName = track?.language.defaultFiles?.[0]?.name ?? `index${track?.language.fileExtension ?? ''}`
 
-  const starterFile: ChallengeFile = {
-    name: fileName,
-    language: langId,
-    content: challenge.starterCode,
-  }
+  const files: ChallengeFile[] = challenge.files && challenge.files.length > 0
+    ? challenge.files
+    : [
+        {
+          name: fileName,
+          language: langId,
+          content: challenge.starterCode,
+        },
+      ]
 
-  const solutionFile: ChallengeFile = {
-    name: fileName,
-    language: langId,
-    content: challenge.solutionCode,
-  }
+  const solutionFiles: ChallengeFile[] = challenge.solutionFiles && challenge.solutionFiles.length > 0
+    ? challenge.solutionFiles
+    : challenge.files && challenge.files.length > 0
+      ? challenge.files.map((f) =>
+          f.name.toLowerCase().endsWith('.css') || f.name.toLowerCase().endsWith(`.${langId}`)
+            ? { ...f, content: challenge.solutionCode }
+            : f
+        )
+      : [
+          {
+            name: fileName,
+            language: langId,
+            content: challenge.solutionCode,
+          },
+        ]
 
   return {
     id: challenge.id,
@@ -39,13 +53,15 @@ export function toChallengeV2(challenge: Challenge, trackId?: string): Challenge
     difficulty: challenge.difficulty,
     prompt: challenge.prompt,
     objective: challenge.objective,
-    files: [starterFile],
+    notice: challenge.notice,
+    files,
     requirements: challenge.requirements,
     hints: challenge.hints,
     solution: {
-      files: [solutionFile],
-      explanation: challenge.solutionExplanation.join('\n\n'),
+      files: solutionFiles,
+      explanation: Array.isArray(challenge.solutionExplanation) ? challenge.solutionExplanation.join('\n\n') : '',
     },
+    tests: challenge.tests,
   }
 }
 
@@ -57,10 +73,12 @@ export function toChallenge(v2: ChallengeV2): Challenge {
     difficulty: v2.difficulty,
     prompt: v2.prompt,
     objective: v2.objective,
+    notice: v2.notice,
     starterCode: v2.files[0]?.content ?? '',
     requirements: v2.requirements,
     hints: v2.hints,
     solutionCode: v2.solution.files[0]?.content ?? '',
     solutionExplanation: v2.solution.explanation.split('\n\n'),
+    tests: v2.tests,
   }
 }

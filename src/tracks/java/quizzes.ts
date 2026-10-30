@@ -1,0 +1,268 @@
+import type { Quiz } from '../../data/types'
+
+export const javaQuizzes: Quiz[] = [
+  {
+    topicId: 'java-syntax-types',
+    questions: [
+      {
+        id: 'java-q-syntax-1',
+        kind: 'choice',
+        prompt: 'What is the signature of the entry point method in every standard Java application?',
+        options: [
+          'public void main(String args)',
+          'public static void main(String[] args)',
+          'public static int start(String[] args)',
+          'static void main(String args[])',
+        ],
+        correctIndex: 1,
+        explanation: 'Java runtime entry requires the exact signature: public static void main(String[] args).',
+      },
+      {
+        id: 'java-q-syntax-2',
+        kind: 'choice',
+        prompt: 'Which of the following is NOT a Java primitive type?',
+        options: [
+          'String',
+          'int',
+          'double',
+          'boolean',
+        ],
+        correctIndex: 0,
+        explanation: 'String is a reference object type in java.lang, whereas int, double, and boolean are primitives.',
+      },
+      {
+        id: 'java-q-syntax-3',
+        kind: 'choice',
+        prompt: 'What is the size and representation of the int primitive type in Java?',
+        options: [
+          '16-bit unsigned integer',
+          '64-bit IEEE floating point',
+          '32-bit signed two\'s complement integer',
+          '8-bit ASCII character',
+        ],
+        correctIndex: 2,
+        explanation: 'In Java, int is strictly a 32-bit signed two\'s complement integer across all operating platforms.',
+      },
+    ],
+  },
+  {
+    topicId: 'java-control-flow',
+    questions: [
+      {
+        id: 'java-q-flow-1',
+        kind: 'choice',
+        prompt: 'Which statement correctly describes loop execution in Java?',
+        options: [
+          'A while loop always executes at least once regardless of condition',
+          'A for loop condition is evaluated before each iteration body runs',
+          'for loops cannot be nested inside each other',
+          'break statements cannot be used inside while loops',
+        ],
+        correctIndex: 1,
+        explanation: 'for loop conditions are pre-tested before executing the loop body on each cycle.',
+      },
+      {
+        id: 'java-q-flow-2',
+        kind: 'choice',
+        prompt: 'What asymptotic time complexity is typically produced by two nested loops iterating from 0 to n?',
+        options: [
+          'O(1)',
+          'O(log n)',
+          'O(n)',
+          'O(n^2)',
+        ],
+        correctIndex: 3,
+        explanation: 'When a loop iterating n times encloses an inner loop also running n times, total operations scale quadratically as O(n^2).',
+      },
+      {
+        id: 'java-q-flow-3',
+        kind: 'choice',
+        prompt: 'What keyword immediately terminates the enclosing loop and continues execution after it?',
+        options: [
+          'break',
+          'continue',
+          'exit',
+          'return',
+        ],
+        correctIndex: 0,
+        explanation: 'break exits the innermost enclosing loop or switch construct immediately.',
+      },
+    ],
+  },
+  {
+    topicId: 'java-methods',
+    questions: [
+      {
+        id: 'java-q-methods-1',
+        kind: 'choice',
+        prompt: 'How does Java pass primitive arguments into methods?',
+        options: [
+          'By reference pointer',
+          'By value (a copy of the primitive value)',
+          'By shared memory reference',
+          'By lazy evaluation',
+        ],
+        correctIndex: 1,
+        explanation: 'Java strictly evaluates all parameters pass-by-value; primitives receive a copy of their literal value.',
+      },
+      {
+        id: 'java-q-methods-2',
+        kind: 'choice',
+        prompt: 'What is required for valid method overloading in Java?',
+        options: [
+          'Same method name with identical parameter lists and different return types',
+          'Different method names with the same parameter types',
+          'Same method name with different parameter types, count, or order',
+          'Overloaded methods must be marked with the override keyword',
+        ],
+        correctIndex: 2,
+        explanation: 'Overloading requires the method names to match while their parameter signatures differ.',
+      },
+      {
+        id: 'java-q-methods-3',
+        kind: 'choice',
+        prompt: 'Which return type indicates that a method performs actions without returning any value?',
+        options: [
+          'null',
+          'void',
+          'empty',
+          'boolean',
+        ],
+        correctIndex: 1,
+        explanation: 'void specifies that the method does not return a value to the caller.',
+      },
+    ],
+  },
+  {
+    topicId: 'java-classes-oop',
+    questions: [
+      {
+        id: 'java-q-oop-1',
+        kind: 'choice',
+        prompt: 'What is the primary objective of encapsulation in object-oriented Java design?',
+        options: [
+          'Allowing global unrestricted access to all class fields',
+          'Restricting direct access to internal state and controlling mutations via methods',
+          'Ensuring all methods are declared static',
+          'Preventing a class from having more than one constructor',
+        ],
+        correctIndex: 1,
+        explanation: 'Encapsulation safeguards internal object integrity by making fields private and mediating access through public getters/setters.',
+      },
+      {
+        id: 'java-q-oop-2',
+        kind: 'choice',
+        prompt: 'How is a constructor declared in a Java class?',
+        options: [
+          'With the void return type and constructor name',
+          'With the exact class name and no return type',
+          'With the new keyword in the method header',
+          'With the init identifier',
+        ],
+        correctIndex: 1,
+        explanation: 'Constructors have no return type (not even void) and must match the class name identically.',
+      },
+      {
+        id: 'java-q-oop-3',
+        kind: 'choice',
+        prompt: 'What does the this keyword refer to inside an instance method or constructor?',
+        options: [
+          'The current class definition',
+          'The superclass parent instance',
+          'The current object instance being operated on',
+          'The static execution namespace',
+        ],
+        correctIndex: 2,
+        explanation: 'this is a reference variable referring directly to the current invoking object instance.',
+      },
+    ],
+  },
+  {
+    topicId: 'java-arrays-collections',
+    questions: [
+      {
+        id: 'java-q-coll-1',
+        kind: 'choice',
+        prompt: 'How is the fixed size of an instantiated array numbers accessed in Java?',
+        options: [
+          'numbers.size()',
+          'numbers.length',
+          'numbers.count',
+          'numbers.length()',
+        ],
+        correctIndex: 1,
+        explanation: 'In Java, arrays have a public final field length without parentheses.',
+      },
+      {
+        id: 'java-q-coll-2',
+        kind: 'choice',
+        prompt: 'What differentiates an ArrayList from a standard Java array?',
+        options: [
+          'ArrayList can only store primitive types',
+          'ArrayList has a dynamically resizable capacity',
+          'ArrayList does not support index-based lookups',
+          'ArrayList is allocated on the stack rather than the heap',
+        ],
+        correctIndex: 1,
+        explanation: 'ArrayList automatically grows its internal storage array as elements are appended.',
+      },
+      {
+        id: 'java-q-coll-3',
+        kind: 'choice',
+        prompt: 'Which syntax represents a valid enhanced for loop (for-each) over int[] items?',
+        options: [
+          'for (int i in items) { }',
+          'for (int item : items) { }',
+          'foreach (items as item) { }',
+          'for (item of items) { }',
+        ],
+        correctIndex: 1,
+        explanation: 'Java for-each syntax uses a colon: for (Type element : collection).',
+      },
+    ],
+  },
+  {
+    topicId: 'java-recursion',
+    questions: [
+      {
+        id: 'java-q-rec-1',
+        kind: 'choice',
+        prompt: 'What happens if a recursive method in Java fails to reach or define a base case?',
+        options: [
+          'It returns 0 automatically after 100 iterations',
+          'It continues recursing until memory exhaustion triggers a StackOverflowError',
+          'The Java compiler detects it and throws a CompileError',
+          'It converts automatically into an iterative while loop',
+        ],
+        correctIndex: 1,
+        explanation: 'Infinite recursive calls continuously push new activation frames onto the JVM call stack until StackOverflowError is thrown.',
+      },
+      {
+        id: 'java-q-rec-2',
+        kind: 'choice',
+        prompt: 'What is the auxiliary space complexity of a linear recursive method with recursion depth n?',
+        options: [
+          'O(1)',
+          'O(n)',
+          'O(n^2)',
+          'O(2^n)',
+        ],
+        correctIndex: 1,
+        explanation: 'Each active recursive invocation holds a stack frame on the call stack, requiring O(n) auxiliary call stack space.',
+      },
+      {
+        id: 'java-q-rec-3',
+        kind: 'choice',
+        prompt: 'What role does the base case perform in a recursive algorithm?',
+        options: [
+          'It initializes the class constructor',
+          'It splits the problem into two subproblems',
+          'It provides a direct termination condition without making further recursive calls',
+          'It prints the result to standard output',
+        ],
+        correctIndex: 2,
+        explanation: 'The base case terminates the recursive chain by directly returning a base value.',
+      },
+    ],
+  },
+]

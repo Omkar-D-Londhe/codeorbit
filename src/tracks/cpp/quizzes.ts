@@ -1,0 +1,268 @@
+import type { Quiz } from '../../data/types'
+
+export const cppQuizzes: Quiz[] = [
+  {
+    topicId: 'cpp-syntax-io',
+    questions: [
+      {
+        id: 'cpp-q-syntax-1',
+        kind: 'choice',
+        prompt: 'Which standard header must be included to utilize std::cout and std::cin?',
+        options: [
+          '<stdio.h>',
+          '<iostream>',
+          '<string>',
+          '<stream>',
+        ],
+        correctIndex: 1,
+        explanation: '<iostream> declares the basic C++ stream objects including std::cin, std::cout, and std::cerr.',
+      },
+      {
+        id: 'cpp-q-syntax-2',
+        kind: 'choice',
+        prompt: 'What stream operator is used to write formatted output to std::cout in C++?',
+        options: [
+          '>> (extraction)',
+          '<< (insertion)',
+          '-> (member access)',
+          ':: (scope resolution)',
+        ],
+        correctIndex: 1,
+        explanation: 'The << stream insertion operator inserts formatted values into an output stream.',
+      },
+      {
+        id: 'cpp-q-syntax-3',
+        kind: 'choice',
+        prompt: 'What return value from main() conventionally signifies successful program execution to the OS?',
+        options: [
+          '0',
+          '1',
+          '-1',
+          'void',
+        ],
+        correctIndex: 0,
+        explanation: 'Returning 0 from main() signals EXIT_SUCCESS to the host operating system.',
+      },
+    ],
+  },
+  {
+    topicId: 'cpp-control-flow',
+    questions: [
+      {
+        id: 'cpp-q-flow-1',
+        kind: 'choice',
+        prompt: 'What asymptotic complexity results from two nested for loops iterating up to n in C++?',
+        options: [
+          'O(1)',
+          'O(n)',
+          'O(n^2)',
+          'O(n log n)',
+        ],
+        correctIndex: 2,
+        explanation: 'Two nested loops iterating proportionally to n execute n * n = n^2 operations, yielding O(n^2) quadratic time.',
+      },
+      {
+        id: 'cpp-q-flow-2',
+        kind: 'choice',
+        prompt: 'Which statement immediately skips the rest of the current loop iteration and proceeds to the next cycle?',
+        options: [
+          'break',
+          'continue',
+          'goto',
+          'return',
+        ],
+        correctIndex: 1,
+        explanation: 'continue skips remaining statements in the current iteration and jumps to the update/condition step.',
+      },
+      {
+        id: 'cpp-q-flow-3',
+        kind: 'choice',
+        prompt: 'What type must the condition expression evaluate to inside a C++ if statement?',
+        options: [
+          'Strictly a string',
+          'A boolean or any type implicitly convertible to bool',
+          'An integer greater than 10',
+          'A pointer to a function',
+        ],
+        correctIndex: 1,
+        explanation: 'C++ if conditions evaluate any expression that contextually converts to bool (0 is false, non-zero is true).',
+      },
+    ],
+  },
+  {
+    topicId: 'cpp-functions-references',
+    questions: [
+      {
+        id: 'cpp-q-fn-1',
+        kind: 'choice',
+        prompt: 'What is the primary benefit of passing a large object by const reference (const Type&) rather than by value?',
+        options: [
+          'It allows the function to mutate the original object',
+          'It avoids the memory and performance cost of copying the object while preventing mutations',
+          'It dynamically allocates the object on the heap',
+          'It converts the object to a pointer automatically',
+        ],
+        correctIndex: 1,
+        explanation: 'const Type& passes an alias without copying the underlying bytes and guarantees immutability.',
+      },
+      {
+        id: 'cpp-q-fn-2',
+        kind: 'choice',
+        prompt: 'How does pass-by-reference (&) alter function parameter behavior compared to pass-by-value in C++?',
+        options: [
+          'It creates a shallow copy of the argument',
+          'It operates directly on the caller\'s original variable through an alias',
+          'It forces the parameter to be an rvalue',
+          'It evaluates the argument asynchronously',
+        ],
+        correctIndex: 1,
+        explanation: 'A reference parameter binds directly to the caller\'s argument variable, allowing in-place modifications.',
+      },
+      {
+        id: 'cpp-q-fn-3',
+        kind: 'choice',
+        prompt: 'What keyword informs the compiler that a member function does not modify any object state?',
+        options: [
+          'static',
+          'immutable',
+          'const',
+          'final',
+        ],
+        correctIndex: 2,
+        explanation: 'A const qualifier placed after a member function signature guarantees it will not alter any class member fields.',
+      },
+    ],
+  },
+  {
+    topicId: 'cpp-pointers-memory',
+    questions: [
+      {
+        id: 'cpp-q-ptr-1',
+        kind: 'choice',
+        prompt: 'Which operator retrieves the memory address of an existing variable in C++?',
+        options: [
+          '* (dereference)',
+          '& (address-of)',
+          '-> (arrow)',
+          ':: (scope)',
+        ],
+        correctIndex: 1,
+        explanation: 'The unary & operator returns the memory address where the operand is stored.',
+      },
+      {
+        id: 'cpp-q-ptr-2',
+        kind: 'choice',
+        prompt: 'Given int* ptr = &val;, what operation reads the actual integer stored at that address?',
+        options: [
+          '&ptr',
+          '*ptr',
+          'ptr.value',
+          'ptr->val',
+        ],
+        correctIndex: 1,
+        explanation: 'The dereference operator * accesses the value residing at the address stored in ptr.',
+      },
+      {
+        id: 'cpp-q-ptr-3',
+        kind: 'choice',
+        prompt: 'What is the standard C++11 type-safe literal used to represent a null pointer?',
+        options: [
+          'NULL',
+          '0',
+          'nullptr',
+          'void',
+        ],
+        correctIndex: 2,
+        explanation: 'nullptr is a prvalue of type std::nullptr_t, eliminating ambiguities with integer 0.',
+      },
+    ],
+  },
+  {
+    topicId: 'cpp-classes-objects',
+    questions: [
+      {
+        id: 'cpp-q-class-1',
+        kind: 'choice',
+        prompt: 'What is the default member access specifier in a C++ class if none is explicitly specified?',
+        options: [
+          'public',
+          'private',
+          'protected',
+          'internal',
+        ],
+        correctIndex: 1,
+        explanation: 'In C++, class members default to private (unlike struct members, which default to public).',
+      },
+      {
+        id: 'cpp-q-class-2',
+        kind: 'choice',
+        prompt: 'What is the purpose of a member initializer list in a C++ constructor?',
+        options: [
+          'To initialize member fields before the constructor body begins executing',
+          'To allocate dynamic memory automatically',
+          'To inherit from multiple base classes',
+          'To define static constants in the header file',
+        ],
+        correctIndex: 0,
+        explanation: 'Initializer lists (: field(val)) initialize members directly, avoiding default construction followed by assignment.',
+      },
+      {
+        id: 'cpp-q-class-3',
+        kind: 'choice',
+        prompt: 'How is a constructor declared inside a C++ class named Rectangle?',
+        options: [
+          'void Rectangle()',
+          'Rectangle()',
+          'construct Rectangle()',
+          'Rectangle create()',
+        ],
+        correctIndex: 1,
+        explanation: 'Constructors in C++ bear the exact name of the class with no return type specification.',
+      },
+    ],
+  },
+  {
+    topicId: 'cpp-recursion-stl',
+    questions: [
+      {
+        id: 'cpp-q-rec-1',
+        kind: 'choice',
+        prompt: 'Which standard container in C++ represents a contiguous dynamically resizable array?',
+        options: [
+          'std::list',
+          'std::vector',
+          'std::map',
+          'std::queue',
+        ],
+        correctIndex: 1,
+        explanation: 'std::vector manages dynamic, contiguous element storage with automatic expansion.',
+      },
+      {
+        id: 'cpp-q-rec-2',
+        kind: 'choice',
+        prompt: 'What method appends a new element to the end of a std::vector?',
+        options: [
+          'append()',
+          'push_back()',
+          'add()',
+          'insert_last()',
+        ],
+        correctIndex: 1,
+        explanation: 'push_back() appends an element to the end of the vector in amortized O(1) time.',
+      },
+      {
+        id: 'cpp-q-rec-3',
+        kind: 'choice',
+        prompt: 'What condition is essential in every recursive function to prevent infinite recursion?',
+        options: [
+          'A static counter variable',
+          'A base case that returns without calling itself',
+          'A catch block for StackOverflowException',
+          'A call to std::exit()',
+        ],
+        correctIndex: 1,
+        explanation: 'Every valid recursive algorithm must include a base case that terminates recursive dispatch.',
+      },
+    ],
+  },
+]

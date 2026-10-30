@@ -104,7 +104,7 @@ describe('progress rules', () => {
       let s = createDefaultState()
       topics.forEach((t) => { s = fullPass(s, t.id) })
       expect(nextAction(s).kind).toBe('all-complete')
-      expect(trackProgress(s, 'html')).toMatchObject({ completedTopics: 12, masteredTopics: 12 })
+      expect(trackProgress(s, 'html')).toMatchObject({ completedTopics: topics.length, masteredTopics: topics.length })
     })
   })
 

@@ -20,6 +20,7 @@ import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/
 import { loadDyslexiaFont } from '../core/a11y/dyslexiaFont'
 import { Icon } from '../components/Icon'
 import { useTour } from '../core/onboarding/Tour'
+import { getExternalServices } from '../core/services/registry'
 
 const FONT_SCALE_STEPS: FontScale[] = [0.875, 1, 1.125, 1.25, 1.5]
 const FONT_SCALE_PERCENTAGES: Record<FontScale, string> = {
@@ -223,6 +224,7 @@ export default function Settings() {
 
       <div style={{ display: 'grid', gap: 'var(--s-6)' }}>
         {/* Profile Section (14.1) */}
+        <div data-concept-id="fc-07" className="settings-section">
         <Card title="Learner Profile" eyebrow="Profile">
           <div style={{ display: 'grid', gap: 'var(--s-3)', marginTop: 'var(--s-3)' }}>
             <label htmlFor="user-name-input" className="field-label">
@@ -244,6 +246,7 @@ export default function Settings() {
             </p>
           </div>
         </Card>
+        </div>
 
         {/* Learning Pace (14.2) */}
         <Card title="Learning Pace" eyebrow="Goals">
@@ -666,7 +669,69 @@ export default function Settings() {
           </div>
         </Card>
 
+        {/* Connected Services (Stage 28: 17.2, 17.5, 17.8) */}
+        <Card title="Connected Services" eyebrow="Integrations & Privacy">
+          <div style={{ display: 'grid', gap: 'var(--s-4)', marginTop: 'var(--s-3)' }}>
+            <p className="muted small" style={{ margin: 0 }}>
+              CodeOrbit is an offline-first learning platform. All core learning, editor, and analysis features run locally in your browser. Services requiring remote infrastructure or external APIs remain strictly disconnected until explicitly configured and approved.
+            </p>
+
+            <div className="services-grid" style={{ display: 'grid', gap: 'var(--s-4)' }}>
+              {getExternalServices().map((svc) => (
+                <div
+                  key={svc.id}
+                  className="card card--quiet service-card"
+                  style={{
+                    padding: 'var(--s-4)',
+                    background: 'var(--surface-raised, rgba(255, 255, 255, 0.03))',
+                    border: '1px solid var(--c-border, #3a3556)',
+                    borderRadius: 'var(--r-md, 8px)',
+                  }}
+                  data-testid={`service-card-${svc.id}`}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: 600 }}>{svc.name}</h4>
+                      <p className="muted small" style={{ margin: 0 }}>{svc.description}</p>
+                    </div>
+                    <span
+                      className={`badge ${svc.status === 'connected' ? 'badge--available' : 'badge--subtle'}`}
+                      data-testid={`service-status-${svc.id}`}
+                    >
+                      {svc.status === 'connected' ? 'Connected' : svc.status === 'error' ? 'Error' : 'Not connected'}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      margin: '12px 0',
+                      padding: '10px 12px',
+                      background: 'var(--color-bg-subtle, rgba(0, 0, 0, 0.2))',
+                      borderRadius: '6px',
+                      borderLeft: '3px solid var(--color-warning, #f59e0b)',
+                      fontSize: '0.85rem',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong>Privacy disclosure:</strong> {svc.disclosure}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    <span className="muted small" style={{ fontStyle: 'italic' }}>
+                      Status: Hard Gate {svc.gateId} (Gated — not approved) · Zero network calls
+                    </span>
+                    <Button variant="secondary" size="sm" disabled aria-disabled="true" title="Integration not approved">
+                      Not configured
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
         {/* Data Management (14.4, 16.4) */}
+        <div data-concept-id="fc-25" className="storage-card">
         <Card title="Data Management" eyebrow="Backup & Storage">
           <div style={{ display: 'grid', gap: 'var(--s-5)', marginTop: 'var(--s-3)' }}>
             <div>
@@ -709,6 +774,7 @@ export default function Settings() {
             </div>
           </div>
         </Card>
+        </div>
       </div>
 
       {/* Import Preview Dialog */}

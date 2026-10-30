@@ -107,7 +107,35 @@
   --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px; --s-12: 56px;
 
   /* Shape + depth */
-  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 16px; --r-full: 9999px;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+  --radius: 0.5rem;
+
+  /* Backward-compatible canonical bridges & fallbacks (UI-03, UI-15) */
+  --c-muted: var(--text-muted);
+  --muted: var(--text-muted);
+  --fail: var(--danger);
+  --border-hover: var(--border-strong);
+  --c-border-hover: var(--border-strong);
+  --border-subtle: var(--border);
+  --bg-card: var(--surface-raised);
+  --card-bg: var(--surface-raised);
+  --c-bg-subtle: var(--surface);
+  --color-bg-subtle: var(--surface);
+  --color-surface-2: var(--surface-raised);
+  --color-warning: var(--warning);
+  --c-accent-glow: rgb(154 139 255 / 0.25);
+  --accent-bright: var(--accent-hover);
+  --shadow-md: var(--shadow-2);
+  --fs-xsmall: 0.6875rem;
+  --fs-base: 1rem;
+  --fs-h3: 1.25rem;
+  --text-sm: 0.875rem;
+  --text-xs: 0.75rem;
+  --c-primary: var(--c-accent);
 
   /* Motion */
   --t-fast: 120ms;

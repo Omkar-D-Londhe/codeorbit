@@ -23,6 +23,30 @@ export const SHORTCUTS: ShortcutDef[] = [
     scope: 'global',
   },
   {
+    id: 'nav-home',
+    keys: ['g h'],
+    description: 'Go to Home / Dashboard',
+    scope: 'global',
+  },
+  {
+    id: 'nav-explore',
+    keys: ['g e'],
+    description: 'Go to Explore technologies',
+    scope: 'global',
+  },
+  {
+    id: 'nav-progress',
+    keys: ['g p'],
+    description: 'Go to My Progress & analytics',
+    scope: 'global',
+  },
+  {
+    id: 'nav-concepts',
+    keys: ['g c'],
+    description: 'Go to Concept Atlas',
+    scope: 'global',
+  },
+  {
     id: 'close-modal',
     keys: ['Esc'],
     description: 'Close dialog, modal, or palette',

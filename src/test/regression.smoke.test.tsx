@@ -72,7 +72,7 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
 
     // Promoted Constellation Orbit on /learn/html
     const stars = document.querySelectorAll('.constellation-star')
-    expect(stars).toHaveLength(12)
+    expect(stars).toHaveLength(13)
 
     // Click on first star selects Document structure
     await user.click(stars[0])
@@ -93,8 +93,8 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
     const legacy = renderAt('/learn/html?orbit=legacy')
     const strip = within(screen.getByRole('list', { name: /topics in curriculum order/i })).getAllByRole('button')
     const arch = within(screen.getByRole('list', { name: /on the learning orbit/i })).getAllByRole('button')
-    expect(strip).toHaveLength(12)
-    expect(arch).toHaveLength(12)
+    expect(strip).toHaveLength(13)
+    expect(arch).toHaveLength(13)
     legacy.unmount()
   })
 
@@ -229,7 +229,7 @@ describe('G2 Regression Smoke Suite (9 Items)', () => {
     expect(tp.parts).toBe(3)
 
     renderAt('/progress')
-    expect(screen.getByText(/1 of 12 topics complete · 3 of 36 steps done · 1 mastered/i)).toBeInTheDocument()
+    expect(screen.getByText(/1 of 13 topics complete · 3 of 39 steps done · 1 mastered/i)).toBeInTheDocument()
   })
 
   it('8. Storage recovery for corrupt, newer-version and unavailable storage', () => {

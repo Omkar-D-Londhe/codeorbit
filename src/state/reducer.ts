@@ -1,7 +1,8 @@
 import { createDefaultState, MAX_DAYS, MAX_ACTIVITY_EVENTS } from '../lib/storage'
 import { getQuiz } from '../data/quizzes'
+import { getTopic } from '../data/curriculum'
 import { scoreQuestion, type QuizSession } from '../lib/quiz'
-import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent, ChallengeRecord, CheckHistoryEntry, NoteRecord, OnboardingState, ReviewCard, Grade } from './types'
+import type { Activity, CodeOrbitState, ErrorEntry, ErrorStatus, QuizBest, Settings, ActivityEvent, ChallengeRecord, CheckHistoryEntry, NoteRecord, OnboardingState, ReviewCard, Grade, ChallengeV2, AnalysisRecord, LastVisited } from './types'
 import { addDay, dayKey, streakInfo, nextStreakBest } from '../core/gamification/streak'
 import { createReviewCard, schedule, toDayKey } from '../core/learning/spaced'
 
@@ -41,6 +42,10 @@ export type Action =
   | { type: 'ADD_REVIEW_CARD'; card: ReviewCard }
   | { type: 'REMOVE_REVIEW_CARD'; cardId: string }
   | { type: 'ANSWER_REVIEW_CARD'; cardId: string; grade: Grade; now?: number }
+  | { type: 'SAVE_CUSTOM_CHALLENGE'; challenge: ChallengeV2 }
+  | { type: 'DELETE_CUSTOM_CHALLENGE'; id: string }
+  | { type: 'RECORD_ANALYSIS'; record: AnalysisRecord }
+  | { type: 'CLEAR_ANALYSIS_HISTORY' }
 
 const emptyChallenge = (): ChallengeRecord => ({
   attempts: 0,
@@ -85,8 +90,10 @@ function withActivity(
   }
 }
 
-export function draftKey(challengeId: string, fileName?: string, fileCount = 1): string {
-  return fileCount <= 1 || !fileName ? challengeId : `${challengeId}::${fileName}`
+export function draftKey(challengeId: string, fileName?: string, fileCount?: number): string {
+  if (!fileName) return challengeId
+  if (fileCount !== undefined && fileCount <= 1) return challengeId
+  return `${challengeId}::${fileName}`
 }
 
 export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
@@ -98,11 +105,31 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
     case 'VISIT': {
       const atTime = action.now || Date.now()
       const lv = state.lastVisited
-      if (lv && lv.topicId === action.topicId && lv.activity === action.activity && lv.challengeId === action.challengeId) return state
+      const newLv: LastVisited = { topicId: action.topicId, activity: action.activity, at: atTime, ...(action.challengeId ? { challengeId: action.challengeId } : {}) }
+      const topicObj = getTopic(action.topicId)
+      const trackId = topicObj?.technologyId
+      const prevTrackLv = trackId ? state.lastVisitedByTrack?.[trackId] : undefined
+
+      if (
+        lv &&
+        lv.topicId === action.topicId &&
+        lv.activity === action.activity &&
+        lv.challengeId === action.challengeId &&
+        prevTrackLv &&
+        prevTrackLv.topicId === action.topicId &&
+        prevTrackLv.activity === action.activity &&
+        prevTrackLv.challengeId === action.challengeId
+      ) {
+        return state
+      }
+
       return {
         ...state,
         selectedTopicId: action.topicId,
-        lastVisited: { topicId: action.topicId, activity: action.activity, at: atTime, ...(action.challengeId ? { challengeId: action.challengeId } : {}) },
+        lastVisited: newLv,
+        lastVisitedByTrack: trackId
+          ? { ...(state.lastVisitedByTrack || {}), [trackId]: newLv }
+          : state.lastVisitedByTrack,
       }
     }
     case 'SET_LESSON_COMPLETE': {
@@ -515,6 +542,50 @@ export function reducer(state: CodeOrbitState, action: Action): CodeOrbitState {
         refId: card.id,
         meta: { grade: action.grade, intervalDays: updated.intervalDays },
       })
+    }
+    case 'SAVE_CUSTOM_CHALLENGE': {
+      const existing = state.custom?.challenges ?? []
+      const index = existing.findIndex((c) => c.id === action.challenge.id)
+      const list = [...existing]
+      if (index >= 0) {
+        list[index] = action.challenge
+      } else {
+        list.push(action.challenge)
+      }
+      return {
+        ...state,
+        custom: {
+          ...state.custom,
+          challenges: list,
+        },
+      }
+    }
+    case 'DELETE_CUSTOM_CHALLENGE': {
+      const targetId = action.id ?? (action as { challengeId?: string }).challengeId
+      return {
+        ...state,
+        custom: {
+          ...state.custom,
+          challenges: (state.custom?.challenges ?? []).filter((c) => c.id !== targetId),
+        },
+      }
+    }
+    case 'RECORD_ANALYSIS': {
+      const existing = state.analysis?.history ?? []
+      return {
+        ...state,
+        analysis: {
+          history: [action.record, ...existing].slice(0, 30),
+        },
+      }
+    }
+    case 'CLEAR_ANALYSIS_HISTORY': {
+      return {
+        ...state,
+        analysis: {
+          history: [],
+        },
+      }
     }
   }
 }

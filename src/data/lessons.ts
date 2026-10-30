@@ -1,4 +1,5 @@
 import type { Lesson, LessonSection } from './types'
+import { getTracks } from '../core/content/registry.ts'
 
 export function slugifyHeading(heading: string): string {
   return heading
@@ -96,6 +97,14 @@ export const lessons: Lesson[] = [
         heading: 'Common mistake',
         body: ['Browsers repair broken structure silently, so a missing <title> or doctype often "works" while quietly causing quirks.'],
         callout: { kind: 'mistake', text: 'Putting visible content in <head>, or forgetting the doctype, makes behaviour differ between browsers.' },
+      },
+      {
+        id: 'local-dev-serving',
+        heading: 'Local development and HTTP serving',
+        body: [
+          'When previewing HTML locally, opening files directly via file:// URLs imposes security restrictions on CORS, web workers, fonts, and ES modules. Web developers run a local HTTP server (such as Vite, Live Server, or Python http.server) to deliver files over http://localhost with accurate MIME types and HTTP headers.',
+        ],
+        callout: { kind: 'why', text: 'Local HTTP serving replicates real production conditions, avoiding silent browser security blocks.' },
       },
     ],
   },
@@ -268,6 +277,19 @@ This step is <strong>important</strong>.</p>`,
         },
         callout: { kind: 'mistake', text: 'Using <blockquote> just to indent text. Indentation is a styling job, not a meaning.' },
       },
+      {
+        id: 'specialized-text-formatting',
+        heading: 'Specialized text formatting',
+        body: [
+          '<mark> highlights text for relevance or reference (like a highlighter pen). <sup> renders superscript for mathematical powers (e.g. 10<sup>2</sup>) or footnotes. <sub> renders subscript for chemical formulas (e.g. H<sub>2</sub>O). <u> represents an unarticulated annotation, such as flagging spelling mistakes.',
+        ],
+        code: {
+          label: 'Highlight, superscripts and subscripts',
+          code: `<p>Search result with <mark>highlighted</mark> match.</p>
+<p>Water is H<sub>2</sub>O, and 2<sup>3</sup> = 8.</p>
+<p>A misspelled <u class="spelling">wrd</u> annotated with u.</p>`,
+        },
+      },
     ],
   },
   {
@@ -322,6 +344,18 @@ This step is <strong>important</strong>.</p>`,
         id: 'nesting',
         heading: 'Nesting',
         body: ['To create a {{term:nestedList}}, place the inner <ul> or <ol> inside an <li>, not as a sibling of the <li> elements.'],
+        code: {
+          label: 'A nested outline list',
+          code: `<ul>
+  <li>Fruits
+    <ul>
+      <li>Apples</li>
+      <li>Bananas</li>
+    </ul>
+  </li>
+  <li>Vegetables</li>
+</ul>`,
+        },
         callout: { kind: 'why', text: 'Screen readers announce "list, 3 items", which helps people understand the shape of the content.' },
       },
     ],
@@ -427,6 +461,87 @@ This step is <strong>important</strong>.</p>`,
     ],
   },
   {
+    topicId: 'media-elements',
+    objective: 'Embed native audio and video with fallback sources, controls and accessible subtitles.',
+    takeaways: [
+      '<audio> and <video> provide built-in media playback without third-party plugins.',
+      'Always include the controls attribute so users can play, pause, and adjust volume.',
+      'Provide multiple <source> elements so browsers pick the best supported format.',
+      'Always include fallback text inside the media element for older user agents.',
+      '<track kind="subtitles"> provides essential captions and subtitles for accessibility.',
+    ],
+    terms: {
+      mediaControls: {
+        term: 'Media Controls',
+        definition: 'Native browser interface buttons (play, pause, volume, scrubbing) enabled via the controls boolean attribute.',
+      },
+      mediaFallback: {
+        term: 'Media Fallback',
+        definition: 'Text content placed inside audio or video tags that only renders if the browser does not support the element.',
+      },
+      textTrack: {
+        term: 'Text Track',
+        definition: 'Timed subtitle, caption, or description files linked via the <track> tag in WebVTT format.',
+      },
+    },
+    a11yNotes: [
+      'Never autoplay media with audio enabled; unexpected sound disorients screen reader users.',
+      'Always provide closed captions or subtitles via <track> for pre-recorded video containing speech.',
+    ],
+    demos: [
+      {
+        id: 'demo-media',
+        title: 'Embedded Audio and Video',
+        files: [
+          {
+            name: 'index.html',
+            content: `<figure>
+  <audio controls>
+    <source src="podcast.mp3" type="audio/mpeg">
+    Your browser does not support native audio.
+  </audio>
+  <figcaption>Episode 1: Semantic HTML</figcaption>
+</figure>`,
+          },
+        ],
+      },
+    ],
+    sections: [
+      {
+        id: 'audio-and-video-elements',
+        heading: 'Audio and video elements',
+        body: [
+          'HTML5 {{term:mediaControls}} let users play audio and video natively. Use <audio> for sound clips and <video> for movies or animations. Adding the boolean controls attribute displays play/pause, volume, and seeking controls.',
+        ],
+        code: {
+          label: 'Audio with controls and fallback',
+          code: `<audio controls>
+  <source src="audio.mp3" type="audio/mpeg">
+  <source src="audio.ogg" type="audio/ogg">
+  Your browser does not support the audio element.
+</audio>`,
+        },
+      },
+      {
+        id: 'video-sources-and-tracks',
+        heading: 'Video sources and captions',
+        body: [
+          '<video> supports multiple <source> tags with type attributes (e.g. video/mp4, video/webm). For accessibility, link WebVTT subtitles or captions using a <track> element with kind="subtitles" or kind="captions", srclang, and label.',
+        ],
+        code: {
+          label: 'Video with captions and poster',
+          code: `<video controls width="640" height="360" poster="thumb.jpg">
+  <source src="movie.mp4" type="video/mp4">
+  <source src="movie.webm" type="video/webm">
+  <track kind="subtitles" src="subtitles_en.vtt" srclang="en" label="English">
+  Your browser does not support HTML5 video.
+</video>`,
+        },
+        callout: { kind: 'why', text: 'Captions are required for deaf or hard-of-hearing users, and help anyone watching in noisy environments.' },
+      },
+    ],
+  },
+  {
     topicId: 'tables',
     objective: 'Mark up tabular data with captions, header cells and body rows.',
     takeaways: [
@@ -479,6 +594,35 @@ This step is <strong>important</strong>.</p>`,
         heading: 'When to use a table',
         body: ['Use tables for {{term:tabularData}} that has rows and columns, not to position things on the page.'],
         callout: { kind: 'mistake', text: 'Building page layouts out of tables. That is what CSS layout is for.' },
+      },
+      {
+        id: 'spanning-rows-and-columns',
+        heading: 'Spanning rows and columns',
+        body: [
+          'Table cells can span across multiple columns with colspan="n" or across multiple rows with rowspan="n". When cells span, the subsequent rows or columns omit the spanned positions to preserve a rectangular grid.',
+        ],
+        code: {
+          label: 'Table with cell spans',
+          code: `<table>
+  <caption>Team Schedule</caption>
+  <thead>
+    <tr>
+      <th scope="col">Member</th>
+      <th scope="col" colspan="2">Availability</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row" rowspan="2">Alice</th>
+      <td>Mon: 9am - 1pm</td>
+      <td>Wed: 1pm - 5pm</td>
+    </tr>
+    <tr>
+      <td colspan="2">Fri: On-call full day</td>
+    </tr>
+  </tbody>
+</table>`,
+        },
       },
     ],
   },
@@ -548,6 +692,32 @@ This step is <strong>important</strong>.</p>`,
         heading: 'Input types and validation',
         body: ['type="email", number, date and others give the right keyboard on phones and built-in {{term:inputValidation}}. required blocks submission when empty. A placeholder is a hint, not a replacement for a label.'],
         callout: { kind: 'mistake', text: 'Relying on placeholder text as the only label: it disappears while typing and is not reliably announced.' },
+      },
+      {
+        id: 'advanced-controls-and-constraints',
+        heading: 'Choice controls and pattern constraints',
+        body: [
+          'Beyond text and email, forms support radio buttons (type="radio") sharing a name for single choices, checkboxes (type="checkbox") for multi-selection, dropdown menus (<select> with <option>), telephone numbers (type="tel"), and file pickers (type="file"). Native validation attributes like pattern (a regex), minlength, and maxlength enforce format and length constraints in the browser.',
+        ],
+        code: {
+          label: 'Rich controls with validation',
+          code: `<form action="#" method="post">
+  <fieldset>
+    <legend>Subscription</legend>
+    <label><input type="radio" name="plan" value="monthly" checked> Monthly</label>
+    <label><input type="radio" name="plan" value="annual"> Annual</label>
+  </fieldset>
+  <label for="country">Country</label>
+  <select id="country" name="country">
+    <option value="us">United States</option>
+    <option value="uk">United Kingdom</option>
+  </select>
+  <label for="phone">Phone Number</label>
+  <input id="phone" name="phone" type="tel" pattern="[0-9]{10}">
+  <label for="code">Promo Code</label>
+  <input id="code" name="code" type="text" minlength="4" maxlength="12">
+</form>`,
+        },
       },
     ],
   },
@@ -712,4 +882,12 @@ This step is <strong>important</strong>.</p>`,
   },
 ]
 
-export const getLesson = (topicId: string): Lesson | undefined => lessons.find((l) => l.topicId === topicId)
+export const getLesson = (topicId: string): Lesson | undefined => {
+  const l = lessons.find((x) => x.topicId === topicId)
+  if (l) return l
+  for (const track of getTracks()) {
+    const found = track.lessons[topicId]
+    if (found) return found
+  }
+  return undefined
+}

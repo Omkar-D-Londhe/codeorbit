@@ -17,8 +17,15 @@ describe('Empty track registry handling', () => {
     registerTracks()
   })
 
-  it('renders EmptyState on Home when HTML track is unregistered without crashing', () => {
+  it('renders EmptyState on Home when available tracks are unregistered without crashing', () => {
     unregisterTrack('html')
+    unregisterTrack('css')
+    unregisterTrack('javascript')
+    unregisterTrack('bootstrap')
+    unregisterTrack('python')
+    unregisterTrack('java')
+    unregisterTrack('cpp')
+    unregisterTrack('angular')
 
     render(
       <AppStateProvider>

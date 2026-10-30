@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
-import { getTechnology, getTopic, topicsFor, groups } from '../data/curriculum'
+import { getTechnology, getTopic, topicsFor, groupsFor } from '../data/curriculum'
 import { LearningOrbit } from '../components/orbit/LearningOrbit'
 import { TopicDetail } from '../components/orbit/TopicDetail'
 import { PageHeader } from '../components/PageHeader'
@@ -15,7 +15,7 @@ import { fuzzy } from '../core/search/fuzzy'
 export default function Track() {
   const { technologyId = '' } = useParams()
   const tech = getTechnology(technologyId)
-  if (!tech || tech.status !== 'available') return <Navigate to="/explore" replace />
+  if (!tech || (tech.status !== 'available' && tech.status !== 'preview' && tech.status !== 'decision-gated')) return <Navigate to="/explore" replace />
   return <TrackInner technologyId={tech.id} name={tech.name} glyph={tech.glyph} description={tech.description} />
 }
 
@@ -137,6 +137,8 @@ function TrackInner({
     )
   }
 
+  const trackGroups = groupsFor(technologyId)
+
   return (
     <div className="page page--wide">
       <PageHeader
@@ -229,7 +231,7 @@ function TrackInner({
         technologyGlyph={glyph}
         technologyDescription={description}
         topics={list}
-        groups={groups}
+        groups={trackGroups}
         highlightIds={highlightIds}
       />
     </div>

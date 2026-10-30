@@ -18,6 +18,7 @@ import type {
 } from '../../data/types'
 
 import type { ConceptEntry } from '../concepts/concepts'
+import type { CodeRunner } from '../runner/types'
 
 // Re-export existing content types
 export type {
@@ -84,6 +85,7 @@ export interface ChallengeV2 {
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   prompt: string
   objective: string
+  notice?: string
   files: ChallengeFile[]
   requirements: ChallengeRequirement[]
   hints: [string, string, string]
@@ -120,7 +122,7 @@ export interface TrackModule {
   lessons: Record<string, Lesson>
   quizzes: Record<string, Quiz>
   challenges: Challenge[]
-  runner?: unknown
+  runner?: CodeRunner
   validatorFactory?: ChallengeValidatorFactory
   analysisProvider?: unknown
   snippets?: unknown[]

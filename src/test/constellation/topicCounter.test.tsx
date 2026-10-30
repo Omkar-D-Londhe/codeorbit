@@ -8,11 +8,11 @@ import { ConstellationOrbit } from '../../core/orbit/constellation/Constellation
 import { AppStateProvider } from '../../state/AppState'
 
 describe('Topic Counter & Total Consistency (Stage 10 Acceptance Fixes)', () => {
-  it('HTML track curriculum collection contains exactly 12 topics', () => {
+  it('HTML track curriculum collection contains all topics', () => {
     const htmlTopics = topicsFor('html')
-    expect(htmlTopics).toHaveLength(12)
+    expect(htmlTopics).toHaveLength(13)
     expect(htmlTopics[0].id).toBe('html-structure')
-    expect(htmlTopics[11].id).toBe('putting-together')
+    expect(htmlTopics[htmlTopics.length - 1].id).toBe('putting-together')
   })
 
   it('TopicStepper derives count dynamically from topics.length (not hardcoded)', () => {
@@ -27,20 +27,20 @@ describe('Topic Counter & Total Consistency (Stage 10 Acceptance Fixes)', () => 
       />
     )
 
-    // Check compact counter element reflects 1 / 12
+    // Check compact counter element reflects 1 / N
     const counter = document.querySelector('.constellation-stepper-counter')
     expect(counter).not.toBeNull()
-    expect(counter?.textContent?.trim()).toBe('1 / 12')
+    expect(counter?.textContent?.trim()).toBe(`1 / ${htmlTopics.length}`)
 
-    // Rerender at last topic index (11)
+    // Rerender at last topic index
     rerender(
       <TopicStepper
         topics={htmlTopics}
-        selectedIndex={11}
+        selectedIndex={htmlTopics.length - 1}
         onSelectIndex={onSelect}
       />
     )
-    expect(counter?.textContent?.trim()).toBe('12 / 12')
+    expect(counter?.textContent?.trim()).toBe(`${htmlTopics.length} / ${htmlTopics.length}`)
 
     // Test with arbitrary 7 synthetic topics to guarantee zero hardcoding
     const mockTopics = Array.from({ length: 7 }, (_, i) => ({
@@ -63,7 +63,7 @@ describe('Topic Counter & Total Consistency (Stage 10 Acceptance Fixes)', () => 
     expect(counter?.textContent?.trim()).toBe('3 / 7')
   })
 
-  it('TopicDetailsPanel badge displays "Topic 1 of 12" dynamically', () => {
+  it('TopicDetailsPanel badge displays "Topic 1 of N" dynamically', () => {
     const htmlTopics = topicsFor('html')
     render(
       <MemoryRouter>
@@ -78,10 +78,10 @@ describe('Topic Counter & Total Consistency (Stage 10 Acceptance Fixes)', () => 
       </MemoryRouter>
     )
 
-    expect(screen.getByText('Topic 1 of 12')).toBeInTheDocument()
+    expect(screen.getByText(`Topic 1 of ${htmlTopics.length}`)).toBeInTheDocument()
   })
 
-  it('ConstellationOrbit in expanded mode renders floating card with "Topic 1 of 12"', async () => {
+  it('ConstellationOrbit in expanded mode renders floating card with "Topic 1 of N"', async () => {
     const htmlTopics = topicsFor('html')
 
     render(
@@ -107,7 +107,7 @@ describe('Topic Counter & Total Consistency (Stage 10 Acceptance Fixes)', () => 
     const expandBtn = screen.getByRole('button', { name: /Expand constellation view/i })
     expandBtn.click()
 
-    // Floating card should display Topic 1 of 12
-    expect(await screen.findByText('Topic 1 of 12')).toBeInTheDocument()
+    // Floating card should display Topic 1 of N
+    expect(await screen.findByText(`Topic 1 of ${htmlTopics.length}`)).toBeInTheDocument()
   })
 })

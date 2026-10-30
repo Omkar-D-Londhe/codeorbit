@@ -1,6 +1,9 @@
+import type { ChallengeTestCase } from '../core/content/types'
+import type { AngularRule } from '../tracks/angular/validators'
+
 /** Content + domain types. Everything in src/data is app content (not learner activity). */
 
-export type TechnologyStatus = 'available' | 'planned'
+export type TechnologyStatus = 'available' | 'preview' | 'planned' | 'decision-gated'
 
 export interface Technology {
   id: string
@@ -145,6 +148,41 @@ export type Rule =
   | { kind: 'headingOrder' }
   | { kind: 'fragmentLinksResolve' }
   | { kind: 'noLinkText'; patterns: string[] }
+  | { kind: 'hasAttrValue'; selector: string; attr: string; values: string[] }
+  | { kind: 'nestedList' }
+  | { kind: 'cellSpan'; attr: 'rowspan' | 'colspan'; min: number }
+  | { kind: 'inputTypes'; types: string[]; min?: number }
+  | { kind: 'mediaControls'; element: 'audio' | 'video' }
+  | { kind: 'ruleExists'; selector: string; property: string; value?: string | RegExp }
+  | { kind: 'declares'; property: string; pattern: string }
+  | { kind: 'mediaQuery'; feature: 'min-width' | 'max-width'; min?: number; max?: number }
+  | { kind: 'usesDisplay'; value: 'flex' | 'grid' }
+  | { kind: 'reducedMotionGuard' }
+  | { kind: 'specificityBelow'; selector: string; max: [number, number, number] }
+  | { kind: 'testPasses'; testId: string }
+  | { kind: 'allTestsPass' }
+  | { kind: 'declaresFunction'; name: string }
+  | { kind: 'jsSourceMatches'; pattern: string | RegExp }
+  | { kind: 'domAssertion'; selector: string; check: 'exists' | 'text' | 'attribute'; expected?: string; attr?: string }
+  | { kind: 'hasClass'; selector: string; className: string }
+  | { kind: 'navbarStructure' }
+  | { kind: 'gridStructure'; expectedCols?: number }
+  | { kind: 'formControls' }
+  | { kind: 'validationFeedback' }
+  | { kind: 'definesFunction'; name: string; paramsCount?: number; params?: string[]; returns?: boolean; returnType?: string }
+  | { kind: 'containsLoop'; loopType?: 'for' | 'while' | 'range-for' | 'enhanced-for' | 'any'; minNesting?: number }
+  | { kind: 'usesComprehension'; comprehensionType?: 'list' | 'dict' | 'set' | 'any' }
+  | { kind: 'usesRecursion'; functionName?: string; methodName?: string }
+  | { kind: 'declaresClass'; name: string; methods?: string[] }
+  | { kind: 'usesConstruct'; construct: 'if-elif-else' | 'try-except' | 'with' | 'lambda' | 'docstring' | 'assert' | 'if-else' | 'switch' | 'enhanced-for' | 'private-field' | 'iostream' | 'cout' | 'nullptr' | 'vector' | 'access-specifier' | 'if' }
+  | { kind: 'pythonSourceMatches'; pattern: string | RegExp }
+  | { kind: 'blocksImport'; blockedModules?: string[] }
+  | { kind: 'definesMethod'; name: string; returnType?: string; paramsCount?: number; isStatic?: boolean }
+  | { kind: 'definesClass'; name: string }
+  | { kind: 'usesPointerOrReference'; usage?: 'pointer' | 'reference' | 'any' }
+  | { kind: 'javaSourceMatches'; pattern: string | RegExp }
+  | { kind: 'cppSourceMatches'; pattern: string | RegExp }
+  | AngularRule
 
 export interface ChallengeRequirement {
   id: string
@@ -162,11 +200,18 @@ export interface Challenge {
   title: string
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   prompt: string
+  description?: string
   objective: string
+  notice?: string
   starterCode: string
   requirements: ChallengeRequirement[]
   /** Exactly three, in order: conceptual → structural → specific. */
   hints: [string, string, string]
+  solution?: string
   solutionCode: string
   solutionExplanation: string[]
+  needsMedia?: boolean
+  files?: Array<{ name: string; language: string; content: string; readOnly?: boolean }>
+  solutionFiles?: Array<{ name: string; language: string; content: string; readOnly?: boolean }>
+  tests?: ChallengeTestCase[]
 }

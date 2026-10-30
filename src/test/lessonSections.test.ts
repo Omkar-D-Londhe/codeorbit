@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { lessons, getSectionId } from '../data/lessons'
 
 describe('Lesson content integrity and section IDs (Stage 08)', () => {
-  it('contains all 12 lessons with valid objectives', () => {
-    expect(lessons).toHaveLength(12)
+  it('contains all lessons with valid objectives', () => {
+    expect(lessons).toHaveLength(13)
     for (const l of lessons) {
       expect(l.topicId).toBeTruthy()
       expect(l.objective.trim().length).toBeGreaterThan(10)

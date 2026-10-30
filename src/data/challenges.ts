@@ -1,4 +1,5 @@
 import type { Challenge } from './types'
+import { getTracks } from '../core/content/registry.ts'
 
 const SVG_DOT = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='100'%3E%3Crect width='160' height='100' fill='%239A8BFF'/%3E%3C/svg%3E`
 
@@ -384,7 +385,227 @@ Tue Links 25`,
 </html>`,
     solutionExplanation: ['The skeleton declares language, charset and title.', 'header/nav, main and footer provide landmarks.', 'A single h1, an image with alt and a list complete the content.'],
   },
+  {
+    id: 'ch-media-elements',
+    topicId: 'media-elements',
+    title: 'Embed multimedia audio and video players',
+    difficulty: 'intermediate',
+    needsMedia: true,
+    objective: 'Embed native audio and video players with controls, sources, fallback text, and subtitles.',
+    prompt: 'Add an <audio> element with controls and fallback text, and a <video> element with controls, multiple <source> tags, and a subtitle <track>.',
+    starterCode: `<audio>
+  <source src="audio.mp3" type="audio/mpeg">
+</audio>
+<video width="480">
+  <source src="movie.mp4" type="video/mp4">
+</video>`,
+    requirements: [
+      { id: 'audio-controls', description: 'Audio player has the controls attribute', explanation: 'Users need controls to play and pause audio.', rule: { kind: 'mediaControls', element: 'audio' } },
+      { id: 'video-controls', description: 'Video player has the controls attribute', explanation: 'Users need controls to play and pause video.', rule: { kind: 'mediaControls', element: 'video' } },
+      { id: 'video-track', description: 'Video has a subtitle track (<track kind="subtitles">)', explanation: 'Subtitles are essential for accessibility.', rule: { kind: 'selector', selector: 'video track[kind="subtitles"]', min: 1 } },
+      { id: 'sources', description: 'At least 3 <source> tags are provided', explanation: 'Multiple sources allow browsers to choose the best format.', rule: { kind: 'selector', selector: 'source', min: 3 } },
+      { id: 'fallback', description: 'Audio or video contains fallback text for legacy browsers', explanation: 'Fallback text informs users whose browsers cannot play native media.', rule: { kind: 'textLength', selector: 'audio, video', min: 10 } },
+    ],
+    hints: [
+      'Both audio and video tags accept the boolean controls attribute.',
+      'Place <track kind="subtitles" src="..." srclang="en" label="..."> inside the <video> tag.',
+      'Include text like "Your browser does not support HTML5 media." inside <audio> or <video>.',
+    ],
+    solutionCode: `<audio controls>
+  <source src="audio.mp3" type="audio/mpeg">
+  Your browser does not support audio playback.
+</audio>
+<video controls width="480">
+  <source src="movie.mp4" type="video/mp4">
+  <source src="movie.webm" type="video/webm">
+  <track kind="subtitles" src="subtitles.vtt" srclang="en" label="English">
+  Your browser does not support video playback.
+</video>`,
+    solutionExplanation: [
+      'The controls attribute enables playback widgets.',
+      'Multiple sources let browsers choose supported formats.',
+      'The track element provides accessible subtitles.',
+      'Fallback text ensures older clients display an explanation.',
+    ],
+  },
+  {
+    id: 'ch-html-formatting',
+    topicId: 'text-semantics',
+    title: 'Advanced text formatting tags',
+    difficulty: 'intermediate',
+    objective: 'Apply mark, sup, sub, and u tags for specialized text presentation.',
+    prompt: 'Format the text using <mark> for the highlighted keyword, <sup> for the exponent, <sub> for the chemical subscript, and <u> for the annotated spelling mistake.',
+    starterCode: `<p>Please note the keyword in this search query.</p>
+<p>Water formula is H2O and squared math is 102 = 100.</p>
+<p>Please fix this speling mistake.</p>`,
+    requirements: [
+      { id: 'mark', description: 'A <mark> element highlights relevant text', explanation: '<mark> indicates text highlighted for reference or search relevance.', rule: { kind: 'selector', selector: 'mark', min: 1 } },
+      { id: 'sup', description: 'A <sup> element renders superscript', explanation: '<sup> is used for exponents and footnotes.', rule: { kind: 'selector', selector: 'sup', min: 1 } },
+      { id: 'sub', description: 'A <sub> element renders subscript', explanation: '<sub> is used for chemical formulas and mathematical indices.', rule: { kind: 'selector', selector: 'sub', min: 1 } },
+      { id: 'u', description: 'A <u> element marks unarticulated annotation', explanation: '<u> represents annotations such as misspelled words.', rule: { kind: 'selector', selector: 'u', min: 1 } },
+    ],
+    hints: [
+      'Wrap "keyword" in <mark>…</mark>.',
+      'Wrap "2" in H2O with <sub> and "2" in 102 with <sup>.',
+      'Wrap the misspelled word "speling" with <u>…</u>.',
+    ],
+    solutionCode: `<p>Please note the <mark>keyword</mark> in this search query.</p>
+<p>Water formula is H<sub>2</sub>O and squared math is 10<sup>2</sup> = 100.</p>
+<p>Please fix this <u>speling</u> mistake.</p>`,
+    solutionExplanation: [
+      '<mark> draws visual and semantic attention to search matches.',
+      '<sup> and <sub> adjust baseline position for powers and chemical notations.',
+      '<u> flags annotations without conveying emphasis.',
+    ],
+  },
+  {
+    id: 'ch-html-nested-lists',
+    topicId: 'lists',
+    title: 'Build a nested outline list',
+    difficulty: 'intermediate',
+    objective: 'Create a hierarchically nested list with valid HTML structure.',
+    prompt: 'Add an inner nested list of topics inside one of the parent list items.',
+    starterCode: `<ul>
+  <li>Web Design</li>
+  <li>App Development</li>
+</ul>`,
+    requirements: [
+      { id: 'nested', description: 'A list is nested inside a parent list item', explanation: 'Sub-lists must sit inside an <li> element.', rule: { kind: 'nestedList' } },
+      { id: 'valid-li', description: 'Every <li> belongs to a list', explanation: 'Loose list items break document outlines.', rule: { kind: 'noMatch', selector: ':not(ul):not(ol) > li' } },
+      { id: 'sub-items', description: 'At least 2 nested sub-items exist', explanation: 'The nested outline demonstrates sub-categorization.', rule: { kind: 'selector', selector: 'li li', min: 2 } },
+    ],
+    hints: [
+      'Open a <ul> inside the <li> for "Web Design" before its closing </li>.',
+      'Put at least two <li> items inside that inner <ul>.',
+      'Make sure every <li> is inside either the outer or inner <ul>.',
+    ],
+    solutionCode: `<ul>
+  <li>Web Design
+    <ul>
+      <li>HTML Foundations</li>
+      <li>CSS Styling</li>
+    </ul>
+  </li>
+  <li>App Development</li>
+</ul>`,
+    solutionExplanation: [
+      'The inner <ul> sits completely inside a parent <li>.',
+      'Sub-items inherit hierarchy cleanly for screen reader announcements.',
+    ],
+  },
+  {
+    id: 'ch-html-table-spans',
+    topicId: 'tables',
+    title: 'Span table cells across rows and columns',
+    difficulty: 'intermediate',
+    objective: 'Use rowspan and colspan to construct multi-dimensional cell spans.',
+    prompt: 'Create a table where at least one cell spans 2 or more columns using colspan, and at least one cell spans 2 or more rows using rowspan.',
+    starterCode: `<table>
+  <caption>Team Schedule</caption>
+  <tbody>
+    <tr><td>Member</td><td>Morning</td><td>Afternoon</td></tr>
+    <tr><td>Alice</td><td>On-call</td><td>On-call</td></tr>
+  </tbody>
+</table>`,
+    requirements: [
+      { id: 'colspan', description: 'A table cell spans at least 2 columns (colspan >= 2)', explanation: 'colspan merges horizontal adjacent cells.', rule: { kind: 'cellSpan', attr: 'colspan', min: 2 } },
+      { id: 'rowspan', description: 'A table cell spans at least 2 rows (rowspan >= 2)', explanation: 'rowspan merges vertical adjacent cells.', rule: { kind: 'cellSpan', attr: 'rowspan', min: 2 } },
+      { id: 'caption', description: 'Table has a non-empty <caption>', explanation: 'Captions identify tabular data sets.', rule: { kind: 'selector', selector: 'table > caption', min: 1 } },
+    ],
+    hints: [
+      'Add colspan="2" to a cell (e.g. <td colspan="2">On-call full day</td>).',
+      'Add rowspan="2" to a row header (e.g. <th scope="row" rowspan="2">Alice</th>).',
+      'Adjust subsequent cells in the row so total column counts remain balanced.',
+    ],
+    solutionCode: `<table>
+  <caption>Team Schedule</caption>
+  <thead>
+    <tr>
+      <th scope="col" rowspan="2">Member</th>
+      <th scope="col" colspan="2">Shifts</th>
+    </tr>
+    <tr>
+      <th scope="col">Morning</th>
+      <th scope="col">Afternoon</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row" rowspan="2">Alice</th>
+      <td>Desk Support</td>
+      <td>Lab Testing</td>
+    </tr>
+    <tr>
+      <td colspan="2">Emergency On-Call</td>
+    </tr>
+  </tbody>
+</table>`,
+    solutionExplanation: [
+      'rowspan="2" on Member and Alice merges two vertical cells.',
+      'colspan="2" on Shifts and Emergency On-Call merges two horizontal cells.',
+    ],
+  },
+  {
+    id: 'ch-html-advanced-forms',
+    topicId: 'forms',
+    title: 'Interactive form controls and pattern constraints',
+    difficulty: 'intermediate',
+    objective: 'Implement radio choices, checkboxes, dropdown options, and pattern-validated inputs.',
+    prompt: 'Build a form containing radio buttons, a checkbox, a phone input with a 10-digit pattern attribute, and a select dropdown, all labelled.',
+    starterCode: `<form action="#" method="post">
+  <button type="submit">Submit</button>
+</form>`,
+    requirements: [
+      { id: 'input-types', description: 'Includes radio, checkbox, and tel input types', explanation: 'Distinct input types trigger appropriate touch controls and validators.', rule: { kind: 'inputTypes', types: ['radio', 'checkbox', 'tel'] } },
+      { id: 'select', description: 'Includes a <select> element with options', explanation: 'Dropdown menus provide compact selection from presets.', rule: { kind: 'selector', selector: 'form select option', min: 2 } },
+      { id: 'pattern', description: 'The tel input has a pattern attribute for 10 digits', explanation: 'pattern enforces format constraints with regular expressions.', rule: { kind: 'hasAttrValue', selector: 'input[type="tel"]', attr: 'pattern', values: ['[0-9]{10}', '\\d{10}'] } },
+      { id: 'controls-labelled', description: 'All interactive controls are labelled', explanation: 'Form controls must have accessible names.', rule: { kind: 'controlsLabelled' } },
+    ],
+    hints: [
+      'Use <input type="radio" name="plan"> wrapped in a <label>.',
+      'Use <input type="checkbox"> for terms agreement.',
+      'Add <input id="tel" type="tel" pattern="[0-9]{10}"> paired with <label for="tel">.',
+    ],
+    solutionCode: `<form action="#" method="post">
+  <fieldset>
+    <legend>Subscription</legend>
+    <label><input type="radio" name="plan" value="monthly" checked> Monthly</label>
+    <label><input type="radio" name="plan" value="annual"> Annual</label>
+  </fieldset>
+  <label><input type="checkbox" name="terms" required> Agree to terms</label>
+  <label for="country">Country</label>
+  <select id="country" name="country">
+    <option value="us">United States</option>
+    <option value="ca">Canada</option>
+  </select>
+  <label for="phone">Phone (10 digits)</label>
+  <input id="phone" name="phone" type="tel" pattern="[0-9]{10}" required>
+  <button type="submit">Submit</button>
+</form>`,
+    solutionExplanation: [
+      'Radio buttons with the same name allow one selection.',
+      'type="tel" with pattern="[0-9]{10}" restricts submission to 10 digits.',
+      'All controls are associated with labels for accessibility.',
+    ],
+  },
 ]
 
-export const getChallenge = (id: string): Challenge | undefined => challenges.find((c) => c.id === id)
-export const challengesForTopic = (topicId: string): Challenge[] => challenges.filter((c) => c.topicId === topicId)
+export const getChallenge = (id: string): Challenge | undefined => {
+  const c = challenges.find((ch) => ch.id === id)
+  if (c) return c
+  for (const track of getTracks()) {
+    const found = track.challenges.find((ch) => ch.id === id)
+    if (found) return found
+  }
+  return undefined
+}
+
+export const challengesForTopic = (topicId: string): Challenge[] => {
+  const matched = challenges.filter((c) => c.topicId === topicId)
+  if (matched.length > 0) return matched
+  for (const track of getTracks()) {
+    const trackMatched = track.challenges.filter((c) => c.topicId === topicId)
+    if (trackMatched.length > 0) return trackMatched
+  }
+  return []
+}

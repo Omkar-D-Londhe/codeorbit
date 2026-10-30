@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getTopic } from '../data/curriculum'
 import { ConfirmDialog } from '../components/Dialog'
 import { EmptyState } from '../components/EmptyState'
@@ -22,9 +22,14 @@ export default function Review() {
   const { state, dispatch } = useApp()
   const toast = useToast()
   const track = useTrack()
+  const [searchParams] = useSearchParams()
   const dueList = dueCards(state.review ?? {}, toDayKey())
   const dueCount = dueList.length
-  const [tab, setTab] = useState<'due' | 'errors' | 'journal'>('due')
+  const [tab, setTab] = useState<'due' | 'errors' | 'journal'>(() => {
+    const p = searchParams.get('tab')
+    if (p === 'due' || p === 'errors' || p === 'journal') return p
+    return 'errors'
+  })
   const [errorViewMode, setErrorViewMode] = useState<'list' | 'flashcards'>('list')
   const [del, setDel] = useState<string | null>(null)
   
@@ -87,11 +92,14 @@ export default function Review() {
         </button>
       </div>
 
-      <div role="tabpanel" id="rpanel-due" aria-labelledby="rtab-due" hidden={tab !== 'due'}>
-        <DueReview />
-      </div>
+      {tab === 'due' && (
+        <div role="tabpanel" id="rpanel-due" aria-labelledby="rtab-due">
+          <DueReview />
+        </div>
+      )}
 
-      <div role="tabpanel" id="rpanel-errors" aria-labelledby="rtab-errors" hidden={tab !== 'errors'}>
+      {tab === 'errors' && (
+        <div role="tabpanel" id="rpanel-errors" aria-labelledby="rtab-errors">
         {state.errorNotebook.length === 0 ? (
           <EmptyState
             variant="review"
@@ -222,8 +230,10 @@ export default function Review() {
           </div>
         )}
       </div>
+      )}
 
-      <div role="tabpanel" id="rpanel-journal" aria-labelledby="rtab-journal" hidden={tab !== 'journal'}>
+      {tab === 'journal' && (
+      <div role="tabpanel" id="rpanel-journal" aria-labelledby="rtab-journal">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
           <h2 className="section-title" style={{ margin: 0 }}>Notes</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -318,6 +328,7 @@ export default function Review() {
           </ul>
         )}
       </div>
+      )}
 
       <ConfirmDialog
         open={!!del}

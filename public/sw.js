@@ -2,6 +2,7 @@
 const APP_VERSION = '0.1.0'
 const SHELL_CACHE = `codeorbit-shell-v${APP_VERSION}`
 const ASSETS_CACHE = `codeorbit-assets-v${APP_VERSION}`
+const PYODIDE_CACHE = 'codeorbit-pyodide-v1'
 
 const PRECACHE_SHELL_URLS = [
   '/',
@@ -30,7 +31,7 @@ self.addEventListener('install', (event) => {
 
 // 2. Activate event: Deterministic cleanup of obsolete caches
 self.addEventListener('activate', (event) => {
-  const activeCaches = new Set([SHELL_CACHE, ASSETS_CACHE])
+  const activeCaches = new Set([SHELL_CACHE, ASSETS_CACHE, PYODIDE_CACHE])
   event.waitUntil(
     caches
       .keys()
@@ -69,6 +70,11 @@ function isStaticAsset(url) {
   return false
 }
 
+function isPyodideAsset(url) {
+  const path = url.pathname
+  return path.includes('/pyodide/') || /\.(wasm|zip)$/i.test(path)
+}
+
 // 4. Fetch event: Strategic routing
 self.addEventListener('fetch', (event) => {
   const request = event.request
@@ -99,6 +105,25 @@ self.addEventListener('fetch', (event) => {
             return cached || caches.match('/')
           })
         })
+    )
+    return
+  }
+
+  // Strategy Pyodide: WebAssembly & Python runtime assets -> Cache-first with network fallback into PYODIDE_CACHE
+  if (isPyodideAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request)
+          .then((networkRes) => {
+            if (networkRes && networkRes.status === 200) {
+              const clone = networkRes.clone()
+              caches.open(PYODIDE_CACHE).then((cache) => cache.put(request, clone))
+            }
+            return networkRes
+          })
+          .catch(() => cached)
+      })
     )
     return
   }

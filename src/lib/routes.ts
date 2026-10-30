@@ -6,6 +6,9 @@ export const quizPath = (topicId: string): string => `/quiz/${topicId}`
 export const practicePath = (challengeId: string): string => `/practice/${challengeId}`
 export const trackPath = (technologyId: string): string => `/learn/${technologyId}`
 export const masteryPath = (technologyId: string): string => `/learn/${technologyId}/mastery`
+export const createPath = (): string => '/create'
+export const sharePath = (): string => '/share'
+export const conceptsPath = (): string => '/concepts'
 
 export function resumePath(lv: LastVisited): string {
   if (lv.activity === 'quiz') return quizPath(lv.topicId)

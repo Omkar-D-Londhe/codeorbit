@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useChordShortcut } from './useChordShortcut'
 
 /**
  * Checks whether the keyboard event originated from a typing target
@@ -22,18 +23,24 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 export interface UseGlobalShortcutsOptions {
   onOpenPalette: () => void
   onOpenShortcuts: () => void
+  onNavigate?: (path: string) => void
 }
 
 /**
  * Attaches global keyboard shortcuts:
  * - Ctrl+K / ⌘K and '/' open Command Palette.
  * - '?' opens Keyboard Shortcuts Reference Modal.
+ * - 'g h', 'g e', 'g p', 'g c' chord navigation shortcuts.
  * Strictly guards against firing while typing in any input or editor.
  */
 export function useGlobalShortcuts({
   onOpenPalette,
   onOpenShortcuts,
+  onNavigate,
 }: UseGlobalShortcutsOptions) {
+  // Wire two-key chords (UI-08)
+  useChordShortcut({ onNavigate })
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // 1. Guard against firing while typing in form inputs, textareas, or CodeMirror

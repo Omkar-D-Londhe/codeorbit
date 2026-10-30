@@ -34,13 +34,14 @@ export function AccessibleBarChart({
   }
 
   const maxValue = Math.max(...data.map((d) => Math.max(d.value, d.secondaryValue ?? 0)), 1)
-  const chartHeight = 180
+  const chartHeight = 230
   const barWidth = 24
   const gap = 16
   const paddingX = 40
-  const paddingY = 24
-  const svgWidth = Math.max(320, paddingX * 2 + data.length * (barWidth + gap))
-  const usableHeight = chartHeight - paddingY * 2
+  const paddingTop = 20
+  const paddingBottom = 64
+  const svgWidth = Math.max(340, paddingX * 2 + data.length * (barWidth + gap))
+  const usableHeight = chartHeight - paddingTop - paddingBottom
 
   return (
     <figure className="card accessible-chart-figure" aria-labelledby={`chart-${title.replace(/\s+/g, '-').toLowerCase()}`}>
@@ -77,11 +78,11 @@ export function AccessibleBarChart({
         >
           {/* Subtle gridlines */}
           {[0, 0.5, 1].map((ratio) => {
-            const y = chartHeight - paddingY - ratio * usableHeight
+            const y = chartHeight - paddingBottom - ratio * usableHeight
             return (
               <g key={ratio}>
                 <line x1={paddingX} y1={y} x2={svgWidth - paddingX} y2={y} stroke="var(--c-border, #333)" strokeDasharray="3 3" />
-                <text x={paddingX - 8} y={y + 4} fill="var(--c-muted, #888)" fontSize="10" textAnchor="end">
+                <text x={paddingX - 8} y={y + 4} fill="var(--c-text-muted)" fontSize="10" textAnchor="end">
                   {Math.round(ratio * maxValue)}
                 </text>
               </g>
@@ -92,8 +93,10 @@ export function AccessibleBarChart({
           {data.map((item, idx) => {
             const x = paddingX + idx * (barWidth + gap)
             const h = Math.max(4, (item.value / maxValue) * usableHeight)
-            const y = chartHeight - paddingY - h
+            const y = chartHeight - paddingBottom - h
             const isActive = activeItem?.label === item.label
+            const labelX = x + barWidth / 2
+            const labelY = chartHeight - paddingBottom + 12
 
             return (
               <g key={item.label}>
@@ -112,14 +115,18 @@ export function AccessibleBarChart({
                   onMouseEnter={() => setActiveItem(item)}
                   onMouseLeave={() => setActiveItem(null)}
                 />
+                {/* Rotated topic label (UI-02) */}
                 <text
-                  x={x + barWidth / 2}
-                  y={chartHeight - paddingY + 14}
-                  fill="var(--c-muted, #888)"
+                  x={labelX}
+                  y={labelY}
+                  transform={`rotate(-40, ${labelX}, ${labelY})`}
+                  fill="var(--c-text-muted)"
                   fontSize="10"
-                  textAnchor="middle"
+                  fontWeight="500"
+                  textAnchor="end"
                 >
-                  {item.label}
+                  {item.label.length > 15 ? `${item.label.slice(0, 13)}…` : item.label}
+                  <title>{item.label}</title>
                 </text>
               </g>
             )

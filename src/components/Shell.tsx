@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { openErrorCount } from '../lib/progress'
 import { dueCards } from '../core/learning/spaced'
 import { useMediaQuery } from '../lib/hooks'
@@ -23,6 +23,7 @@ import {
   REMINDER_BANNER_MESSAGE,
 } from '../core/reminders/reminders'
 import { ReminderBanner } from '../core/reminders/ReminderBanner'
+import { HighlightOverlay } from '../core/concepts/HighlightOverlay'
 import { Kbd } from '../core/ui/Kbd'
 
 interface NavItem { to: string; label: string; icon: IconName; match: (p: string) => boolean }
@@ -35,7 +36,11 @@ const PRIMARY_NAV: NavItem[] = [
 ]
 
 const SIDEBAR_NAV: NavItem[] = [
-  ...PRIMARY_NAV,
+  PRIMARY_NAV[0],
+  PRIMARY_NAV[1],
+  { to: '/concepts', label: 'Concepts', icon: 'book-open', match: (p) => p === '/concepts' },
+  PRIMARY_NAV[2],
+  PRIMARY_NAV[3],
   { to: '/settings', label: 'Settings', icon: 'settings', match: (p) => p === '/settings' },
 ]
 
@@ -76,7 +81,7 @@ function NavLinks({ variant }: { variant: 'side' | 'bottom' }) {
 
 function Brand() {
   return (
-    <Link to="/" className="brand" aria-label="CodeOrbit home">
+    <Link to="/" className="brand" data-concept-id="fc-04" aria-label="CodeOrbit home">
       <Emblem size={30} />
       <span className="brand__word">CodeOrbit</span>
     </Link>
@@ -116,6 +121,7 @@ export function Shell() {
   const { state } = useApp()
   const isMobile = useMediaQuery('(max-width: 767px)')
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
 
@@ -138,10 +144,11 @@ export function Shell() {
     }
   }, [state.settings?.reminders])
 
-  // Attach global keyboard shortcuts: Ctrl/⌘+K, '/', '?'
+  // Attach global keyboard shortcuts: Ctrl/⌘+K, '/', '?', and 'g h/e/p/c' chords
   useGlobalShortcuts({
     onOpenPalette: () => setPaletteOpen(true),
     onOpenShortcuts: () => setShortcutsOpen(true),
+    onNavigate: (path) => navigate(path),
   })
 
   // On route change: scroll to top and move focus to the main region (not on first load).
@@ -154,7 +161,7 @@ export function Shell() {
   return (
     <div className="shell">
       <Atmosphere />
-      <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus() }}>Skip to main content</a>
+      <a className="skip-link" data-concept-id="fc-05" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus() }}>Skip to main content</a>
       {isMobile ? (
         <header className="topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Brand />
@@ -184,6 +191,7 @@ export function Shell() {
           <button
             type="button"
             className="sidebar-search-btn"
+            data-concept-id="fc-15 fc-32"
             onClick={() => setPaletteOpen(true)}
             data-tour="search"
             aria-label="Search and command palette (Ctrl+K)"
@@ -194,7 +202,7 @@ export function Shell() {
             </span>
             <Kbd className="sidebar-search-btn__kbd">Ctrl K</Kbd>
           </button>
-          <nav aria-label="Main"><NavLinks variant="side" /></nav>
+          <nav aria-label="Main" data-concept-id="fc-09 fc-03"><NavLinks variant="side" /></nav>
           <SaveNote />
         </aside>
       )}
@@ -225,6 +233,9 @@ export function Shell() {
         open={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
+
+      {/* Concept Atlas live highlight overlay */}
+      <HighlightOverlay />
     </div>
   )
 }

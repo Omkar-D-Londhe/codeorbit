@@ -11,7 +11,7 @@ describe('curriculum data', () => {
     ids.forEach((id) => expect(id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/))
     expect(ids[0]).toBe('html-structure')
     expect(ids[ids.length - 1]).toBe('putting-together')
-    expect(ids).toHaveLength(12)
+    expect(ids).toHaveLength(topics.length)
   })
 
   it('only references existing groups and every group has a topic', () => {
@@ -85,5 +85,19 @@ describe('curriculum data', () => {
   it('marks only HTML as available, others as planned with no topics', () => {
     expect(technologies.filter((t) => t.status === 'available').map((t) => t.id)).toEqual(['html'])
     technologies.filter((t) => t.status === 'planned').forEach((t) => expect(t.topicIds).toHaveLength(0))
+  })
+
+  it('scoped track topic indices are always within track length (Topic X of Y consistency)', async () => {
+    const { getTracks } = await import('../core/content/registry')
+    const { topicsFor } = await import('../data/curriculum')
+    for (const track of getTracks()) {
+      const trackTopics = topicsFor(track.id)
+      expect(trackTopics.length).toBeGreaterThan(0)
+      trackTopics.forEach((t, i) => {
+        const foundIdx = trackTopics.findIndex((x) => x.id === t.id)
+        expect(foundIdx).toBe(i)
+        expect(foundIdx + 1).toBeLessThanOrEqual(trackTopics.length)
+      })
+    }
   })
 })

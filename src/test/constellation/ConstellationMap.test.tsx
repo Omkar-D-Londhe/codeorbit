@@ -43,10 +43,10 @@ describe('ConstellationMap component integration', () => {
 
     // Map container
     expect(
-      screen.getByRole('group', { name: /Learning Orbit map for HTML, 12 topics/i }),
+      screen.getByRole('group', { name: new RegExp(`Learning Orbit map for HTML, ${topics.length} topics`, 'i') }),
     ).toBeInTheDocument()
 
-    // 12 star buttons
+    // star buttons
     for (let i = 0; i < topics.length; i++) {
       const topic = topics[i]
       const numStr = String(i + 1).padStart(2, '0')
@@ -133,10 +133,12 @@ describe('ConstellationMap component integration', () => {
     const user = userEvent.setup()
     renderConstellation()
 
-    // Topic 12 (putting-together) has prerequisites and is locked initially
-    const capstone = topics[11]
+    // Capstone topic (putting-together) has prerequisites and is locked initially
+    const capstoneIndex = topics.findIndex((t) => t.id === 'putting-together')
+    const capstone = topics[capstoneIndex]
+    const capstoneNum = String(capstoneIndex + 1).padStart(2, '0')
     const star12 = screen.getByRole('button', {
-      name: new RegExp(`12 ${capstone.title}`, 'i'),
+      name: new RegExp(`${capstoneNum} ${capstone.title}`, 'i'),
     })
     expect(star12).toHaveAttribute('aria-label', expect.stringContaining('Locked'))
 

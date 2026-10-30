@@ -26,21 +26,21 @@ describe('first run', () => {
   it('shows an honest first-run Home with no invented progress', () => {
     renderAt('/')
     expect(screen.getByRole('heading', { level: 1, name: /learn html by exploring it/i })).toBeInTheDocument()
-    expect(screen.getByText(/0 of 12 topics complete/i)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`0 of ${topics.length} topics complete`, 'i'))).toBeInTheDocument()
     expect(screen.queryByText(/last activity/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /resume/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /start html/i })).toHaveAttribute('href', '/learn/html')
   })
 
-  it('marks future technologies as previews with no actions', () => {
+  it('marks future or decision-gated technologies honestly — all tracks now available after Pass 2', () => {
     renderAt('/explore')
-    for (const name of ['CSS', 'JavaScript', 'Bootstrap', 'Angular']) {
-      const card = screen.getByRole('listitem', { name: new RegExp(`${name}: preview`, 'i') })
-      expect(within(card).queryByRole('link')).toBeNull()
-      expect(within(card).queryByRole('button')).toBeNull()
-      expect(within(card).getByText('Preview')).toBeInTheDocument()
-    }
-    expect(screen.getByRole('link', { name: /open track/i })).toHaveAttribute('href', '/learn/html')
+    // All 8 tracks (html, css, javascript, python, bootstrap, java, cpp, angular) are now
+    // 'available' after Pass 2 promotions. No decision-pending-badge should be present.
+    expect(screen.queryByTestId('decision-pending-badge')).not.toBeInTheDocument()
+    // Every available track exposes an "Open track" link.
+    const openTrackLinks = screen.getAllByRole('link', { name: /open track/i })
+    expect(openTrackLinks.length).toBeGreaterThan(0)
+    expect(openTrackLinks[0]).toHaveAttribute('href', '/learn/html')
   })
 
   it('unknown routes show a helpful not-found page', () => {
@@ -55,8 +55,8 @@ describe('Learning Orbit', () => {
     renderAt('/learn/html?orbit=legacy')
     const strip = within(screen.getByRole('list', { name: /topics in curriculum order/i })).getAllByRole('button')
     const arch = within(screen.getByRole('list', { name: /on the learning orbit/i })).getAllByRole('button')
-    expect(strip).toHaveLength(12)
-    expect(arch).toHaveLength(12)
+    expect(strip).toHaveLength(topics.length)
+    expect(arch).toHaveLength(topics.length)
     expect(strip.map((b) => b.getAttribute('data-topic-id'))).toEqual(topics.map((t) => t.id))
     expect(arch.map((b) => b.getAttribute('data-topic-id'))).toEqual(topics.map((t) => t.id))
   })
@@ -123,7 +123,7 @@ describe('Learning Orbit', () => {
 
   it('gives each node an accessible name with position and status (not colour alone)', () => {
     renderAt('/learn/html?orbit=legacy')
-    expect(screen.getAllByRole('button', { name: /Topic 1 of 12: Document structure\. Not started\. Selected\./ }).length).toBe(2)
+    expect(screen.getAllByRole('button', { name: new RegExp(`Topic 1 of ${topics.length}: Document structure\\. Not started\\. Selected\\.`) }).length).toBe(2)
   })
 
   it('draws connectors only for declared prerequisites and highlights the selected topic’s', async () => {
@@ -436,7 +436,7 @@ describe('progress & review', () => {
   it('shows honest empty states', () => {
     renderAt('/progress')
     expect(screen.getByText(/no progress yet/i)).toBeInTheDocument()
-    expect(screen.getAllByText('Not started').length).toBe(12)
+    expect(screen.getAllByText('Not started').length).toBe(topics.length)
     renderAt('/review')
     expect(screen.getByText(/error notebook is empty/i)).toBeInTheDocument()
   })

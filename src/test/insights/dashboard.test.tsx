@@ -33,8 +33,8 @@ describe('Dashboard Integration (Stage 12: Catalog 3.1–3.6, 15.3, REF-08)', ()
     expect(screen.getByRole('heading', { level: 1, name: /learn html by exploring it/i })).toBeInTheDocument()
 
     // 3.1 Hero Ring: shows real 0 metrics without fabrication
-    expect(screen.getByText(/0 of 12 topics complete/i)).toBeInTheDocument()
-    expect(screen.getByText(/0 of 36 learning steps done/i)).toBeInTheDocument()
+    expect(screen.getByText(/0 of 13 topics complete/i)).toBeInTheDocument()
+    expect(screen.getByText(/0 of 39 learning steps done/i)).toBeInTheDocument()
 
     // 3.2 Streak Calendar: shows "No activity recorded yet", zero streak figures
     expect(screen.getByText(/no activity recorded yet/i)).toBeInTheDocument()
@@ -103,7 +103,7 @@ describe('Dashboard Integration (Stage 12: Catalog 3.1–3.6, 15.3, REF-08)', ()
     expect(resumeLink).toHaveAttribute('href', '/lesson/elements-attributes')
 
     // 3.1 Hero Ring reflects real completed steps
-    expect(screen.getByText(/2 of 36 learning steps done/i)).toBeInTheDocument()
+    expect(screen.getByText(/2 of 39 learning steps done/i)).toBeInTheDocument()
 
     // 3.5 Activity Feed: displays real events with sentences and timestamps
     expect(screen.getByText(/activity feed/i)).toBeInTheDocument()

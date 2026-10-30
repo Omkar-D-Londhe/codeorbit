@@ -36,6 +36,7 @@ export function CommandPalette({ open, onClose, onOpenShortcuts }: CommandPalett
 
   const inputRef = useRef<HTMLInputElement>(null)
   const listboxRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | null>(null)
 
   // Memoised index, rebuilt on tracks or notes/bookmarks change
@@ -109,6 +110,19 @@ export function CommandPalette({ open, onClose, onOpenShortcuts }: CommandPalett
       return
     }
 
+    if (e.key === 'Tab') {
+      const helpBtn = dialogRef.current?.querySelector<HTMLElement>('.palette-footer__help')
+      if (e.shiftKey && document.activeElement === inputRef.current && helpBtn) {
+        e.preventDefault()
+        helpBtn.focus()
+        return
+      } else if (!e.shiftKey && document.activeElement === helpBtn && inputRef.current) {
+        e.preventDefault()
+        inputRef.current.focus()
+        return
+      }
+    }
+
     if (results.length === 0) return
 
     if (e.key === 'ArrowDown') {
@@ -136,6 +150,7 @@ export function CommandPalette({ open, onClose, onOpenShortcuts }: CommandPalett
       }}
     >
       <div
+        ref={dialogRef}
         className="palette-dialog"
         role="dialog"
         aria-modal="true"

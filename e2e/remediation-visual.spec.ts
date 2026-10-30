@@ -277,24 +277,24 @@ test.describe('Learning Orbit: Constellation Final Remediation Verification (Sta
     }
   })
 
-  test('Acceptance 5: Topic counter reflects exactly 12 topics on HTML track dynamically', async ({ page }) => {
+  test('Acceptance 5: Topic counter reflects exactly 13 topics on HTML track dynamically', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 })
     await page.goto('/learn/html')
     await page.waitForSelector('.constellation-root')
 
     const counter = page.locator('.constellation-stepper-counter')
     await expect(counter).toBeVisible()
-    await expect(counter).toHaveText('1 / 12')
+    await expect(counter).toHaveText('1 / 13')
 
     // Click next topic in stepper
     const nextBtn = page.getByRole('button', { name: 'Next topic' })
     await nextBtn.click()
-    await expect(counter).toHaveText('2 / 12')
+    await expect(counter).toHaveText('2 / 13')
 
-    // At desktop size, details panel badge also displays Topic 2 of 12
+    // At desktop size, details panel badge also displays Topic 2 of 13
     await page.setViewportSize({ width: 1440, height: 900 })
     const panelBadge = page.locator('.constellation-panel__badge')
-    await expect(panelBadge).toHaveText('Topic 2 of 12')
+    await expect(panelBadge).toHaveText('Topic 2 of 13')
   })
 
   test('Acceptance 3: Toolbar controls verification through click, keyboard focus, and expand/collapse', async ({ page }) => {

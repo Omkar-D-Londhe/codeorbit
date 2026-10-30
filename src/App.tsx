@@ -25,6 +25,9 @@ const Review = lazyRoute(() => import('./pages/Review'), 'Review')
 const NotesPage = lazyRoute(() => import('./core/notes/NotesPage'), 'NotesPage')
 const BookmarksPage = lazyRoute(() => import('./core/notes/BookmarksPage'), 'BookmarksPage')
 const Settings = lazyRoute(() => import('./pages/Settings'), 'Settings')
+const ChallengeCreator = lazyRoute(() => import('./core/authoring/ChallengeCreator'), 'ChallengeCreator')
+const SharePage = lazyRoute(() => import('./pages/Share'), 'Share')
+const Concepts = lazyRoute(() => import('./pages/Concepts'), 'Concepts')
 const NotFound = lazyRoute(() => import('./pages/NotFound'), 'NotFound')
 
 const UiGallery = import.meta.env.DEV ? lazyRoute(() => import('./pages/UiGallery'), 'UiGallery') : null
@@ -58,6 +61,9 @@ export default function App() {
                 <Route path="notes" element={<NotesPage />} />
                 <Route path="bookmarks" element={<BookmarksPage />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="create" element={<ChallengeCreator />} />
+                <Route path="share" element={<SharePage />} />
+                <Route path="concepts" element={<Concepts />} />
                 {import.meta.env.DEV && UiGallery && (
                   <Route
                     path="__ui"

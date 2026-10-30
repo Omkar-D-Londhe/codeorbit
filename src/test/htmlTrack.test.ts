@@ -19,7 +19,7 @@ describe('HTML Track Module and Registry Integration', () => {
     const topicIds = htmlTrack.topics.map((t) => t.id)
     const uniqueIds = new Set(topicIds)
     expect(uniqueIds.size).toBe(topicIds.length)
-    expect(topicIds.length).toBe(12)
+    expect(topicIds.length).toBe(13)
   })
 
   it('ensures every topic has a lesson, a 3+ question quiz, and a challenge', () => {
@@ -51,12 +51,22 @@ describe('HTML Track Module and Registry Integration', () => {
     expect(registeredHtml).toBeDefined()
     expect(registeredHtml?.availability).toBe('available')
 
-    const plannedIds = ['css', 'javascript', 'bootstrap', 'angular']
-    for (const pid of plannedIds) {
-      const track = getTrack(pid)
-      expect(track, `Track ${pid} should be registered`).toBeDefined()
-      expect(track?.availability).toBe('planned')
-      expect(track?.capabilities).toEqual([])
-    }
+    const registeredCss = getTrack('css')
+    expect(registeredCss).toBeDefined()
+    expect(registeredCss?.availability).toBe('available')
+
+    const registeredJs = getTrack('javascript')
+    expect(registeredJs).toBeDefined()
+    expect(registeredJs?.availability).toBe('available')
+
+    const registeredBs = getTrack('bootstrap')
+    expect(registeredBs).toBeDefined()
+    expect(registeredBs?.availability).toBe('available')
+
+    // Angular was promoted to 'available' in Pass 2 (W6) with a full practice lab.
+    const registeredNg = getTrack('angular')
+    expect(registeredNg).toBeDefined()
+    expect(registeredNg?.availability).toBe('available')
+    expect(registeredNg?.capabilities).toEqual(['lessons', 'quizzes', 'practice', 'preview', 'diagnostics'])
   })
 })

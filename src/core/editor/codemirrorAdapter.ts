@@ -42,6 +42,7 @@ export class CodeMirrorEditorAdapter implements EditorAdapter {
     const tabSizeComp = new Compartment()
     const keymapComp = new Compartment()
     const themeComp = new Compartment()
+    const langComp = new Compartment()
 
     const createTheme = (fontSize: number) =>
       EditorView.theme({
@@ -129,9 +130,9 @@ export class CodeMirrorEditorAdapter implements EditorAdapter {
 
     // Language extensions
     const defLang = defaultTrackId()
-    if (currentOpts.language === defLang || !currentOpts.language) {
-      extensions.push(html({ autoCloseTags: currentOpts.autoClose !== false }))
-    }
+    const isHtml = currentOpts.language === defLang || !currentOpts.language
+    extensions.push(langComp.of(isHtml ? html({ autoCloseTags: currentOpts.autoClose !== false }) : []))
+
     if (currentOpts.autoClose !== false) {
       extensions.push(closeBrackets())
     }
@@ -145,6 +146,39 @@ export class CodeMirrorEditorAdapter implements EditorAdapter {
       state: startState,
       parent: el,
     })
+
+    // Lazily load non-HTML languages
+    if (currentOpts.language === 'python') {
+      import('@codemirror/lang-python')
+        .then(({ python }) => {
+          view.dispatch({ effects: langComp.reconfigure(python()) })
+        })
+        .catch(() => {})
+    } else if (currentOpts.language === 'javascript' || currentOpts.language === 'js') {
+      import('@codemirror/lang-javascript')
+        .then(({ javascript }) => {
+          view.dispatch({ effects: langComp.reconfigure(javascript()) })
+        })
+        .catch(() => {})
+    } else if (currentOpts.language === 'css') {
+      import('@codemirror/lang-css')
+        .then(({ css }) => {
+          view.dispatch({ effects: langComp.reconfigure(css()) })
+        })
+        .catch(() => {})
+    } else if (currentOpts.language === 'java') {
+      import('@codemirror/lang-java')
+        .then(({ java }) => {
+          view.dispatch({ effects: langComp.reconfigure(java()) })
+        })
+        .catch(() => {})
+    } else if (currentOpts.language === 'cpp' || currentOpts.language === 'c++') {
+      import('@codemirror/lang-cpp')
+        .then(({ cpp }) => {
+          view.dispatch({ effects: langComp.reconfigure(cpp()) })
+        })
+        .catch(() => {})
+    }
 
     return {
       getValue() {

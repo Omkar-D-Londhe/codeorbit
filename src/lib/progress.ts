@@ -1,6 +1,6 @@
 import { challenges, challengesForTopic } from '../data/challenges'
 import { getQuiz } from '../data/quizzes'
-import { topics, getTopic } from '../data/curriculum'
+import { getTopic, topicsFor } from '../data/curriculum'
 import { defaultTrackId } from '../core/content/registry'
 import type { Topic } from '../data/types'
 import { isPass, isPerfect } from './quiz'
@@ -38,17 +38,16 @@ export function topicProgress(state: CodeOrbitState, topic: Topic): TopicProgres
   const quizPassed = rec?.quizBest ? isPass(rec.quizBest) : false
   const quizPerfect = rec?.quizBest ? isPerfect(rec.quizBest) : false
   const chs = challengesForTopic(topic.id)
-  const practiceDone = chs.length > 0 && chs.every((c) => state.challenges[c.id]?.completed === true)
-  const usedSolution = chs.some((c) => {
-    const r = state.challenges[c.id]
-    return r ? r.solutionRevealed && !r.completedWithoutSolution : false
-  })
+  const primaryCh = chs[0]
+  const primaryRec = primaryCh ? state.challenges[primaryCh.id] : undefined
+  const practiceDone = chs.length > 0 && (primaryRec?.completed === true || chs.every((c) => state.challenges[c.id]?.completed === true))
+  const usedSolution = primaryRec ? primaryRec.solutionRevealed && !primaryRec.completedWithoutSolution : false
   const draftEdited = chs.some((c) => {
-    const d = state.drafts[c.id]
+    const d = state.drafts?.[c.id]
     return d !== undefined && d !== c.starterCode
   })
-  const challengeActivity = chs.some((c) => (state.challenges[c.id]?.attempts ?? 0) > 0)
-  const sess = state.quizSessions[topic.id]
+  const challengeActivity = chs.some((c) => (state.challenges?.[c.id]?.attempts ?? 0) > 0)
+  const sess = state.quizSessions?.[topic.id]
   const quizActivity = (rec?.quizAttempts ?? 0) > 0 || (sess ? sess.answers.some((a) => a !== null) || sess.skipped.some(Boolean) : false)
   const touched = lessonDone || quizActivity || draftEdited || challengeActivity
 
@@ -57,7 +56,7 @@ export function topicProgress(state: CodeOrbitState, topic: Topic): TopicProgres
   const parts = (lessonDone ? 1 : 0) + (hasQuiz && quizPassed ? 1 : 0) + (practiceDone ? 1 : 0)
   const allDone = parts === partsTotal
   let status: TopicStatus = 'not-started'
-  if (allDone) status = quizPerfect && chs.every((c) => state.challenges[c.id]?.completedWithoutSolution === true) ? 'mastered' : 'completed'
+  if (allDone) status = quizPerfect && primaryRec?.completedWithoutSolution === true ? 'mastered' : 'completed'
   else if (touched) status = 'in-progress'
   return { lessonDone, quizPassed, quizPerfect, practiceDone, usedSolution, touched, parts, partsTotal, status }
 }
@@ -72,7 +71,7 @@ export interface TrackProgress {
 }
 
 export function trackProgress(state: CodeOrbitState, technologyId: string): TrackProgress {
-  const ts = topics.filter((t) => t.technologyId === technologyId)
+  const ts = topicsFor(technologyId)
   const ps = ts.map((t) => topicProgress(state, t))
   return {
     totalTopics: ts.length,
@@ -97,10 +96,21 @@ const isDone = (state: CodeOrbitState, t: Topic): boolean => {
 
 /** Transparent, rule-based recommendation (no hidden scoring). */
 export function nextAction(state: CodeOrbitState, technologyId: string = defaultTrackId() ?? ''): NextAction {
-  const ts = topics.filter((t) => t.technologyId === technologyId)
+  const ts = topicsFor(technologyId)
   const anyActivity = ts.some((t) => topicProgress(state, t).touched)
-  const lv = state.lastVisited ? getTopic(state.lastVisited.topicId) : undefined
-  if (lv && !isDone(state, lv)) return { kind: 'resume', topicId: lv.id, reason: 'You were last working on this topic and it is not finished yet.' }
+
+  // Track-scoped resume target
+  const trackLv = state.lastVisitedByTrack?.[technologyId]
+  const trackLvTopic = trackLv ? getTopic(trackLv.topicId) : undefined
+  if (trackLvTopic && trackLvTopic.technologyId === technologyId && !isDone(state, trackLvTopic)) {
+    return { kind: 'resume', topicId: trackLvTopic.id, reason: 'You were last working on this topic in this track and it is not finished yet.' }
+  }
+
+  // Fallback to global lastVisited ONLY IF it belongs to this track
+  const globalLv = state.lastVisited ? getTopic(state.lastVisited.topicId) : undefined
+  if (globalLv && globalLv.technologyId === technologyId && !isDone(state, globalLv)) {
+    return { kind: 'resume', topicId: globalLv.id, reason: 'You were last working on this topic and it is not finished yet.' }
+  }
   const ready = ts.find((t) => !isDone(state, t) && t.prerequisiteIds.every((p) => { const pt = getTopic(p); return pt ? isDone(state, pt) : true }))
   if (ready) {
     const unmet = ready.prerequisiteIds.length

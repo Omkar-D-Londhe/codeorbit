@@ -34,12 +34,15 @@ export function AccessibleLineChart({
   }
 
   const maxValue = Math.max(...points.map((p) => p.value), 1)
-  const chartHeight = 180
-  const paddingX = 40
-  const paddingY = 24
+  const chartHeight = 190
+  const paddingX = 42
+  const paddingY = 28
   const usableHeight = chartHeight - paddingY * 2
-  const pointGap = 24
-  const svgWidth = Math.max(340, paddingX * 2 + (points.length - 1) * pointGap)
+  const pointGap = Math.max(28, points.length > 10 ? 28 : 36)
+  const svgWidth = Math.max(360, paddingX * 2 + (points.length - 1) * pointGap)
+
+  // Decimation step to avoid label collisions (UI-01)
+  const labelInterval = points.length > 8 ? Math.ceil(points.length / 7) : 1
 
   // Compute SVG coordinates for polyline
   const coords = points.map((p, idx) => {
@@ -90,7 +93,7 @@ export function AccessibleLineChart({
             return (
               <g key={ratio}>
                 <line x1={paddingX} y1={y} x2={svgWidth - paddingX} y2={y} stroke="var(--c-border, #333)" strokeDasharray="3 3" />
-                <text x={paddingX - 8} y={y + 4} fill="var(--c-muted, #888)" fontSize="10" textAnchor="end">
+                <text x={paddingX - 8} y={y + 4} fill="var(--c-text-muted)" fontSize="10" textAnchor="end">
                   {Math.round(ratio * maxValue)}
                 </text>
               </g>
@@ -114,7 +117,7 @@ export function AccessibleLineChart({
           />
 
           {/* Data points */}
-          {coords.map(({ x, y, point }) => {
+          {coords.map(({ x, y, point }, idx) => {
             const isActive = activePoint?.label === point.label
             return (
               <g key={point.label}>
@@ -131,15 +134,18 @@ export function AccessibleLineChart({
                   onMouseEnter={() => setActivePoint(point)}
                   onMouseLeave={() => setActivePoint(null)}
                 />
-                <text
-                  x={x}
-                  y={chartHeight - paddingY + 14}
-                  fill="var(--c-muted, #888)"
-                  fontSize="9"
-                  textAnchor="middle"
-                >
-                  {point.label}
-                </text>
+                {/* Show label only at decimation interval or last point to prevent overlaps (UI-01) */}
+                {(idx % labelInterval === 0 || idx === points.length - 1) && (
+                  <text
+                    x={x}
+                    y={chartHeight - paddingY + 16}
+                    fill="var(--c-text-muted)"
+                    fontSize="10"
+                    textAnchor="middle"
+                  >
+                    {point.label}
+                  </text>
+                )}
               </g>
             )
           })}

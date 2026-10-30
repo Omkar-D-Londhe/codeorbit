@@ -1,0 +1,93 @@
+import type { Topic, TopicGroup } from '../../data/types'
+
+export const BOOTSTRAP_TECH_ID = 'bootstrap'
+
+export const bootstrapGroups: TopicGroup[] = [
+  { id: 'bs-grid-layout', title: 'Grid & Layout' },
+  { id: 'bs-typography-utilities', title: 'Typography & Utilities' },
+  { id: 'bs-components-nav', title: 'Components & Navigation' },
+  { id: 'bs-forms-auth', title: 'Forms & Authentication' },
+]
+
+export const bootstrapTopics: Topic[] = [
+  {
+    id: 'grid-system',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Bootstrap Grid & 12-Column Layout',
+    shortTitle: 'Grid',
+    groupId: 'bs-grid-layout',
+    description: 'Master the 12-column flexbox grid, columns, rows, and responsive breakpoints.',
+    prerequisiteIds: [],
+    tags: ['grid', 'layout', 'responsive', 'columns'],
+  },
+  {
+    id: 'containers-layout',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Containers and Breakpoints',
+    shortTitle: 'Containers',
+    groupId: 'bs-grid-layout',
+    description: 'Use default, fluid, and responsive container widths to frame responsive pages.',
+    prerequisiteIds: ['grid-system'],
+    tags: ['containers', 'breakpoints', 'layout'],
+  },
+  {
+    id: 'utilities',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Utilities, Spacing and Colors',
+    shortTitle: 'Utilities',
+    groupId: 'bs-typography-utilities',
+    description: 'Rapidly style margins, padding, text alignment, colors, and display properties.',
+    prerequisiteIds: ['grid-system'],
+    tags: ['utilities', 'spacing', 'colors', 'typography'],
+  },
+  {
+    id: 'components',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Core Components (Buttons, Cards, Alerts)',
+    shortTitle: 'Components',
+    groupId: 'bs-components-nav',
+    description: 'Build cohesive interfaces with pre-styled buttons, cards, alerts, and badges.',
+    prerequisiteIds: ['utilities'],
+    tags: ['components', 'buttons', 'cards', 'alerts'],
+  },
+  {
+    id: 'navbar',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Responsive Navbar & Toggler',
+    shortTitle: 'Navbar',
+    groupId: 'bs-components-nav',
+    description: 'Construct responsive navigation headers with brand, toggler, and collapsible menus.',
+    prerequisiteIds: ['components'],
+    tags: ['navbar', 'navigation', 'responsive', 'a11y'],
+  },
+  {
+    id: 'forms-controls',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Form Controls and Layouts',
+    shortTitle: 'Forms',
+    groupId: 'bs-forms-auth',
+    description: 'Structure accessible form inputs, labels, selects, checkboxes, and input groups.',
+    prerequisiteIds: ['components'],
+    tags: ['forms', 'inputs', 'labels', 'controls'],
+  },
+  {
+    id: 'auth-forms',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Authentication UI & Validation States',
+    shortTitle: 'Auth Forms',
+    groupId: 'bs-forms-auth',
+    description: 'Design login and registration form layouts with validation feedback states.',
+    prerequisiteIds: ['forms-controls'],
+    tags: ['auth', 'forms', 'validation', 'feedback'],
+  },
+  {
+    id: 'responsive-patterns',
+    technologyId: BOOTSTRAP_TECH_ID,
+    title: 'Responsive UI Patterns & Dashboards',
+    shortTitle: 'Patterns',
+    groupId: 'bs-components-nav',
+    description: 'Assemble complete responsive dashboards combining navbars, grids, and cards.',
+    prerequisiteIds: ['navbar', 'auth-forms'],
+    tags: ['dashboard', 'patterns', 'responsive', 'capstone'],
+  },
+]

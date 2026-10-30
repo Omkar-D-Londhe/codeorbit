@@ -42,9 +42,9 @@ beforeEach(() => {
 })
 
 describe('Mastery map page (REF-02, Stage 15a)', () => {
-  it('shows the graph with all 12 topics and only real edges on wide screens', () => {
+  it('shows the graph with all topics and only real edges on wide screens', () => {
     renderAt('/learn/html/mastery')
-    expect(document.querySelectorAll('.mastery-node')).toHaveLength(12)
+    expect(document.querySelectorAll('.mastery-node')).toHaveLength(topics.length)
     expect(document.querySelectorAll('.mastery__edge')).toHaveLength(prerequisiteEdges.length)
   })
 
@@ -124,7 +124,7 @@ describe('Mastery map page (REF-02, Stage 15a)', () => {
 
     // Select topic within heatmap
     const items = document.querySelectorAll('.mastery-heatmap__item')
-    expect(items.length).toBe(12)
+    expect(items.length).toBe(13)
     await user.click(items[1])
     expect(items[1]).toHaveAttribute('aria-current', 'true')
   })
@@ -177,7 +177,7 @@ describe('Mastery map page (REF-02, Stage 15a)', () => {
 
   it('/mastery redirects to default track map /learn/html/mastery', () => {
     renderAt('/mastery')
-    expect(document.querySelectorAll('.mastery-node')).toHaveLength(12)
+    expect(document.querySelectorAll('.mastery-node')).toHaveLength(topics.length)
     expect(screen.getByRole('heading', { level: 1, name: 'Mastery map' })).toBeInTheDocument()
   })
 
@@ -213,7 +213,7 @@ describe('Force-directed mastery graph view (Stage 15b, Enhancement 11.1)', () =
     expect(graph).toBeInTheDocument()
 
     const nodes = document.querySelectorAll('.mastery__graph--force .mastery-node')
-    expect(nodes).toHaveLength(12)
+    expect(nodes).toHaveLength(topics.length)
 
     const edges = document.querySelectorAll('.mastery__graph--force .mastery__edge')
     expect(edges).toHaveLength(prerequisiteEdges.length)

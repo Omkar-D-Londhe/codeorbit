@@ -13,8 +13,14 @@ export function registerServiceWorker(onUpdate?: UpdateCallback): void {
     return
   }
 
-  // Reload page once controller changes after user confirms skipWaiting
+  // Only reload once controller changes when an active controller already existed (i.e. update after skipWaiting).
+  // Do NOT reload on the initial claim, which causes ERR_ABORTED race conditions.
+  let hadController = Boolean(navigator.serviceWorker.controller)
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) {
+      hadController = true
+      return
+    }
     if (refreshing) return
     refreshing = true
     window.location.reload()

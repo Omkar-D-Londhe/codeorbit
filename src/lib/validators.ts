@@ -1,5 +1,33 @@
 import type { Challenge, ChallengeRequirement, Rule } from '../data/types'
 import { findRuleLocation } from './sourcePositions'
+import { evaluateCssRule, findCssRuleLocation, type CssRule } from '../tracks/css/validators'
+import {
+  checkHasClass,
+  checkNavbarStructure,
+  checkGridStructure,
+  checkFormControls,
+  checkValidationFeedback,
+} from '../tracks/bootstrap/validators'
+import {
+  evaluatePythonRule,
+  findPythonRuleLocation,
+  type PythonRule,
+} from '../tracks/python/validators'
+import {
+  evaluateJavaRule,
+  findJavaRuleLocation,
+  type JavaRule,
+} from '../tracks/java/validators'
+import {
+  evaluateCppRule,
+  findCppRuleLocation,
+  type CppRule,
+} from '../tracks/cpp/validators'
+import {
+  evaluateAngularRule,
+  findAngularRuleLocation,
+  type AngularRule,
+} from '../tracks/angular/validators'
 
 export type RequirementStatus = 'pass' | 'fail'
 
@@ -53,7 +81,7 @@ function safeQuery(doc: Document, selector: string): Element[] {
 }
 
 /** Evaluate one rule against a parsed document. Pure and deterministic. */
-export function evaluateRule(rule: Rule, doc: Document, rawHtml: string): boolean {
+export function evaluateRule(rule: Rule, doc: Document, rawHtml: string, css?: string): boolean {
   switch (rule.kind) {
     case 'doctype':
       return /^\s*<!doctype\s+html\s*>/i.test(rawHtml)
@@ -107,14 +135,132 @@ export function evaluateRule(rule: Rule, doc: Document, rawHtml: string): boolea
       const links = safeQuery(doc, 'a')
       return links.every((a) => !banned.includes(norm(a.textContent).toLowerCase().replace(/[.!?:]+$/, '')))
     }
+    case 'hasAttrValue': {
+      const els = safeQuery(doc, rule.selector)
+      return els.some((el) => {
+        const v = norm(el.getAttribute(rule.attr)).toLowerCase()
+        return rule.values.some((val) => val.toLowerCase() === v)
+      })
+    }
+    case 'nestedList': {
+      return safeQuery(doc, 'li ul, li ol').length > 0
+    }
+    case 'cellSpan': {
+      const cells = safeQuery(doc, 'th, td')
+      return cells.some((cell) => {
+        const val = parseInt(cell.getAttribute(rule.attr) || '0', 10)
+        return !isNaN(val) && val >= rule.min
+      })
+    }
+    case 'inputTypes': {
+      const inputs = safeQuery(doc, 'input')
+      const presentTypes = new Set(inputs.map((inp) => (inp.getAttribute('type') || 'text').toLowerCase()))
+      const matched = rule.types.filter((t) => presentTypes.has(t.toLowerCase()))
+      const required = rule.min !== undefined ? rule.min : rule.types.length
+      return matched.length >= required
+    }
+    case 'mediaControls': {
+      const els = safeQuery(doc, rule.element)
+      return els.length > 0 && els.some((el) => el.hasAttribute('controls'))
+    }
+    case 'ruleExists':
+    case 'declares':
+    case 'mediaQuery':
+    case 'usesDisplay':
+    case 'reducedMotionGuard':
+    case 'specificityBelow': {
+      const effectiveCss = css ?? Array.from(doc.querySelectorAll('style')).map((s) => s.textContent || '').join('\n')
+      return evaluateCssRule(rule as unknown as CssRule, effectiveCss, rawHtml)
+    }
+    case 'hasClass':
+      return checkHasClass(doc, rule.selector, rule.className)
+    case 'navbarStructure':
+      return checkNavbarStructure(doc)
+    case 'gridStructure':
+      return checkGridStructure(doc, rule.expectedCols)
+    case 'formControls':
+      return checkFormControls(doc)
+    case 'validationFeedback':
+      return checkValidationFeedback(doc)
+    case 'definesFunction':
+    case 'containsLoop':
+    case 'usesComprehension':
+    case 'usesRecursion':
+    case 'declaresClass':
+    case 'usesConstruct':
+    case 'pythonSourceMatches':
+    case 'blocksImport':
+      return evaluatePythonRule(rule as PythonRule, rawHtml)
+    default:
+      return false
   }
 }
 
-export function checkRequirements(requirements: ChallengeRequirement[], html: string): CheckResult {
+export function checkRequirements(
+  requirements: ChallengeRequirement[],
+  html: string,
+  css?: string,
+  options?: { language?: string },
+): CheckResult {
   const doc = parseHtml(html)
+  const effectiveCss = css ?? Array.from(doc.querySelectorAll('style')).map((s) => s.textContent || '').join('\n')
   const results: RequirementResult[] = requirements.map((r) => {
-    const met = evaluateRule(r.rule, doc, html)
-    const loc = findRuleLocation(r.rule, doc, html, met)
+    const isCssKind = [
+      'ruleExists',
+      'declares',
+      'mediaQuery',
+      'usesDisplay',
+      'reducedMotionGuard',
+      'specificityBelow',
+    ].includes(r.rule?.kind)
+
+    const isJava = options?.language === 'java' || r.rule?.kind === 'javaSourceMatches' || r.rule?.kind === 'definesMethod'
+    const isCpp = options?.language === 'cpp' || r.rule?.kind === 'cppSourceMatches' || r.rule?.kind === 'usesPointerOrReference'
+    const isAngular =
+      options?.language === 'angular' ||
+      r.rule?.kind === 'angularSourceMatches' ||
+      r.rule?.kind === 'declaresComponent' ||
+      r.rule?.kind === 'usesSignal' ||
+      r.rule?.kind === 'usesControlFlow' ||
+      r.rule?.kind === 'usesBinding' ||
+      r.rule?.kind === 'declaresInjectable' ||
+      r.rule?.kind === 'usesRouterLink'
+
+    const isPythonKind = !isJava && !isCpp && !isAngular && [
+      'definesFunction',
+      'containsLoop',
+      'usesComprehension',
+      'usesRecursion',
+      'declaresClass',
+      'usesConstruct',
+      'pythonSourceMatches',
+      'blocksImport',
+    ].includes(r.rule?.kind)
+
+    const met = isCssKind
+      ? evaluateCssRule(r.rule as unknown as CssRule, effectiveCss, html)
+      : isJava
+        ? evaluateJavaRule(html, r.rule as unknown as JavaRule)
+        : isCpp
+          ? evaluateCppRule(html, r.rule as unknown as CppRule)
+          : isAngular
+            ? evaluateAngularRule(html, r.rule as unknown as AngularRule)
+            : isPythonKind
+              ? evaluatePythonRule(r.rule as PythonRule, html)
+              : evaluateRule(r.rule, doc, html, effectiveCss)
+
+    const loc = isCssKind
+      ? findCssRuleLocation(r.rule as unknown as CssRule, effectiveCss)
+      : isJava
+        ? findJavaRuleLocation(html, r.rule as unknown as JavaRule)
+        : isCpp
+          ? findCppRuleLocation(html, r.rule as unknown as CppRule)
+          : isAngular
+            ? findAngularRuleLocation(html, r.rule as unknown as AngularRule)
+            : isPythonKind
+              ? findPythonRuleLocation(r.rule as PythonRule, html)
+              : findRuleLocation(r.rule, doc, html, met)
+
     return {
       id: r.id,
       description: r.description,
@@ -129,5 +275,24 @@ export function checkRequirements(requirements: ChallengeRequirement[], html: st
   return { results, passed, total: results.length, allPassed: passed === results.length }
 }
 
-export const checkChallenge = (challenge: Challenge, html: string): CheckResult =>
-  checkRequirements(challenge.requirements, html)
+export const checkChallenge = (challenge: Challenge, html: string, css?: string): CheckResult => {
+  let effectiveCss = css
+  if (effectiveCss === undefined && challenge.files) {
+    const cssFile = challenge.files.find((f) => f.name.toLowerCase().endsWith('.css'))
+    if (cssFile) effectiveCss = cssFile.content
+  }
+  const language =
+    challenge.id.startsWith('java-') || challenge.topicId.startsWith('java-')
+      ? 'java'
+      : challenge.id.startsWith('cpp-') || challenge.topicId.startsWith('cpp-')
+        ? 'cpp'
+        : challenge.id.startsWith('py-') || challenge.topicId.startsWith('py-')
+          ? 'python'
+          : challenge.id.startsWith('ng-') || challenge.topicId.startsWith('ng-')
+            ? 'angular'
+            : undefined
+
+  return checkRequirements(challenge.requirements, html, effectiveCss, { language })
+}
+
+export const validateChallenge = checkChallenge

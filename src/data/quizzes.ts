@@ -1,4 +1,5 @@
 import type { Quiz, QuizQuestion } from './types'
+import { getTracks } from '../core/content/registry.ts'
 
 /** Deterministic hash so option order is varied but identical on every load. */
 const hash = (s: string): number => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)
@@ -106,6 +107,8 @@ export const quizzes: Quiz[] = [
         caseInsensitive: true,
         explanation: 'The <kbd> inline semantic tag denotes keyboard keystrokes or voice commands.',
       },
+      q('text-semantics-4', 'Which tag is designed to highlight text for relevance or reference?', ['<mark>', '<highlight>', '<yellow>', '<b>'], 0,
+        '<mark> represents text highlighted or marked for reference or relevance purposes.'),
     ],
   },
   {
@@ -164,6 +167,17 @@ export const quizzes: Quiz[] = [
     ],
   },
   {
+    topicId: 'media-elements',
+    questions: [
+      q('media-1', 'Which attribute enables user play, pause, and volume controls on <audio> or <video>?', ['controls', 'autoplay', 'ui', 'play'], 0,
+        'The controls boolean attribute displays native browser playback interface controls.'),
+      q('media-2', 'Why should you include multiple <source> elements inside <video>?', ['To play multiple videos at once', 'To provide fallback video formats for different browser support', 'To increase download speed', 'To repeat playback'], 1,
+        'Browsers evaluate <source> tags in order and play the first format they support.'),
+      q('media-3', 'Which element provides subtitles and captions for audio or video?', ['<caption rel="sub">', '<track kind="subtitles">', '<subtitle>', '<alt>'], 1,
+        '<track> specifies timed text tracks (such as subtitles and captions) in WebVTT format.'),
+    ],
+  },
+  {
     topicId: 'tables',
     questions: [
       q('tables-1', 'Which element holds a header cell?', ['<td>', '<th>', '<tr>', '<caption>'], 1,
@@ -186,6 +200,8 @@ export const quizzes: Quiz[] = [
         answer: 2,
         explanation: 'Line 3 uses <td> cells with scope="col". Table header cells must be <th> elements.',
       },
+      q('tables-4', 'Which attribute allows a table header or cell to span across multiple columns?', ['rowspan', 'colspan', 'span', 'colwidth'], 1,
+        'colspan indicates the number of columns that a cell spans across in a table grid.'),
     ],
   },
   {
@@ -205,6 +221,8 @@ export const quizzes: Quiz[] = [
         caseInsensitive: true,
         explanation: 'The required attribute is a boolean constraint that prevents form submission when the field has no value.',
       },
+      q('forms-4', 'How do you group radio buttons so that only one can be selected at a time?', ['Give them the same id', 'Give them the same name attribute', 'Wrap each in a <div>', 'Give them the same value'], 1,
+        'Radio buttons sharing the same name attribute form a radio button group where selecting one unchecks the others.'),
     ],
   },
   {
@@ -290,4 +308,12 @@ export const quizzes: Quiz[] = [
   },
 ]
 
-export const getQuiz = (topicId: string): Quiz | undefined => quizzes.find((x) => x.topicId === topicId)
+export const getQuiz = (topicId: string): Quiz | undefined => {
+  const q = quizzes.find((x) => x.topicId === topicId)
+  if (q) return q
+  for (const track of getTracks()) {
+    const found = track.quizzes[topicId]
+    if (found) return found
+  }
+  return undefined
+}

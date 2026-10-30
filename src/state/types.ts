@@ -1,8 +1,9 @@
 import type { QuizSession } from '../lib/quiz'
 import type { ReviewCard, Grade } from '../core/learning/spaced'
 import type { ChallengeV2 } from '../core/content/types'
+import type { AnalysisRecord, AnalysisState } from '../core/analysis/types'
 
-export type { ReviewCard, Grade }
+export type { ReviewCard, Grade, ChallengeV2, AnalysisRecord, AnalysisState }
 import type { ThemeId, AccentId, ContrastMode, MotionPreference } from '../core/settings/appearance'
 
 export type Activity = 'lesson' | 'quiz' | 'practice'
@@ -190,6 +191,7 @@ export interface BadgeRecord {
 export interface CodeOrbitState {
   schemaVersion: number
   lastVisited?: LastVisited
+  lastVisitedByTrack?: Record<string, LastVisited>
   selectedTopicId?: string
   topics: Record<string, TopicRecord>
   quizSessions: Record<string, QuizSession>
@@ -212,6 +214,7 @@ export interface CodeOrbitState {
   timeSpentSessions: Record<string, number>
   review: Record<string, ReviewCard>
   custom: { challenges: ChallengeV2[] }
+  analysis: AnalysisState
 }
 
 /** Helper to generate composite section review card ID (18a) */

@@ -184,7 +184,7 @@ describe('Achievements derived from real evidence (Catalog 8.2, REF-05)', () => 
     topics.forEach((t) => {
       s = finishTopic(s, t.id)
     })
-    expect(byId(s, 'html-complete')).toMatchObject({ earned: true, progress: { current: 12, total: 12 } })
+    expect(byId(s, 'html-complete')).toMatchObject({ earned: true, progress: { current: topics.length, total: topics.length } })
   })
 
   it('preserves honest dates: live sync records real timestamp; silent backfill leaves firstSeenAt null', () => {

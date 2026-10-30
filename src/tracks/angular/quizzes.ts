@@ -1,0 +1,268 @@
+import type { Quiz } from '../../data/types'
+
+export const angularQuizzes: Quiz[] = [
+  {
+    topicId: 'ng-components',
+    questions: [
+      {
+        id: 'ng-q-comp-1',
+        kind: 'choice',
+        prompt: 'Which decorator is used to define an Angular component and attach its view metadata?',
+        options: [
+          '@Directive()',
+          '@Component()',
+          '@Injectable()',
+          '@Pipe()',
+        ],
+        correctIndex: 1,
+        explanation: '@Component() marks a TypeScript class as a component and declares its selector, template, and styles.',
+      },
+      {
+        id: 'ng-q-comp-2',
+        kind: 'choice',
+        prompt: 'What is the primary benefit of standalone components in modern Angular?',
+        options: [
+          'They execute in a WebAssembly sandbox',
+          'They manage their own dependencies directly without needing an NgModule',
+          'They do not require TypeScript type annotations',
+          'They compile to pure Web Components without Angular runtime',
+        ],
+        correctIndex: 1,
+        explanation: 'Standalone components specify their dependencies in their own imports array, removing the boilerplate of NgModule definitions.',
+      },
+      {
+        id: 'ng-q-comp-3',
+        kind: 'choice',
+        prompt: 'Which lifecycle hook is the recommended location for performing component initialization logic and data loading?',
+        options: [
+          'constructor',
+          'ngOnDestroy',
+          'ngOnInit',
+          'ngAfterViewChecked',
+        ],
+        correctIndex: 2,
+        explanation: 'ngOnInit is invoked once after input properties are set, making it the proper location for initialization and data requests.',
+      },
+    ],
+  },
+  {
+    topicId: 'ng-templates',
+    questions: [
+      {
+        id: 'ng-q-tmpl-1',
+        kind: 'choice',
+        prompt: 'Which syntax represents text interpolation in Angular templates?',
+        options: [
+          '${ expression }',
+          '#{ expression }',
+          '{{ expression }}',
+          '[[ expression ]]',
+        ],
+        correctIndex: 2,
+        explanation: 'Angular uses double curly braces {{ expression }} to evaluate and interpolate values from the component into the template.',
+      },
+      {
+        id: 'ng-q-tmpl-2',
+        kind: 'choice',
+        prompt: 'What is the purpose of the safe navigation operator (?.) in an Angular template expression like user?.profile?.email?',
+        options: [
+          'It escapes HTML tags to prevent XSS attacks',
+          'It guards against null or undefined property access errors during template rendering',
+          'It triggers immediate change detection on the object',
+          'It converts the evaluated value into an observable stream',
+        ],
+        correctIndex: 1,
+        explanation: 'The safe navigation operator prevents runtime TypeErrors when evaluating properties on objects that may temporarily be null or undefined.',
+      },
+      {
+        id: 'ng-q-tmpl-3',
+        kind: 'choice',
+        prompt: 'Where are expressions inside template interpolation {{ }} evaluated?',
+        options: [
+          'In the global window context',
+          'Within the execution context of the host component instance',
+          'Directly inside the browser DOM parser',
+          'Inside a sandboxed ServiceWorker thread',
+        ],
+        correctIndex: 1,
+        explanation: 'Template expressions evaluate directly within the scope and properties of the component instance.',
+      },
+    ],
+  },
+  {
+    topicId: 'ng-data-binding',
+    questions: [
+      {
+        id: 'ng-q-bind-1',
+        kind: 'choice',
+        prompt: 'Which syntax correctly represents one-way property binding from component to DOM element in Angular?',
+        options: [
+          '(property)="value"',
+          '[property]="expression"',
+          '{{property}}="value"',
+          'bind:property="value"',
+        ],
+        correctIndex: 1,
+        explanation: 'Square brackets [property]="expression" bind a component expression value to an element or child component input property.',
+      },
+      {
+        id: 'ng-q-bind-2',
+        kind: 'choice',
+        prompt: 'Which syntax listens to a DOM or component event and calls an event handler method in Angular?',
+        options: [
+          '(click)="onClick($event)"',
+          '[click]="onClick($event)"',
+          'on-click="onClick($event)"',
+          '@click="onClick($event)"',
+        ],
+        correctIndex: 0,
+        explanation: 'Parentheses (event)="handler()" define event binding in Angular templates.',
+      },
+      {
+        id: 'ng-q-bind-3',
+        kind: 'choice',
+        prompt: 'What is the standard syntax for two-way data binding in Angular ("banana in a box")?',
+        options: [
+          '([ngModel])="userName"',
+          '[(ngModel)]="userName"',
+          '{{ngModel}}="userName"',
+          '{[ngModel]}="userName"',
+        ],
+        correctIndex: 1,
+        explanation: 'The "banana in a box" syntax [(ngModel)] places parentheses inside square brackets for two-way model synchronization.',
+      },
+    ],
+  },
+  {
+    topicId: 'ng-directives',
+    questions: [
+      {
+        id: 'ng-q-dir-1',
+        kind: 'choice',
+        prompt: 'In modern Angular, which built-in block syntax replaces the legacy *ngIf structural directive?',
+        options: [
+          '#if (condition)',
+          '@if (condition) { }',
+          'v-if="condition"',
+          '<!-- if condition -->',
+        ],
+        correctIndex: 1,
+        explanation: 'Modern Angular uses built-in control flow syntax: @if (condition) { ... } @else { ... }.',
+      },
+      {
+        id: 'ng-q-dir-2',
+        kind: 'choice',
+        prompt: 'Why is the track expression mandatory in modern Angular @for loops (e.g. @for (item of items; track item.id))?',
+        options: [
+          'To sort the collection alphabetically before rendering',
+          'To optimize DOM node reuse and avoid unnecessary re-renders when items change',
+          'To convert the array into an indexed database table',
+          'To log rendering performance to the browser console',
+        ],
+        correctIndex: 1,
+        explanation: 'The track expression provides Angular with a unique identity key to track and reuse DOM nodes efficiently across collection mutations.',
+      },
+      {
+        id: 'ng-q-dir-3',
+        kind: 'choice',
+        prompt: 'Which directive is used to dynamically add or remove multiple CSS classes on an element based on object keys and boolean values?',
+        options: [
+          'ngStyle',
+          'ngClass',
+          'classToggle',
+          'styleBinding',
+        ],
+        correctIndex: 1,
+        explanation: '[ngClass]="{ \'class-a\': isTrue, \'class-b\': isFalse }" toggles classes dynamically based on boolean conditions.',
+      },
+    ],
+  },
+  {
+    topicId: 'ng-services',
+    questions: [
+      {
+        id: 'ng-q-svc-1',
+        kind: 'choice',
+        prompt: 'Which decorator marks a class as an Angular service that can be managed by the Dependency Injection system?',
+        options: [
+          '@Service()',
+          '@Component()',
+          '@Injectable()',
+          '@Provider()',
+        ],
+        correctIndex: 2,
+        explanation: '@Injectable() declares that a class is a service and can have dependencies injected into it or be injected into components.',
+      },
+      {
+        id: 'ng-q-svc-2',
+        kind: 'choice',
+        prompt: 'What does providedIn: "root" achieve when configured in an @Injectable() decorator?',
+        options: [
+          'It provides the service as an application-wide singleton that is eligible for tree-shaking',
+          'It attaches the service to the window root object',
+          'It requires the service to be declared in every component imports array',
+          'It runs the service in the browser root privileged thread',
+        ],
+        correctIndex: 0,
+        explanation: 'providedIn: "root" registers the service with the root injector as a singleton across the application and enables tree-shaking if unused.',
+      },
+      {
+        id: 'ng-q-svc-3',
+        kind: 'choice',
+        prompt: 'Besides constructor injection, which modern Angular function can inject a service directly within a class property declaration?',
+        options: [
+          'resolve()',
+          'useService()',
+          'inject()',
+          'lookup()',
+        ],
+        correctIndex: 2,
+        explanation: 'The inject() function (e.g. private myService = inject(MyService);) resolves dependencies directly in field initializers and constructors.',
+      },
+    ],
+  },
+  {
+    topicId: 'ng-routing',
+    questions: [
+      {
+        id: 'ng-q-route-1',
+        kind: 'choice',
+        prompt: 'Which component directive acts as a dynamic placeholder where the Angular Router renders the currently matched route component?',
+        options: [
+          '<router-view></router-view>',
+          '<router-outlet></router-outlet>',
+          '<route-container></route-container>',
+          '<outlet></outlet>',
+        ],
+        correctIndex: 1,
+        explanation: '<router-outlet></router-outlet> marks the spot in a template where the active router component is inserted.',
+      },
+      {
+        id: 'ng-q-route-2',
+        kind: 'choice',
+        prompt: 'Which directive should be attached to anchor tags for client-side navigation without triggering full page reloads?',
+        options: [
+          'href="/path"',
+          'routerLink="/path"',
+          'navTarget="/path"',
+          'routeTo="/path"',
+        ],
+        correctIndex: 1,
+        explanation: 'The routerLink directive intercepts clicks and performs client-side URL navigation without triggering browser document reloading.',
+      },
+      {
+        id: 'ng-q-route-3',
+        kind: 'choice',
+        prompt: 'Which path string in an Angular Route definition acts as a wildcard fallback to match any undefined URL (such as a 404 page)?',
+        options: [
+          'path: "*"',
+          'path: "**"',
+          'path: "default"',
+          'path: "all"',
+        ],
+        correctIndex: 1,
+        explanation: 'The double asterisk path: "**" matches all unmatched URL paths as a wildcard fallback.',
+      },
+    ],
+  },
+]

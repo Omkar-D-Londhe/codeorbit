@@ -23,13 +23,25 @@ export type ImportResult =
   | { ok: true; state: CodeOrbitState; summary: ImportSummary; repaired: boolean }
   | { ok: false; error: string }
 
-export function buildExport(state: CodeOrbitState, exportedAt = Date.now()): string {
+export function buildExport(
+  state: CodeOrbitState,
+  exportedAt = Date.now(),
+  options?: { includeAnalysisHistory?: boolean }
+): string {
+  // Analysis history excluded from export unless the learner opts in (Stage 20 §11)
+  const stateToExport: CodeOrbitState = options?.includeAnalysisHistory
+    ? state
+    : {
+        ...state,
+        analysis: state.analysis ? { ...state.analysis, history: [] } : { history: [] },
+      }
+
   const exportPayload: ExportFile = {
     app: 'codeorbit',
     exportVersion: 1,
     schemaVersion: state.schemaVersion || SCHEMA_VERSION,
     exportedAt,
-    state
+    state: stateToExport,
   }
   return JSON.stringify(exportPayload, null, 2)
 }

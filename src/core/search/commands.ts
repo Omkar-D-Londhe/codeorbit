@@ -61,6 +61,14 @@ export function buildCommands({
       run: () => navigate('/explore'),
     },
     {
+      id: 'cmd-nav-concepts',
+      title: 'Open Concept Atlas',
+      keywords: ['concepts', 'atlas', 'frontend', 'standards', 'compliance', 'map'],
+      group: 'Navigate',
+      enabled: () => true,
+      run: () => navigate('/concepts'),
+    },
+    {
       id: 'cmd-nav-progress',
       title: 'My Progress & Achievements',
       keywords: ['progress', 'xp', 'badges', 'level', 'achievements', 'stats'],

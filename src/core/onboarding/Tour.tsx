@@ -32,8 +32,8 @@ function getTargetRect(selector: string): SpotlightRect | null {
     const r = el.getBoundingClientRect()
     const width = r.width > 0 ? r.width : 120
     const height = r.height > 0 ? r.height : 44
-    const top = (r.width > 0 || r.height > 0 ? r.top : 80) + window.scrollY
-    const left = (r.width > 0 || r.height > 0 ? r.left : 40) + window.scrollX
+    const top = r.width > 0 || r.height > 0 ? r.top : 80
+    const left = r.width > 0 || r.height > 0 ? r.left : 40
     return {
       top,
       left,
@@ -57,8 +57,8 @@ function calculatePopoverCoords(
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
-  const screenTargetTop = rect.top - window.scrollY
-  const screenTargetLeft = rect.left - window.scrollX
+  const screenTargetTop = rect.top
+  const screenTargetLeft = rect.left
 
   switch (placement) {
     case 'bottom':
@@ -297,11 +297,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
                 ? {
                     clipPath: `polygon(
                       0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%,
-                      ${spotlightRect.left - window.scrollX}px ${spotlightRect.top - window.scrollY}px,
-                      ${spotlightRect.left - window.scrollX + spotlightRect.width}px ${spotlightRect.top - window.scrollY}px,
-                      ${spotlightRect.left - window.scrollX + spotlightRect.width}px ${spotlightRect.top - window.scrollY + spotlightRect.height}px,
-                      ${spotlightRect.left - window.scrollX}px ${spotlightRect.top - window.scrollY + spotlightRect.height}px,
-                      ${spotlightRect.left - window.scrollX}px ${spotlightRect.top - window.scrollY}px
+                      ${spotlightRect.left}px ${spotlightRect.top}px,
+                      ${spotlightRect.left + spotlightRect.width}px ${spotlightRect.top}px,
+                      ${spotlightRect.left + spotlightRect.width}px ${spotlightRect.top + spotlightRect.height}px,
+                      ${spotlightRect.left}px ${spotlightRect.top + spotlightRect.height}px,
+                      ${spotlightRect.left}px ${spotlightRect.top}px
                     )`,
                   }
                 : undefined
@@ -314,8 +314,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
               className="tour-spotlight-box"
               aria-hidden="true"
               style={{
-                top: `${spotlightRect.top - window.scrollY - 4}px`,
-                left: `${spotlightRect.left - window.scrollX - 4}px`,
+                top: `${spotlightRect.top - 4}px`,
+                left: `${spotlightRect.left - 4}px`,
                 width: `${spotlightRect.width + 8}px`,
                 height: `${spotlightRect.height + 8}px`,
               }}

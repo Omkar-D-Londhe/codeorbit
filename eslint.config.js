@@ -11,6 +11,7 @@ export default tseslint.config(
       'scripts',
       'docs/antigravity/reference/**',
       'docs/**',
+      'public/**',
     ],
   },
   {

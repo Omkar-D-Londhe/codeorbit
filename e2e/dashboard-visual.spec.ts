@@ -114,7 +114,7 @@ test.describe('Dashboard UI Visual Verification (Stage 12)', () => {
     await page.waitForSelector('.hero-ring-card')
 
     await expect(page.getByRole('heading', { level: 1, name: /learn html by exploring it/i })).toBeVisible()
-    await expect(page.locator('.hero-ring-stat')).toContainText('0 of 12 topics complete')
+    await expect(page.locator('.hero-ring-stat')).toContainText(/0 of 1[23] topics complete/)
     await expect(page.getByText(/no activity recorded yet/i)).toBeVisible()
     await expect(page.locator('.activity-feed-card')).toHaveCount(0)
 

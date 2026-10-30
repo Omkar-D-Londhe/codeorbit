@@ -5,6 +5,7 @@ import { AppStateProvider } from '../../state/AppState'
 import { createDefaultState } from '../../lib/storage'
 import type { CodeOrbitState } from '../../state/types'
 import { topics } from '../../data/curriculum'
+import { dayKey } from '../../core/gamification/streak'
 
 const mockTrack = {
   id: 'html',
@@ -39,7 +40,7 @@ describe('Progress Sharing Card (Stage 15c, Catalog 12.5)', () => {
         ...createDefaultState().settings,
         userName: 'Ada Lovelace',
       },
-      activityDays: ['2026-10-26', '2026-10-27'], // 2-day streak
+      activityDays: [dayKey(Date.now() - 86400000), dayKey(Date.now())], // 2-day streak
       topics: {
         'html-structure': {
           lessonComplete: true,

@@ -134,8 +134,8 @@ export function ShareCard() {
       ctx.fillText(`Lvl ${stats.level} · ${stats.xp} XP`, extraX, currentY + 26)
     }
 
-    // Footer
-    ctx.fillStyle = '#64748b'
+    // Footer (UI-04: #94a3b8 exceeds 4.5:1 WCAG AA contrast ratio against dark canvas)
+    ctx.fillStyle = '#94a3b8'
     ctx.font = '11px Inter, sans-serif'
     ctx.fillText('Measured on this device · Generated locally by CodeOrbit', 28, h - 22)
   }, [stats])

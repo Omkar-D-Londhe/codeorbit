@@ -267,7 +267,7 @@ export function ConstellationOrbit({
             trackTitle={technologyName}
             trackGlyph={technologyGlyph}
             selectedTopicId={selectedTopicId}
-            lastVisitedTopicId={state.lastVisited?.topicId}
+            lastVisitedTopicId={state.lastVisitedByTrack?.[technologyId]?.topicId ?? (state.lastVisited?.topicId && topics.some((t) => t.id === state.lastVisited?.topicId) ? state.lastVisited?.topicId : null)}
             pulsingTopicIds={pulsingTopicIds}
             highlightIds={highlightIds}
             nodeViews={nodeViews}

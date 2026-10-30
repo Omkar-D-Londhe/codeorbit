@@ -169,4 +169,32 @@ describe('core/a11y/contrast', () => {
       })
     }
   })
+
+  describe('ShareCard and Heat Chip Contrast (UI-04, UI-05)', () => {
+    it('ShareCard canvas footer text meets WCAG AA (>= 4.5:1) against background gradient', () => {
+      const footerColor = '#94a3b8'
+      const canvasBgMid = '#161426'
+      const canvasBgBottom = '#0a0a0f'
+      expect(contrastRatio(footerColor, canvasBgMid)).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(footerColor, canvasBgBottom)).toBeGreaterThanOrEqual(4.5)
+    })
+
+    it('Heat chip pass/fail text colors meet WCAG AA (>= 4.5:1) across dark and Starlight themes', () => {
+      // Dark theme: #34d399 text on rgba(16, 185, 129, 0.2) over #111219 surface
+      const darkPassComp = composite('rgba(16, 185, 129, 0.2)', '#111219')
+      const darkPassFg = '#34d399'
+      expect(contrastRatio(darkPassFg, darkPassComp)).toBeGreaterThanOrEqual(4.5)
+
+      // Dark theme: #f87171 text on rgba(239, 68, 68, 0.2) over #111219 surface
+      const darkFailComp = composite('rgba(239, 68, 68, 0.2)', '#111219')
+      const darkFailFg = '#f87171'
+      expect(contrastRatio(darkFailFg, darkFailComp)).toBeGreaterThanOrEqual(4.5)
+
+      // Starlight light theme: #065f46 on #d1fae5
+      expect(contrastRatio('#065f46', '#d1fae5')).toBeGreaterThanOrEqual(4.5)
+
+      // Starlight light theme: #991b1b on #fee2e2
+      expect(contrastRatio('#991b1b', '#fee2e2')).toBeGreaterThanOrEqual(4.5)
+    })
+  })
 })

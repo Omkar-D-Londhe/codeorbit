@@ -1,15 +1,15 @@
 import { challenges } from '../data/challenges'
 import { getTopic } from '../data/curriculum'
 import { getQuiz } from '../data/quizzes'
-import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry, OnboardingState } from '../state/types'
+import type { CodeOrbitState, ErrorEntry, ChallengeRecord, TopicRecord, ActivityEvent, Settings, CheckHistoryEntry, OnboardingState, AnalysisRecord } from '../state/types'
 import { DEFAULT_SETTINGS, DEFAULT_ATMOSPHERE_SETTINGS, DEFAULT_EDITOR_SETTINGS } from '../state/types'
 import { sanitizeSession } from './quiz'
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8 } from '../core/storage/migrations'
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9 } from '../core/storage/migrations'
 import { isValidTheme, isValidAccent, isValidContrast, isValidMotion, isValidFontScale, readEarlyAppearance } from '../core/settings/appearance'
 
 export const STORAGE_KEY = 'codeorbit:state'
 export const BACKUP_KEY = 'codeorbit:state:backup'
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 export const MAX_DAYS = 400
 export const MAX_ACTIVITY_EVENTS = 5000
 
@@ -56,7 +56,8 @@ export const createDefaultState = (): CodeOrbitState => {
     timeSpent: {},
     timeSpentSessions: {},
     review: {},
-    custom: { challenges: [] }
+    custom: { challenges: [] },
+    analysis: { history: [] }
   }
 }
 
@@ -82,6 +83,7 @@ export const migrations: Array<(old: Json) => Json> = [
   migrateV5toV6,
   migrateV6toV7,
   migrateV7toV8,
+  migrateV8toV9,
 ]
 
 export function migrate(raw: Json): Json | null {
@@ -109,6 +111,30 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
         ...(typeof lv.challengeId === 'string' && challenges.some((c) => c.id === lv.challengeId) ? { challengeId: lv.challengeId } : {}),
       }
     } else drop()
+  }
+
+  if (isObj(raw.lastVisitedByTrack)) {
+    s.lastVisitedByTrack = {}
+    for (const [trackId, lv] of Object.entries(raw.lastVisitedByTrack)) {
+      if (
+        isObj(lv) &&
+        typeof lv.topicId === 'string' &&
+        getTopic(lv.topicId) &&
+        ['lesson', 'quiz', 'practice'].includes(lv.activity as string) &&
+        isNum(lv.at)
+      ) {
+        s.lastVisitedByTrack[trackId] = {
+          topicId: lv.topicId,
+          activity: lv.activity as 'lesson' | 'quiz' | 'practice',
+          at: lv.at,
+          ...(typeof lv.challengeId === 'string' && challenges.some((c) => c.id === lv.challengeId)
+            ? { challengeId: lv.challengeId }
+            : {}),
+        }
+      } else {
+        drop()
+      }
+    }
   }
   if (typeof raw.selectedTopicId === 'string') {
     if (getTopic(raw.selectedTopicId)) s.selectedTopicId = raw.selectedTopicId
@@ -544,6 +570,17 @@ export function sanitizeState(raw: Json): { state: CodeOrbitState; repaired: boo
     }
   } else if (raw.custom !== undefined) drop()
 
+  // Sanitize analysis (schema v9: Complexity analysis history, capped at 30)
+  if (isObj(raw.analysis)) {
+    const rawH = Array.isArray(raw.analysis.history) ? raw.analysis.history : []
+    s.analysis = {
+      history: rawH
+        .filter((item): item is AnalysisRecord => isObj(item) && typeof item.id === 'string')
+        .slice(0, 30),
+    }
+    if (rawH.length > 30) drop()
+  } else if (raw.analysis !== undefined) drop()
+
   return { state: s, repaired }
 }
 
@@ -598,6 +635,19 @@ export function saveState(state: CodeOrbitState, storage: StorageLike | null = d
     storage.setItem(STORAGE_KEY, JSON.stringify(state))
     return { ok: true }
   } catch {
+    // Under storage quota pressure, derived analysis history is safely dropped to preserve essential progress
+    if (state.analysis?.history && state.analysis.history.length > 0) {
+      try {
+        const trimmedState: CodeOrbitState = {
+          ...state,
+          analysis: { history: [] },
+        }
+        storage.setItem(STORAGE_KEY, JSON.stringify(trimmedState))
+        return { ok: true }
+      } catch {
+        return { ok: false, reason: 'failed' }
+      }
+    }
     return { ok: false, reason: 'failed' }
   }
 }

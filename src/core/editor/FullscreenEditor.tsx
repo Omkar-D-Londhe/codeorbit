@@ -34,6 +34,18 @@ export function FullscreenEditor({
     const openerEl = openerRef?.current
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.documentElement.classList.add('is-fullscreen')
+
+    const container = containerRef.current
+    if (container && typeof document !== 'undefined' && document.fullscreenEnabled && !document.fullscreenElement) {
+      container.requestFullscreen?.().catch(() => {})
+    }
+
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement && open) {
+        onClose()
+      }
+    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -47,10 +59,16 @@ export function FullscreenEditor({
     }
 
     window.addEventListener('keydown', onKeyDown)
+    document.addEventListener('fullscreenchange', onFullscreenChange)
 
     return () => {
       document.body.style.overflow = prevOverflow
+      document.documentElement.classList.remove('is-fullscreen')
       window.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('fullscreenchange', onFullscreenChange)
+      if (typeof document !== 'undefined' && document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {})
+      }
       openerEl?.focus()
     }
   }, [open, drawerOpen, onClose, openerRef])

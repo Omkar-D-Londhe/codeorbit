@@ -5,10 +5,10 @@ import referenceV1 from './fixtures/state.v1.reference.json'
 import malformedV1 from './fixtures/state.v1.malformed.json'
 import v6Fixture from './fixtures/state.v6.json'
 
-describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7 -> v8)', () => {
-  it('SCHEMA_VERSION is 8 and migration index 0 is untouched', () => {
-    expect(SCHEMA_VERSION).toBe(8)
-    expect(migrations.length).toBe(8)
+describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7 -> v8 -> v9)', () => {
+  it('SCHEMA_VERSION is 9 and migration index 0 is untouched', () => {
+    expect(SCHEMA_VERSION).toBe(9)
+    expect(migrations.length).toBe(9)
 
     // Test migration 0 directly with v0 shape
     const v0Obj = { schemaVersion: 0, progress: { 'html-structure': { lessonComplete: true } } }
@@ -17,10 +17,10 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(v1Result.topics).toEqual({ 'html-structure': { lessonComplete: true } })
   })
 
-  it('migrates original v1 state into complete v8 state without data loss', () => {
+  it('migrates original v1 state into complete v9 state without data loss', () => {
     const migrated = migrate(originalV1 as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.settings).toBeDefined()
     expect(migrated!.activityDays).toEqual([])
     expect(migrated!.dailyDone).toEqual([])
@@ -33,6 +33,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(migrated!.timeSpentSessions).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
 
     // Verify existing v1 fields are completely preserved
     expect(migrated!.topics).toEqual(originalV1.topics)
@@ -43,7 +44,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
-    expect(state.schemaVersion).toBe(8)
+    expect(state.schemaVersion).toBe(9)
     expect(state.sectionBookmarks).toEqual([])
     expect(state.badges).toEqual({})
     expect(state.personalBests).toEqual({})
@@ -51,12 +52,13 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(state.timeSpentSessions).toEqual({})
     expect(state.review).toEqual({})
     expect(state.custom).toEqual({ challenges: [] })
+    expect(state.analysis).toEqual({ history: [] })
   })
 
   it('migrates reference-style v1 state, preserving activityDays and dailyDone', () => {
     const migrated = migrate(referenceV1 as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.activityDays).toEqual(['2026-10-22', '2026-10-23', '2026-10-24'])
     expect(migrated!.dailyDone).toEqual(['2026-10-24'])
     expect(migrated!.streakBest).toBe(3)
@@ -66,6 +68,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(migrated!.timeSpent).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
@@ -73,7 +76,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(state.streakBest).toBe(3)
   })
 
-  it('migrates v2 state to v8, initializing challenge history, section bookmarks, and badges', () => {
+  it('migrates v2 state to v9, initializing challenge history, section bookmarks, and badges', () => {
     const v2State = {
       schemaVersion: 2,
       topics: {},
@@ -90,7 +93,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v2State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     const ch = (migrated!.challenges as Record<string, Record<string, unknown>>)['ch-html-structure']
     expect(ch.history).toEqual([])
     expect(migrated!.sectionBookmarks).toEqual([])
@@ -99,9 +102,10 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(migrated!.timeSpent).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
   })
 
-  it('migrates v3 state to v8, adding empty sectionBookmarks, badges, and personalBests', () => {
+  it('migrates v3 state to v9, adding empty sectionBookmarks, badges, and personalBests', () => {
     const v3State = {
       schemaVersion: 3,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -110,7 +114,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v3State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.sectionBookmarks).toEqual([])
     expect(migrated!.bookmarks).toEqual(['html-structure'])
     expect(migrated!.badges).toEqual({})
@@ -118,9 +122,10 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(migrated!.timeSpent).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
   })
 
-  it('migrates v4 state to v8, adding badges and personalBests while preserving sectionBookmarks', () => {
+  it('migrates v4 state to v9, adding badges and personalBests while preserving sectionBookmarks', () => {
     const v4State = {
       schemaVersion: 4,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -130,16 +135,17 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v4State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.sectionBookmarks).toEqual(['html-structure#the-skeleton'])
     expect(migrated!.badges).toEqual({})
     expect(migrated!.personalBests).toEqual({})
     expect(migrated!.timeSpent).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
   })
 
-  it('preserves existing badges and personalBests when present during v4 to v8 migration', () => {
+  it('preserves existing badges and personalBests when present during v4 to v9 migration', () => {
     const v4StateWithBadges = {
       schemaVersion: 4,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -157,7 +163,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v4StateWithBadges)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.badges).toEqual({
       'first-challenge': { firstSeenAt: 1700000000000, backfilled: false },
       'html-foundations': { firstSeenAt: null, backfilled: true },
@@ -171,14 +177,15 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(migrated!.custom).toEqual({ challenges: [] })
   })
 
-  it('migrates v6 state into complete v8 state, preserving notes, bookmarks, folders, and initializing timeSpent, review, custom', () => {
+  it('migrates v6 state into complete v9 state, preserving notes, bookmarks, folders, and initializing timeSpent, review, custom, analysis', () => {
     const migrated = migrate(v6Fixture as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.timeSpent).toEqual({})
     expect(migrated!.timeSpentSessions).toEqual({})
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
     expect(migrated!.topics).toEqual(v6Fixture.topics)
     expect(migrated!.challenges).toEqual(v6Fixture.challenges)
     expect(migrated!.notes).toEqual(v6Fixture.notes)
@@ -188,14 +195,15 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
-    expect(state.schemaVersion).toBe(8)
+    expect(state.schemaVersion).toBe(9)
     expect(state.timeSpent).toEqual({})
     expect(state.timeSpentSessions).toEqual({})
     expect(state.review).toEqual({})
     expect(state.custom).toEqual({ challenges: [] })
+    expect(state.analysis).toEqual({ history: [] })
   })
 
-  it('preserves and sanitizes pre-existing timeSpent and timeSpentSessions during migration to v8', () => {
+  it('preserves and sanitizes pre-existing timeSpent and timeSpentSessions during migration to v9', () => {
     const v6WithTime = {
       ...v6Fixture,
       timeSpent: {
@@ -212,7 +220,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v6WithTime as Record<string, unknown>)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.timeSpent).toEqual({
       'html-structure': 150,
       'elements-attributes': 320,
@@ -223,6 +231,7 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     })
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
 
     const { state, repaired } = sanitizeState({
       ...migrated!,
@@ -240,9 +249,10 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     expect(state.timeSpentSessions).toEqual({ 'html-structure': 2 })
     expect(state.review).toEqual({})
     expect(state.custom).toEqual({ challenges: [] })
+    expect(state.analysis).toEqual({ history: [] })
   })
 
-  it('migrates v7 state to v8: initializes review and custom while preserving existing timeSpent and analytics', () => {
+  it('migrates v7 state to v9: initializes review, custom and analysis while preserving existing data', () => {
     const v7State = {
       schemaVersion: 7,
       topics: { 'html-structure': { lessonComplete: true } },
@@ -269,18 +279,50 @@ describe('Schema migrations and fixtures (v1 -> v2 -> v3 -> v4 -> v5 -> v6 -> v7
     }
     const migrated = migrate(v7State)
     expect(migrated).not.toBeNull()
-    expect(migrated!.schemaVersion).toBe(8)
+    expect(migrated!.schemaVersion).toBe(9)
     expect(migrated!.review).toEqual({})
     expect(migrated!.custom).toEqual({ challenges: [] })
+    expect(migrated!.analysis).toEqual({ history: [] })
     expect(migrated!.timeSpent).toEqual({ 'html-structure': 120 })
     expect(migrated!.timeSpentSessions).toEqual({ 'html-structure': 3 })
     expect(migrated!.topics).toEqual({ 'html-structure': { lessonComplete: true } })
 
     const { state, repaired } = sanitizeState(migrated!)
     expect(repaired).toBe(false)
-    expect(state.schemaVersion).toBe(8)
+    expect(state.schemaVersion).toBe(9)
     expect(state.review).toEqual({})
     expect(state.custom).toEqual({ challenges: [] })
+    expect(state.analysis).toEqual({ history: [] })
+  })
+
+  it('migrates v8 state to v9: initializes analysis with empty history or caps history at 30 records', () => {
+    const v8State = {
+      schemaVersion: 8,
+      topics: { 'html-structure': { lessonComplete: true } },
+      challenges: {},
+      notes: {},
+      bookmarks: [],
+      review: {},
+      custom: { challenges: [] },
+      analysis: {
+        history: Array.from({ length: 40 }, (_, i) => ({
+          id: `analysis-${i}`,
+          at: 1700000000000 + i,
+          language: 'javascript',
+        })),
+      },
+    }
+    const migrated = migrate(v8State)
+    expect(migrated).not.toBeNull()
+    expect(migrated!.schemaVersion).toBe(9)
+    const analysis = migrated!.analysis as { history: unknown[] }
+    expect(analysis.history.length).toBe(30)
+    expect((analysis.history[0] as { id: string }).id).toBe('analysis-0')
+
+    const { state, repaired } = sanitizeState(migrated!)
+    expect(repaired).toBe(false)
+    expect(state.schemaVersion).toBe(9)
+    expect(state.analysis.history.length).toBe(30)
   })
 
   it('repairs malformed v1 days list and invalid entries', () => {

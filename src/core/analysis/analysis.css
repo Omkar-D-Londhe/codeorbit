@@ -1,0 +1,203 @@
+/* Analysis Framework & UI Styles (Stage 20b) */
+
+.analysis-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem;
+}
+
+.analysis-empty-card {
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--c-surface-2, rgba(255, 255, 255, 0.03));
+  border: 1px dashed var(--c-border, #333);
+  border-radius: var(--radius-md, 8px);
+}
+
+.analysis-empty-card p {
+  margin: 0.5rem 0 0 0;
+  color: var(--c-text-muted);
+  font-size: 0.95rem;
+}
+
+.analysis-error-card {
+  padding: 1.25rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md, 8px);
+  color: #fca5a5;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.analysis-metric-card {
+  padding: 1rem;
+  background: var(--c-surface-1, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--c-border, #333);
+  border-radius: var(--radius-md, 8px);
+}
+
+.analysis-metric-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.analysis-metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: var(--c-text, #fff);
+}
+
+.analysis-confidence-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.analysis-confidence-chip--low {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.analysis-confidence-chip--medium {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.analysis-confidence-chip--high {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.analysis-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--c-text, #fff);
+  margin: 0;
+}
+
+.analysis-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--c-text-muted, #ccc);
+}
+
+.analysis-step-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--c-surface-1, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--c-border, #333);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.analysis-range-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--c-surface-2, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--c-border, #444);
+  border-radius: var(--radius-sm, 4px);
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--c-accent, #9a8bff);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.analysis-range-chip:hover,
+.analysis-range-chip:focus-visible {
+  border-color: var(--c-accent, #9a8bff);
+  outline: 2px solid var(--c-focus, #9a8bff);
+}
+
+.analysis-bottleneck-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  background: var(--c-surface-1, rgba(255, 255, 255, 0.02));
+  border-left: 3px solid var(--c-accent, #9a8bff);
+  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
+}
+
+.analysis-bottleneck-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analysis-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--c-surface-2, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+}
+
+/* Comparison View */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--c-border, #333);
+}
+
+.comparison-table th {
+  color: var(--c-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.comparison-change--improved {
+  color: #6ee7b7;
+  font-weight: 600;
+}
+
+.comparison-change--regressed {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
+.comparison-change--unchanged {
+  color: var(--c-text-muted);
+}
